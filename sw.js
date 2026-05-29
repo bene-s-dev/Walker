@@ -1,11 +1,12 @@
 javascript
-const CACHE_NAME = 'rehawalk-cache-v1';
+const CACHE_NAME = 'rehawalk-cache-v2';
 
 // Diese Dateien werden für die Offline-Nutzung gespeichert
 const urlsToCache = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './icon.jpg'
 ];
 
 // Install-Event: Cachen der App-Dateien
