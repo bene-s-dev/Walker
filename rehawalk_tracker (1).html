@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RehaWalk Tracker</title>
+    <!-- Verweise auf deine existierenden Dateien -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d9488">
+    <link rel="icon" href="icon.jpg" type="image/jpeg">
+    <link rel="apple-touch-icon" href="icon.jpg">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 pb-12 font-sans">
+
+    <!-- Header -->
+    <header class="bg-teal-600 text-white p-6 shadow-md border-b border-teal-700">
+        <div class="max-w-xl mx-auto flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <div>
+                <h1 class="text-2xl font-bold">RehaWalk Tracker</h1>
+                <p class="text-teal-100 text-sm">Schritt für Schritt zurück in den Alltag</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto px-4 mt-6 space-y-6">
+        
+        <!-- Plan & Fortschritt -->
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <svg class="text-teal-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                Aktueller Trainingsplan
+            </h2>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-teal-50 p-4 rounded-xl text-center">
+                    <div class="text-teal-600 text-sm font-semibold uppercase tracking-wide">Ziel-Dauer</div>
+                    <div id="plan-duration-display" class="text-2xl font-bold text-teal-900">30 Sek</div>
+                </div>
+                <div class="bg-teal-50 p-4 rounded-xl text-center">
+                    <div class="text-teal-600 text-sm font-semibold uppercase tracking-wide">Häufigkeit</div>
+                    <div id="plan-freq-display" class="text-2xl font-bold text-teal-900">1x / Tag</div>
+                </div>
+            </div>
+
+            <div class="flex justify-between text-sm font-medium mb-2">
+                <span>Erfolgreiche Tage</span>
+                <span id="progress-text">0 / 5</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-3 mb-4">
+                <div id="progress-bar" class="bg-teal-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+
+            <div id="preview-container" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-600">
+                Sobald du 5 Tage das Ziel erreicht hast, kannst du den Plan anpassen.
+            </div>
+
+            <div id="level-up-container" class="hidden mt-6 p-4 border border-teal-200 bg-teal-50 rounded-xl">
+                <p class="font-bold text-teal-800 mb-4">Ziel erreicht! Steigerung wählen:</p>
+                <div class="flex flex-col gap-3">
+                    <button id="btn-lvl-dur" class="w-full py-2.5 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition">Dauer +10%</button>
+                    <button id="btn-lvl-freq" class="w-full py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg font-medium hover:bg-teal-50 transition">Häufigkeit +1</button>
+                    <div class="flex gap-2">
+                        <input type="number" id="input-custom-dur" placeholder="Sek." class="w-full p-2 border border-slate-200 rounded">
+                        <button id="btn-custom-dur" class="px-4 py-2 bg-slate-800 text-white rounded hover:bg-slate-900">Übernehmen</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="resetPlan()" class="mt-6 text-xs text-slate-400 hover:text-teal-600 transition flex items-center gap-1">
+                Plan zurücksetzen
+            </button>
+        </section>
+
+        <!-- Training eintragen -->
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold mb-4">Training eintragen</h2>
+            <form id="training-form" class="space-y-4">
+                <input type="date" id="input-date" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <input type="number" id="input-duration" required placeholder="Dauer (Sekunden)" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="input-hr-before" required placeholder="Puls vorher" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <input type="number" id="input-hr-max" required placeholder="Max. Puls" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                </div>
+                <button type="submit" class="w-full py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 transition">Speichern</button>
+            </form>
+        </section>
+
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold mb-4">Verlauf</h2>
+            <div id="history-list" class="space-y-3"></div>
+        </section>
+    </main>
+
+    <script>
+        const getLocalISODate = () => new Date().toISOString().split('T')[0];
+        let sessions = JSON.parse(localStorage.getItem('rehaWalkSessions') || '[]');
+        let plan = JSON.parse(localStorage.getItem('rehaWalkPlan') || '{"duration":30,"frequency":1,"startDate":"' + getLocalISODate() + '"}');
+
+        function saveData() {
+            localStorage.setItem('rehaWalkSessions', JSON.stringify(sessions));
+            localStorage.setItem('rehaWalkPlan', JSON.stringify(plan));
+        }
+
+        function calculateProgress() {
+            const sessionsByDate = sessions.reduce((acc, s) => {
+                if (!acc[s.date]) acc[s.date] = [];
+                acc[s.date].push(s);
+                return acc;
+            }, {});
+            let successfulDays = 0;
+            Object.values(sessionsByDate).forEach(daySessions => {
+                if (daySessions.filter(s => s.duration >= plan.duration && s.hrMax <= 110).length >= plan.frequency) successfulDays++;
+            });
+            return successfulDays;
+        }
+
+        function render() {
+            document.getElementById('plan-duration-display').textContent = plan.duration + ' Sek';
+            document.getElementById('plan-freq-display').textContent = plan.frequency + 'x / Tag';
+            const progress = calculateProgress();
+            document.getElementById('progress-text').textContent = Math.min(progress, 5) + ' / 5';
+            document.getElementById('progress-bar').style.width = (Math.min(progress, 5) / 5) * 100 + '%';
+            
+            document.getElementById('level-up-container').classList.toggle('hidden', progress < 5);
+            document.getElementById('preview-container').classList.toggle('hidden', progress >= 5);
+
+            document.getElementById('history-list').innerHTML = sessions.map(s => `
+                <div class="p-3 bg-slate-50 rounded-xl flex justify-between items-center text-sm border border-slate-100">
+                    <span>${s.date} - ${s.duration}s</span>
+                    <button onclick="deleteSession('${s.id}')" class="text-red-400 hover:text-red-600">Löschen</button>
+                </div>`).join('');
+        }
+
+        document.getElementById('training-form').onsubmit = (e) => {
+            e.preventDefault();
+            sessions.unshift({ id: Date.now(), date: document.getElementById('input-date').value, duration: +document.getElementById('input-duration').value, hrBefore: +document.getElementById('input-hr-before').value, hrMax: +document.getElementById('input-hr-max').value });
+            saveData(); render();
+        };
+
+        document.getElementById('btn-lvl-dur').onclick = () => { plan.duration = Math.round(plan.duration * 1.1); saveData(); render(); };
+        document.getElementById('btn-lvl-freq').onclick = () => { if(plan.frequency < 3) plan.frequency++; saveData(); render(); };
+        document.getElementById('btn-custom-dur').onclick = () => { plan.duration = +document.getElementById('input-custom-dur').value; saveData(); render(); };
+        window.deleteSession = (id) => { sessions = sessions.filter(s => s.id != id); saveData(); render(); };
+        window.resetPlan = () => { plan = { duration: 30, frequency: 1, startDate: getLocalISODate() }; saveData(); render(); };
+
+        document.getElementById('input-date').value = getLocalISODate();
+        render();
+
+        if ('serviceWorker' in navigator && location.protocol !== 'blob:') {
+            navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW Registration failed', err));
+        }
+    </script>
+</body>
+</html>
