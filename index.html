@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeneWalker</title>
-    <!-- Tailwind CSS lädt die modernen Designs -->
+    <!-- PWA Manifest, Theme & Icons -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d9488">
+    <link rel="icon" href="icon.jpg" type="image/jpeg">
+    <link rel="apple-touch-icon" href="icon.jpg">
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 pb-12 font-sans">
@@ -51,7 +56,18 @@
                     <div id="progress-bar" class="bg-teal-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
 
-                <!-- Level Up Auswahl (Wird erst nach 5 Tagen sichtbar) -->
+                <!-- Vorschau auf das nächste Level -->
+                <div id="preview-container" class="mt-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div class="font-bold text-slate-700 mb-1 flex items-center gap-2 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><path d="M2 12h4l3-9 5 18 3-9h5"/></svg>
+                        Vorschau: Nächstes Level
+                    </div>
+                    <p id="preview-text" class="text-sm text-slate-600 leading-relaxed">
+                        <!-- Wird über JavaScript befüllt -->
+                    </p>
+                </div>
+
+                <!-- Level Up Auswahl (Wird erst nach 5 Tagen sichtbar und ersetzt die Vorschau) -->
                 <div id="level-up-container" class="hidden mt-6 p-4 border border-teal-200 bg-teal-50 rounded-xl">
                     <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -138,6 +154,8 @@
         const planFreqDisplay = document.getElementById('plan-freq-display');
         const progressText = document.getElementById('progress-text');
         const progressBar = document.getElementById('progress-bar');
+        const previewContainer = document.getElementById('preview-container');
+        const previewText = document.getElementById('preview-text');
         const levelUpContainer = document.getElementById('level-up-container');
         const btnLvlDur = document.getElementById('btn-lvl-dur');
         const btnLvlFreq = document.getElementById('btn-lvl-freq');
@@ -183,10 +201,14 @@
             progressText.textContent = displayDays + ' / 5';
             progressBar.style.width = (displayDays / 5) * 100 + '%';
 
-            // Level-Up Button Logik
+            const nextDur = Math.round(plan.duration * 1.1);
+
+            // Level-Up oder Vorschau anzeigen
             if (progressDays >= 5) {
+                // Ziel erreicht -> Vorschau verstecken, Auswahl zeigen
+                previewContainer.classList.add('hidden');
                 levelUpContainer.classList.remove('hidden');
-                const nextDur = Math.round(plan.duration * 1.1);
+                
                 btnLvlDur.textContent = 'Dauer +10% (Neu: ' + nextDur + ' Sek)';
                 
                 if (plan.frequency >= 3) {
@@ -197,7 +219,15 @@
                     btnLvlFreq.disabled = false;
                 }
             } else {
+                // Ziel noch nicht erreicht -> Vorschau zeigen, Auswahl verstecken
                 levelUpContainer.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
+                
+                let freqPreviewText = plan.frequency < 3 
+                    ? ` oder die Häufigkeit auf <strong>${plan.frequency + 1}x täglich</strong> anpassen.` 
+                    : '.';
+                    
+                previewText.innerHTML = `Sobald du 5 Tage ohne zu hohen Puls (≤ 110) erreichst, kannst du die Dauer auf <strong>${nextDur} Sek</strong> erhöhen${freqPreviewText}`;
             }
 
             // Verlauf anzeigen
@@ -289,6 +319,15 @@
             saveData();
             render();
         };
+
+        // Service Worker Registrierung für Offline / PWA Support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker erfolgreich registriert'))
+                    .catch(err => console.log('Fehler bei der Service Worker Registrierung: ', err));
+            });
+        }
 
         // App starten
         render();
