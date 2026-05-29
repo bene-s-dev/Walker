@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RehaWalk Tracker</title>
+    <title>BeneWalker</title>
     <!-- Verweise auf deine existierenden Dateien -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d9488">
@@ -19,7 +19,7 @@
         <div class="max-w-xl mx-auto flex items-center gap-3">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             <div>
-                <h1 class="text-2xl font-bold">RehaWalk Tracker</h1>
+                <h1 class="text-2xl font-bold">BeneWalker</h1>
                 <p class="text-teal-100 text-sm">Schritt für Schritt zurück in den Alltag</p>
             </div>
         </div>
@@ -150,7 +150,7 @@
         render();
 
         if ('serviceWorker' in navigator && location.protocol !== 'blob:') {
-            navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW Registration failed', err));
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Registration failed', err));
         }
     </script>
 </body>
