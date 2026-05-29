@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeneWalker</title>
+    <!-- Tailwind CSS lädt die modernen Designs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 pb-12 font-sans">
+
+    <!-- Header -->
+    <header class="bg-teal-600 text-white p-6 shadow-md border-b border-teal-700">
+        <div class="max-w-xl mx-auto flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <div>
+                <h1 class="text-2xl font-bold">BeneWalker</h1>
+                <p class="text-teal-100 text-sm">Schritt für Schritt zurück in den Alltag</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto px-4 mt-6 space-y-6">
+        
+        <!-- Plan & Fortschritt -->
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2">
+                    <svg class="text-teal-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                    Aktueller Trainingsplan
+                </h2>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-teal-50 p-4 rounded-xl text-center">
+                    <div class="text-teal-600 text-sm font-semibold uppercase tracking-wide">Ziel-Dauer</div>
+                    <div id="plan-duration-display" class="text-2xl font-bold text-teal-900">300 Sek</div>
+                </div>
+                <div class="bg-teal-50 p-4 rounded-xl text-center">
+                    <div class="text-teal-600 text-sm font-semibold uppercase tracking-wide">Häufigkeit</div>
+                    <div id="plan-freq-display" class="text-2xl font-bold text-teal-900">1x / Tag</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between text-sm font-medium mb-2">
+                    <span>Erfolgreiche Tage auf diesem Level</span>
+                    <span id="progress-text">0 / 5</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3 mb-4">
+                    <div id="progress-bar" class="bg-teal-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+
+                <!-- Level Up Auswahl (Wird erst nach 5 Tagen sichtbar) -->
+                <div id="level-up-container" class="hidden mt-6 p-4 border border-teal-200 bg-teal-50 rounded-xl">
+                    <h3 class="font-bold text-teal-800 mb-2 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        Ziel erreicht!
+                    </h3>
+                    <p class="text-sm text-teal-700 mb-4">Du hast 5 Tage erfolgreich absolviert. Wie möchtest du dich steigern?</p>
+                    <div class="flex flex-col gap-2">
+                        <button id="btn-lvl-dur" class="w-full py-2.5 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition">
+                            Dauer +10%
+                        </button>
+                        <button id="btn-lvl-freq" class="w-full py-2.5 bg-white border border-teal-600 text-teal-700 rounded-lg font-medium hover:bg-teal-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            Häufigkeit +1
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Training eintragen -->
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <svg class="text-teal-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Training eintragen
+            </h2>
+            <form id="training-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Datum</label>
+                    <input type="date" id="input-date" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Gegangene Dauer (Sekunden)</label>
+                    <input type="number" id="input-duration" step="1" required placeholder="z.B. 300" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1">
+                            <svg class="text-rose-500" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            Puls Vorher
+                        </label>
+                        <input type="number" id="input-hr-before" required placeholder="z.B. 75" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1">
+                            <svg class="text-rose-500" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            Max. Puls
+                        </label>
+                        <input type="number" id="input-hr-max" required placeholder="z.B. 105" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none" />
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full mt-2 py-3 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-900 transition flex justify-center items-center gap-2">
+                    Speichern
+                </button>
+            </form>
+        </section>
+
+        <!-- Historie -->
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                <svg class="text-teal-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Verlauf
+            </h2>
+            <div id="history-list" class="space-y-3">
+                <!-- Wird über JavaScript befüllt -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- App Logik -->
+    <script>
+        // Daten aus dem Speicher laden oder Standardwerte setzen
+        let sessions = JSON.parse(localStorage.getItem('rehaWalkSessions')) || [];
+        let plan = JSON.parse(localStorage.getItem('rehaWalkPlan')) || {
+            duration: 300, 
+            frequency: 1, 
+            startDate: new Date().toISOString().split('T')[0]
+        };
+
+        // UI-Elemente
+        const planDurationDisplay = document.getElementById('plan-duration-display');
+        const planFreqDisplay = document.getElementById('plan-freq-display');
+        const progressText = document.getElementById('progress-text');
+        const progressBar = document.getElementById('progress-bar');
+        const levelUpContainer = document.getElementById('level-up-container');
+        const btnLvlDur = document.getElementById('btn-lvl-dur');
+        const btnLvlFreq = document.getElementById('btn-lvl-freq');
+        const historyList = document.getElementById('history-list');
+        const trainingForm = document.getElementById('training-form');
+        const inputDate = document.getElementById('input-date');
+
+        // Setzt das Datumsauswahlfeld auf heute
+        inputDate.value = new Date().toISOString().split('T')[0];
+
+        // Funktion zum Speichern
+        function saveData() {
+            localStorage.setItem('rehaWalkSessions', JSON.stringify(sessions));
+            localStorage.setItem('rehaWalkPlan', JSON.stringify(plan));
+        }
+
+        // Funktion zur Berechnung der erfolgreichen Tage
+        function calculateProgress() {
+            const relevantSessions = sessions.filter(s => s.date >= plan.startDate);
+            const sessionsByDate = {};
+            
+            relevantSessions.forEach(s => {
+                if (!sessionsByDate[s.date]) sessionsByDate[s.date] = [];
+                sessionsByDate[s.date].push(s);
+            });
+
+            let successfulDays = 0;
+            Object.values(sessionsByDate).forEach(daySessions => {
+                const validSessions = daySessions.filter(s => s.duration >= plan.duration && s.hrMax <= 110);
+                if (validSessions.length >= plan.frequency) successfulDays++;
+            });
+            return successfulDays;
+        }
+
+        // Funktion zum Aktualisieren der Anzeige (UI)
+        function render() {
+            planDurationDisplay.textContent = plan.duration + ' Sek';
+            planFreqDisplay.textContent = plan.frequency + 'x / Tag';
+
+            const progressDays = calculateProgress();
+            const displayDays = Math.min(progressDays, 5);
+            
+            progressText.textContent = displayDays + ' / 5';
+            progressBar.style.width = (displayDays / 5) * 100 + '%';
+
+            // Level-Up Button Logik
+            if (progressDays >= 5) {
+                levelUpContainer.classList.remove('hidden');
+                const nextDur = Math.round(plan.duration * 1.1);
+                btnLvlDur.textContent = 'Dauer +10% (Neu: ' + nextDur + ' Sek)';
+                
+                if (plan.frequency >= 3) {
+                    btnLvlFreq.textContent = 'Maximale Häufigkeit erreicht (3x)';
+                    btnLvlFreq.disabled = true;
+                } else {
+                    btnLvlFreq.textContent = 'Häufigkeit +1 (Neu: ' + (plan.frequency + 1) + 'x/Tag)';
+                    btnLvlFreq.disabled = false;
+                }
+            } else {
+                levelUpContainer.classList.add('hidden');
+            }
+
+            // Verlauf anzeigen
+            if (sessions.length === 0) {
+                historyList.innerHTML = '<p class="text-slate-500 text-sm text-center py-6">Noch keine Trainings eingetragen. Fang heute an!</p>';
+            } else {
+                historyList.innerHTML = sessions.map(session => {
+                    const isSafe = session.hrMax <= 110;
+                    const dateObj = new Date(session.date);
+                    const dateStr = dateObj.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                    
+                    const iconSafe = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+                    const iconWarn = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+                    
+                    const statusClass = isSafe ? 'text-teal-600' : 'text-amber-600';
+                    const statusHtml = isSafe ? iconSafe + ' Puls OK' : iconWarn + ' Puls zu hoch';
+
+                    return `
+                    <div class="p-4 border border-slate-100 rounded-xl bg-slate-50 relative">
+                        <button onclick="deleteSession('${session.id}')" class="absolute top-3 right-3 text-slate-400 hover:text-red-500" title="Löschen">&times;</button>
+                        <div class="flex justify-between items-end mb-2 pr-4">
+                            <span class="font-bold text-slate-700">${dateStr}</span>
+                            <span class="font-bold text-lg">${session.duration} Sek</span>
+                        </div>
+                        <div class="flex items-center gap-4 text-sm">
+                            <div class="flex items-center gap-1 text-slate-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                ${session.hrBefore} &rarr; ${session.hrMax}
+                            </div>
+                            <div class="flex items-center gap-1 font-medium ${statusClass}">
+                                ${statusHtml}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        // Formular absenden (Neues Training)
+        trainingForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const date = document.getElementById('input-date').value;
+            const duration = parseInt(document.getElementById('input-duration').value);
+            const hrBefore = parseInt(document.getElementById('input-hr-before').value);
+            const hrMax = parseInt(document.getElementById('input-hr-max').value);
+
+            const newSession = {
+                id: Date.now().toString(),
+                date: date,
+                duration: duration,
+                hrBefore: hrBefore,
+                hrMax: hrMax
+            };
+
+            // Vorne einfügen und nach Datum sortieren
+            sessions.unshift(newSession);
+            sessions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            saveData();
+            render();
+
+            // Felder leeren (außer Datum)
+            document.getElementById('input-duration').value = '';
+            document.getElementById('input-hr-before').value = '';
+            document.getElementById('input-hr-max').value = '';
+        });
+
+        // Level Up: Dauer erhöhen
+        btnLvlDur.addEventListener('click', () => {
+            plan.duration = Math.round(plan.duration * 1.1);
+            plan.startDate = new Date().toISOString().split('T')[0]; // Neue Zählung beginnt
+            saveData();
+            render();
+        });
+
+        // Level Up: Häufigkeit erhöhen
+        btnLvlFreq.addEventListener('click', () => {
+            if (plan.frequency < 3) {
+                plan.frequency++;
+                plan.startDate = new Date().toISOString().split('T')[0]; // Neue Zählung beginnt
+                saveData();
+                render();
+            }
+        });
+
+        // Eintrag löschen
+        window.deleteSession = (id) => {
+            sessions = sessions.filter(s => s.id !== id);
+            saveData();
+            render();
+        };
+
+        // App starten
+        render();
+    </script>
+</body>
+</html>
