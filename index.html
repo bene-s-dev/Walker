@@ -412,7 +412,7 @@
 
                 <!-- Einheit-Auswahl (1. Gehen vs. 2. Gehen) mit viel Raum -->
                 <div class="mb-5 relative z-10">
-                    <div class="text-xs font-semibold text-emerald-900/70 mb-2.5">Für welche Einheit stoppst du?</div>
+                    
                     <div class="grid grid-cols-2 gap-3 max-w-sm mx-auto p-1.5 bg-emerald-900/5 rounded-2xl border border-emerald-200/60 backdrop-blur-xs">
                         <button type="button" id="sw-target-morning" onclick="setStopwatchTarget('morning')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 bg-white text-slate-900 shadow-2xs border border-emerald-100">
                             <span class="text-amber-900 font-extrabold text-sm">1. Gehen</span>
@@ -495,9 +495,8 @@
 
                 <!-- Beruhigendes Zen-Motto -->
                 <div class="mt-6 pt-4 border-t border-emerald-100/80 text-[11px] text-emerald-800/70 font-medium flex items-center justify-center gap-1.5 relative z-10">
-                    <span>🌿</span>
-                    <span>30 Sek: 1 Ping · 1 Minute: 2 Pings · Ruhig atmen & gehen</span>
-                </div>
+                   
+                
             </section>
 
             <!-- Schnelle Tagesübersicht unter Stoppuhr -->
@@ -1648,7 +1647,7 @@
 
             } else if (type === 'total') {
                 titleEl.textContent = 'Gesamtzeit & Meilensteine';
-                subtitleEl.textContent = 'Gesamter Reha-Erfolg seit Beginn';
+                subtitleEl.textContent = 'Gesamter Erfolg seit Beginn';
                 iconBadgeEl.innerHTML = '🏆';
                 iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg shadow-2xs';
                 chartTitleEl.textContent = 'Kumuliertes Wachstum';
@@ -1731,7 +1730,7 @@
                     }
                 });
 
-                insightTextEl.innerHTML = `Hervorragende Bilanz: Du hast bisher <strong>${hours} Stunden und ${mins} Minuten</strong> reine Gehzeit gesammelt. Das entspricht ca. <strong>${km} Kilometern</strong> zurückgelegter Reha-Distanz! 🚀`;
+                insightTextEl.innerHTML = `Hervorragende Bilanz: Du hast bisher <strong>${hours} Stunden und ${mins} Minuten</strong> reine Gehzeit gesammelt. Das entspricht ca. <strong>${km} Kilometern</strong> zurückgelegter Distanz!`;
 
             } else if (type === 'single') {
                 titleEl.textContent = 'Gehzeit am Stück';
