@@ -513,7 +513,11 @@
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="w-4 h-0 border-t-2 border-dashed border-teal-600 inline-block"></span>
-                        <span>Trend</span>
+                        <span>Ist-Trend (Daten)</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-4 h-0 border-t-2 border-dashed border-violet-500 inline-block"></span>
+                        <span>Empfohlener Trend (+6,5%/Wo)</span>
                     </div>
                 </div>
             </section>
@@ -1402,22 +1406,22 @@
             const eveningMinutes = filtered.map(r => Number((r.eveningSeconds / 60).toFixed(2)));
             const totalMinutes = filtered.map(r => Number((r.totalSeconds / 60).toFixed(2)));
 
-            // Trendlinie berechnen (nur über Tage mit Gehzeit > 0, sodass Ruhetage den Reha-Verlauf nicht abwerten)
-            const activePoints = [];
+            // 1. Tatsächlich errechneter Trend aus den vorangegangenen Daten (lineare Regression über reale aktive Tage)
+            const actualActivePoints = [];
             filtered.forEach((r, idx) => {
-                if (r.totalSeconds > 0) {
-                    activePoints.push({ x: idx, y: r.totalSeconds / 60 });
+                if (!r.isForecast && r.totalSeconds > 0) {
+                    actualActivePoints.push({ x: idx, y: r.totalSeconds / 60 });
                 }
             });
 
-            let trendMinutes = new Array(filtered.length).fill(null);
-            if (activePoints.length === 1) {
-                const singleVal = Number(activePoints[0].y.toFixed(2));
-                trendMinutes = new Array(filtered.length).fill(singleVal);
-            } else if (activePoints.length > 1) {
-                const n = activePoints.length;
+            let actualTrendMinutes = new Array(filtered.length).fill(null);
+            if (actualActivePoints.length === 1) {
+                const singleVal = Number(actualActivePoints[0].y.toFixed(2));
+                actualTrendMinutes = new Array(filtered.length).fill(singleVal);
+            } else if (actualActivePoints.length > 1) {
+                const n = actualActivePoints.length;
                 let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-                for (const pt of activePoints) {
+                for (const pt of actualActivePoints) {
                     sumX += pt.x;
                     sumY += pt.y;
                     sumXY += pt.x * pt.y;
@@ -1427,11 +1431,35 @@
                 const slope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
                 const intercept = (sumY - slope * sumX) / n;
 
-                trendMinutes = filtered.map((_, idx) => {
+                actualTrendMinutes = filtered.map((_, idx) => {
                     const val = slope * idx + intercept;
                     return Number(Math.max(0, val).toFixed(2));
                 });
             }
+
+            // 2. Empfohlener Reha-Trend (+6.5% pro Woche / nachhaltiges Pacing)
+            let todayIdx = filtered.findIndex(r => r.isForecast);
+            if (todayIdx === -1) todayIdx = filtered.length - 1;
+
+            const allActiveRecords = sorted.filter(r => (r.totalSeconds || 0) > 0);
+            let baselineSec = 0;
+            if (allActiveRecords.length > 0) {
+                const recent = allActiveRecords.slice(-14);
+                baselineSec = Math.round(recent.reduce((sum, r) => sum + r.totalSeconds, 0) / recent.length);
+            } else {
+                baselineSec = 180;
+            }
+
+            const dailyPacingRate = Math.pow(1 + 0.065, 1 / 7) - 1;
+            const recommendedTrendMinutes = filtered.map((_, idx) => {
+                if (idx < todayIdx) {
+                    return Number((baselineSec / 60).toFixed(2));
+                } else {
+                    const daysAhead = idx - todayIdx;
+                    const valSec = baselineSec * Math.pow(1 + dailyPacingRate, daysAhead);
+                    return Number((valSec / 60).toFixed(2));
+                }
+            });
 
             if (chartInstance) {
                 chartInstance.destroy();
@@ -1456,8 +1484,8 @@
                         },
                         {
                             type: 'line',
-                            label: 'Trend',
-                            data: trendMinutes,
+                            label: 'Ist-Trend (Daten)',
+                            data: actualTrendMinutes,
                             borderColor: '#0d9488',
                             backgroundColor: 'transparent',
                             borderWidth: 2,
@@ -1465,6 +1493,20 @@
                             pointRadius: 0,
                             pointHoverRadius: 4,
                             tension: 0,
+                            fill: false,
+                            order: 0
+                        },
+                        {
+                            type: 'line',
+                            label: 'Empfohlener Trend (+6,5%/Wo)',
+                            data: recommendedTrendMinutes,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [3, 3],
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            tension: 0.2,
                             fill: false,
                             order: 0
                         },
