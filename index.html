@@ -1794,7 +1794,7 @@
         let stopwatchIsRunning = false;
         let stopwatchTarget = 'morning'; // 'morning' oder 'evening'
         let audioCtx = null;
-        let lastPingMinute = 0;
+        let lastPingInterval = 0;
         let stopwatchSoundEnabled = true;
 
         window.toggleStopwatchSound = function() {
@@ -1806,7 +1806,7 @@
                 if (icon) icon.textContent = '🔔';
                 if (text) text.textContent = 'Ping an';
                 if (btn) btn.className = 'px-2.5 py-1.5 text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200/60 rounded-xl text-xs font-semibold transition flex items-center gap-1';
-                playMinutePing(); // Test-Ping
+                playPing(1); // Test-Ping
             } else {
                 if (icon) icon.textContent = '🔕';
                 if (text) text.textContent = 'Ping aus';
@@ -1814,7 +1814,7 @@
             }
         };
 
-        function playMinutePing() {
+        function playPing(count = 1) {
             if (!stopwatchSoundEnabled) return;
             try {
                 if (!audioCtx) {
@@ -1824,24 +1824,29 @@
                     audioCtx.resume();
                 }
 
-                const now = audioCtx.currentTime;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+                const startTime = audioCtx.currentTime;
 
-                // Klarer, angenehmer Reha-Glockenton
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(987.77, now); // B5
-                osc.frequency.exponentialRampToValueAtTime(1975.53, now + 0.08); // B6 Glöckchen
+                for (let i = 0; i < count; i++) {
+                    const pingTime = startTime + (i * 0.2);
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
 
-                gain.gain.setValueAtTime(0.001, now);
-                gain.gain.exponentialRampToValueAtTime(0.35, now + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+                    osc.type = 'sine';
+                    // Bei Doppel-Ping: 1. Ton 987Hz (B5), 2. Ton 1174Hz (D6) für eine harmonische Melodie
+                    const baseFreq = i === 0 ? 987.77 : 1174.66;
+                    osc.frequency.setValueAtTime(baseFreq, pingTime);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 2, pingTime + 0.07);
 
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
+                    gain.gain.setValueAtTime(0.001, pingTime);
+                    gain.gain.exponentialRampToValueAtTime(0.35, pingTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, pingTime + 0.55);
 
-                osc.start(now);
-                osc.stop(now + 0.7);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(pingTime);
+                    osc.stop(pingTime + 0.55);
+                }
             } catch (e) {
                 console.warn('Audio Context Fehler:', e);
             }
@@ -1947,7 +1952,7 @@
         window.resetStopwatch = function() {
             pauseStopwatch();
             stopwatchElapsedMs = 0;
-            lastPingMinute = 0;
+            lastPingInterval = 0;
             renderStopwatchDisplay();
 
             document.getElementById('btn-sw-text').textContent = 'Starten';
@@ -1968,10 +1973,15 @@
             const secs = totalSec % 60;
             const tenths = Math.floor((stopwatchElapsedMs % 1000) / 100);
 
-            // Minuten-Ping bei jeder vollen Minute (1:00, 2:00, 3:00 ...)
-            if (stopwatchIsRunning && mins > 0 && mins !== lastPingMinute && secs === 0) {
-                lastPingMinute = mins;
-                playMinutePing();
+            // Signal-Ping: 1 Ping bei 30 Sekunden, 2 Pings bei jeder vollen Minute
+            const currentInterval = Math.floor(totalSec / 30);
+            if (stopwatchIsRunning && currentInterval > 0 && currentInterval !== lastPingInterval) {
+                lastPingInterval = currentInterval;
+                if (totalSec % 60 === 0) {
+                    playPing(2); // 2 Pings bei voller Minute
+                } else if (totalSec % 60 === 30) {
+                    playPing(1); // 1 Ping bei 30 Sekunden
+                }
             }
 
             const minStr = String(mins).padStart(2, '0');
