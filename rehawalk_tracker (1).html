@@ -965,9 +965,32 @@
                             }
                         }
                     }
+                },
+                onClick: (event, elements) => {
+                    if (elements.length === 0 && chartInstance) {
+                        chartInstance.setActiveElements([]);
+                        if (chartInstance.tooltip) {
+                            chartInstance.tooltip.setActiveElements([], { x: 0, y: 0 });
+                        }
+                        chartInstance.update('none');
+                    }
                 }
             });
         }
+
+        // Chart Detail-Tooltip bei Klick/Tap außerhalb sofort schließen
+        const dismissChartTooltip = (e) => {
+            const canvas = document.getElementById('walkingChart');
+            if (canvas && !canvas.contains(e.target) && chartInstance) {
+                chartInstance.setActiveElements([]);
+                if (chartInstance.tooltip) {
+                    chartInstance.tooltip.setActiveElements([], { x: 0, y: 0 });
+                }
+                chartInstance.update('none');
+            }
+        };
+        document.addEventListener('pointerdown', dismissChartTooltip);
+        document.addEventListener('touchstart', dismissChartTooltip, { passive: true });
 
         // --- Profil-Menü & Dropdown Steuerung ---
         const btnProfile = document.getElementById('btn-profile');
