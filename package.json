@@ -1,0 +1,12 @@
+{
+  "name": "benewalker",
+  "version": "1.0.0",
+  "description": "BeneWalker - Gehzeit Tracker & Visualisierer",
+  "scripts": {
+    "dev": "npx -y serve . -l 3000",
+    "start": "npx -y serve . -l 3000"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
