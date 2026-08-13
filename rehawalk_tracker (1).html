@@ -48,15 +48,29 @@
                     <p class="text-teal-100 text-xs font-medium">Gehzeitenerfassung</p>
                 </div>
             </div>
-            <div class="relative">
-                <button id="btn-profile" aria-expanded="false" aria-haspopup="true" title="Profil & Optionen" class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 border border-white/30 text-white flex items-center justify-center transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <div class="flex items-center gap-2">
+                <!-- Stoppuhr Tab Button -->
+                <button id="btn-toggle-view" onclick="toggleView()" title="Stoppuhr öffnen" class="h-10 px-3.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 border border-white/30 text-white flex items-center gap-1.5 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50 text-xs font-bold">
+                    <svg id="toggle-view-icon-stopwatch" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v2m-3-2h6" />
                     </svg>
+                    <svg id="toggle-view-icon-dashboard" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span id="toggle-view-text" class="hidden sm:inline">Stoppuhr</span>
                 </button>
 
-                <!-- Profil Dropdown -->
-                <div id="profile-dropdown" class="hidden absolute right-0 top-12 w-64 sm:w-72 bg-white rounded-2xl shadow-2xl border border-slate-200/90 py-2 z-50 text-slate-800 transition-all duration-150 ease-out origin-top-right">
+                <!-- Profil Button & Dropdown -->
+                <div class="relative">
+                    <button id="btn-profile" aria-expanded="false" aria-haspopup="true" title="Profil & Optionen" class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 border border-white/30 text-white flex items-center justify-center transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </button>
+
+                    <!-- Profil Dropdown -->
+                    <div id="profile-dropdown" class="hidden absolute right-0 top-12 w-64 sm:w-72 bg-white rounded-2xl shadow-2xl border border-slate-200/90 py-2 z-50 text-slate-800 transition-all duration-150 ease-out origin-top-right">
                     <!-- Profil Info -->
                     <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
                         <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
@@ -121,10 +135,12 @@
         </div>
     </header>
 
-    <main class="max-w-2xl mx-auto px-4 mt-5 space-y-5">
+    <main class="max-w-2xl mx-auto px-4 mt-5">
 
-        <!-- Stat Cards (Klickbar für Deep-Dive Insights) -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <!-- TAB 1: Dashboard View -->
+        <div id="view-dashboard" class="space-y-5">
+            <!-- Stat Cards (Klickbar für Deep-Dive Insights) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div id="card-stat-today" onclick="openInsightModal('today')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
                 <div class="flex items-center justify-between">
                     <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Heute</div>
@@ -324,6 +340,91 @@
                 <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Trage oben deine morgendliche und abendliche Gehzeit ein, um deinen Fortschritt zu verfolgen.</p>
             </div>
         </section>
+        </div>
+
+        <!-- TAB 2: Live-Stoppuhr View -->
+        <div id="view-stopwatch" class="hidden space-y-5">
+            
+            <!-- Stoppuhr Card -->
+            <section class="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200/80 text-center relative overflow-hidden">
+                <div class="absolute -right-12 -top-12 w-40 h-40 bg-teal-50 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="absolute -left-12 -bottom-12 w-40 h-40 bg-emerald-50 rounded-full blur-2xl pointer-events-none"></div>
+
+                <!-- Header / Back -->
+                <div class="flex items-center justify-between mb-6 relative">
+                    <button type="button" onclick="switchView('dashboard')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        <span>Dashboard</span>
+                    </button>
+                    <span class="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200/60 px-3 py-1 rounded-full uppercase tracking-wider">Live Stoppuhr</span>
+                    <button type="button" onclick="resetStopwatch()" title="Zurücksetzen" class="px-3 py-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs font-semibold rounded-xl transition">
+                        Reset
+                    </button>
+                </div>
+
+                <!-- Session Selection (1. Gehen vs. 2. Gehen) -->
+                <div class="mb-5">
+                    <div class="text-xs font-semibold text-slate-500 mb-2">Für welche Einheit stoppst du die Gehzeit?</div>
+                    <div class="grid grid-cols-2 gap-2 max-w-md mx-auto p-1 bg-slate-100/90 rounded-2xl border border-slate-200/60">
+                        <button type="button" id="sw-target-morning" onclick="setStopwatchTarget('morning')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 bg-white text-slate-900 shadow-xs border border-slate-200/60">
+                            <span class="text-amber-900 font-extrabold text-sm">1. Gehen</span>
+                            <span class="text-[10px] text-slate-400 font-medium" id="sw-morning-preview">Heute: 0m 00s</span>
+                        </button>
+                        <button type="button" id="sw-target-evening" onclick="setStopwatchTarget('evening')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-900">
+                            <span class="text-indigo-900 font-extrabold text-sm">2. Gehen</span>
+                            <span class="text-[10px] text-slate-400 font-medium" id="sw-evening-preview">Heute: 0m 00s</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Big Timer Display -->
+                <div class="my-5 relative">
+                    <div class="inline-flex flex-col items-center justify-center p-6 sm:p-8 bg-slate-50 border border-slate-200/80 rounded-3xl w-full max-w-sm mx-auto shadow-inner">
+                        <div id="sw-status-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-200 text-slate-600 mb-2">
+                            Bereit
+                        </div>
+                        <div id="sw-display" class="font-mono text-5xl sm:text-6xl font-black text-slate-900 tracking-tight leading-none">
+                            00:00<span class="text-2xl sm:text-3xl text-slate-400 font-bold">.0</span>
+                        </div>
+                        <div class="text-xs text-slate-400 font-medium mt-3" id="sw-motivation-hint">
+                            Tippe auf Start, um deinen Lauf zu messen
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Primary Action Controls -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto mt-6">
+                    <!-- Start / Pause Button -->
+                    <button type="button" id="btn-sw-toggle" onclick="toggleStopwatch()" class="w-full sm:flex-1 py-4 px-6 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-base rounded-2xl shadow-lg shadow-teal-700/25 active:scale-[0.98] transition flex items-center justify-center gap-2.5">
+                        <svg id="sw-icon-play" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="sw-icon-pause" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 fill-current hidden" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        <span id="btn-sw-text">Starten</span>
+                    </button>
+
+                    <!-- Speichern Button -->
+                    <button type="button" id="btn-sw-save" onclick="saveStopwatchTime()" class="w-full sm:flex-1 py-4 px-6 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl shadow-md active:scale-[0.98] transition flex items-center justify-center gap-2" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Eintrag speichern</span>
+                    </button>
+                </div>
+
+                <!-- Toast / Success Message -->
+                <div id="sw-success-banner" class="hidden mt-5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-semibold text-emerald-900 flex items-center justify-between">
+                    <span id="sw-success-text">✓ Zeit erfolgreich für heute gespeichert!</span>
+                    <button type="button" onclick="switchView('dashboard')" class="underline text-emerald-800 hover:text-emerald-950 font-bold ml-2">Zum Dashboard</button>
+                </div>
+            </section>
+
+            <!-- Schnelle Tagesübersicht unter Stoppuhr -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between text-xs">
+                <div class="font-bold text-slate-700">Heute erfasst:</div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-amber-50 text-amber-900 px-2.5 py-1 rounded-lg border border-amber-200/60 font-semibold" id="sw-today-m-badge">1. Gehen: 0m 00s</span>
+                    <span class="bg-indigo-50 text-indigo-900 px-2.5 py-1 rounded-lg border border-indigo-200/60 font-semibold" id="sw-today-e-badge">2. Gehen: 0m 00s</span>
+                </div>
+            </div>
+
+        </div>
 
     </main>
 
@@ -1648,12 +1749,232 @@
             }
         });
 
+        // --- Tab / View Umschaltung (Dashboard vs. Live-Stoppuhr) ---
+        let currentView = 'dashboard';
+
+        window.toggleView = function() {
+            switchView(currentView === 'dashboard' ? 'stopwatch' : 'dashboard');
+        };
+
+        window.switchView = function(targetView) {
+            currentView = targetView;
+            const viewDashboard = document.getElementById('view-dashboard');
+            const viewStopwatch = document.getElementById('view-stopwatch');
+            const iconStopwatch = document.getElementById('toggle-view-icon-stopwatch');
+            const iconDashboard = document.getElementById('toggle-view-icon-dashboard');
+            const toggleText = document.getElementById('toggle-view-text');
+
+            if (targetView === 'stopwatch') {
+                viewDashboard.classList.add('hidden');
+                viewStopwatch.classList.remove('hidden');
+                iconStopwatch.classList.add('hidden');
+                iconDashboard.classList.remove('hidden');
+                if (toggleText) toggleText.textContent = 'Dashboard';
+                updateStopwatchOverview();
+            } else {
+                viewStopwatch.classList.add('hidden');
+                viewDashboard.classList.remove('hidden');
+                iconDashboard.classList.add('hidden');
+                iconStopwatch.classList.remove('hidden');
+                if (toggleText) toggleText.textContent = 'Stoppuhr';
+                renderAll();
+            }
+        };
+
+        // --- Live-Stoppuhr Steuerung ---
+        let stopwatchTimer = null;
+        let stopwatchStartTime = 0;
+        let stopwatchElapsedMs = 0;
+        let stopwatchIsRunning = false;
+        let stopwatchTarget = 'morning'; // 'morning' oder 'evening'
+
+        window.setStopwatchTarget = function(target) {
+            stopwatchTarget = target;
+            const btnM = document.getElementById('sw-target-morning');
+            const btnE = document.getElementById('sw-target-evening');
+            if (target === 'morning') {
+                btnM.className = 'py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 bg-white text-slate-900 shadow-xs border border-slate-200/60';
+                btnE.className = 'py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-900';
+            } else {
+                btnE.className = 'py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 bg-white text-slate-900 shadow-xs border border-slate-200/60';
+                btnM.className = 'py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-900';
+            }
+        };
+
+        function updateStopwatchOverview() {
+            const todayStr = getLocalDateStr();
+            const todayEntry = records.find(r => r.date === todayStr);
+            const mSec = todayEntry ? todayEntry.morningSeconds : 0;
+            const eSec = todayEntry ? todayEntry.eveningSeconds : 0;
+
+            const mPrevEl = document.getElementById('sw-morning-preview');
+            const ePrevEl = document.getElementById('sw-evening-preview');
+            const mBadgeEl = document.getElementById('sw-today-m-badge');
+            const eBadgeEl = document.getElementById('sw-today-e-badge');
+
+            if (mPrevEl) mPrevEl.textContent = `Heute: ${formatSecToMinSec(mSec)}`;
+            if (ePrevEl) ePrevEl.textContent = `Heute: ${formatSecToMinSec(eSec)}`;
+            if (mBadgeEl) mBadgeEl.textContent = `1. Gehen: ${formatSecToMinSec(mSec)}`;
+            if (eBadgeEl) eBadgeEl.textContent = `2. Gehen: ${formatSecToMinSec(eSec)}`;
+
+            // Automatischer smarter Fokus auf die noch offene Einheit
+            if (!stopwatchIsRunning && stopwatchElapsedMs === 0) {
+                if (mSec === 0) {
+                    setStopwatchTarget('morning');
+                } else if (eSec === 0) {
+                    setStopwatchTarget('evening');
+                }
+            }
+        }
+
+        window.toggleStopwatch = function() {
+            if (stopwatchIsRunning) {
+                pauseStopwatch();
+            } else {
+                startStopwatch();
+            }
+        };
+
+        window.startStopwatch = function() {
+            if (stopwatchIsRunning) return;
+            stopwatchIsRunning = true;
+            stopwatchStartTime = Date.now() - stopwatchElapsedMs;
+
+            document.getElementById('sw-icon-play')?.classList.add('hidden');
+            document.getElementById('sw-icon-pause')?.classList.remove('hidden');
+            document.getElementById('btn-sw-text').textContent = 'Pause';
+            
+            const badge = document.getElementById('sw-status-badge');
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 animate-pulse mb-2';
+                badge.textContent = 'Gehzeit läuft...';
+            }
+            document.getElementById('btn-sw-save').disabled = false;
+            document.getElementById('sw-success-banner')?.classList.add('hidden');
+
+            stopwatchTimer = setInterval(() => {
+                stopwatchElapsedMs = Date.now() - stopwatchStartTime;
+                renderStopwatchDisplay();
+            }, 50);
+        };
+
+        window.pauseStopwatch = function() {
+            if (!stopwatchIsRunning) return;
+            stopwatchIsRunning = false;
+            clearInterval(stopwatchTimer);
+            stopwatchTimer = null;
+
+            document.getElementById('sw-icon-pause')?.classList.add('hidden');
+            document.getElementById('sw-icon-play')?.classList.remove('hidden');
+            document.getElementById('btn-sw-text').textContent = 'Weiter';
+
+            const badge = document.getElementById('sw-status-badge');
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 mb-2';
+                badge.textContent = 'Pausiert';
+            }
+        };
+
+        window.resetStopwatch = function() {
+            pauseStopwatch();
+            stopwatchElapsedMs = 0;
+            renderStopwatchDisplay();
+
+            document.getElementById('btn-sw-text').textContent = 'Starten';
+            const badge = document.getElementById('sw-status-badge');
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-200 text-slate-600 mb-2';
+                badge.textContent = 'Bereit';
+            }
+            document.getElementById('btn-sw-save').disabled = true;
+            document.getElementById('sw-success-banner')?.classList.add('hidden');
+            const hint = document.getElementById('sw-motivation-hint');
+            if (hint) hint.textContent = 'Tippe auf Start, um deinen Lauf zu messen';
+        };
+
+        function renderStopwatchDisplay() {
+            const totalSec = Math.floor(stopwatchElapsedMs / 1000);
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
+            const tenths = Math.floor((stopwatchElapsedMs % 1000) / 100);
+
+            const minStr = String(mins).padStart(2, '0');
+            const secStr = String(secs).padStart(2, '0');
+
+            const display = document.getElementById('sw-display');
+            if (display) {
+                display.innerHTML = `${minStr}:${secStr}<span class="text-2xl sm:text-3xl text-slate-400 font-bold">.${tenths}</span>`;
+            }
+
+            const hint = document.getElementById('sw-motivation-hint');
+            if (hint && stopwatchIsRunning) {
+                if (mins >= 15) {
+                    hint.textContent = 'Großartige Ausdauer! Bleib gleichmäßig im Schritt. 🚀';
+                } else if (mins >= 10) {
+                    hint.textContent = 'Über 10 Minuten geschafft! Starker Reha-Fortschritt! 🔥';
+                } else if (mins >= 5) {
+                    hint.textContent = '5 Minuten geknackt – weiter so! 🚶';
+                } else if (secs >= 30) {
+                    hint.textContent = 'Gehzeit läuft... Atme ruhig und gleichmäßig.';
+                }
+            }
+        }
+
+        window.saveStopwatchTime = function() {
+            const elapsedSec = Math.round(stopwatchElapsedMs / 1000);
+            if (elapsedSec <= 0) {
+                alert('Die gestoppte Zeit beträgt 0 Sekunden.');
+                return;
+            }
+
+            pauseStopwatch();
+
+            const todayStr = getLocalDateStr();
+            let entry = records.find(r => r.date === todayStr);
+
+            if (!entry) {
+                entry = {
+                    id: todayStr,
+                    date: todayStr,
+                    morningSeconds: 0,
+                    eveningSeconds: 0,
+                    totalSeconds: 0,
+                    updatedAt: new Date().toISOString()
+                };
+                records.push(entry);
+            }
+
+            const targetLabel = stopwatchTarget === 'morning' ? '1. Gehen' : '2. Gehen';
+            if (stopwatchTarget === 'morning') {
+                entry.morningSeconds = elapsedSec;
+            } else {
+                entry.eveningSeconds = elapsedSec;
+            }
+
+            entry.totalSeconds = entry.morningSeconds + entry.eveningSeconds;
+            entry.updatedAt = new Date().toISOString();
+
+            records.sort((a, b) => b.date.localeCompare(a.date));
+            saveRecords();
+            updateStopwatchOverview();
+            renderAll();
+
+            // Erfolgs-Banner anzeigen
+            const banner = document.getElementById('sw-success-banner');
+            const bannerText = document.getElementById('sw-success-text');
+            if (banner && bannerText) {
+                bannerText.textContent = `✓ ${formatSecToMinSec(elapsedSec)} erfolgreich für ${targetLabel} heute gespeichert!`;
+                banner.classList.remove('hidden');
+            }
+        };
+
         // --- Initialisierung ---
         function renderAll() {
             renderStats();
             renderHistory();
             renderChart();
             updateProfileUI();
+            updateStopwatchOverview();
             if (activeInsightMode) {
                 openInsightModal(activeInsightMode);
             }
