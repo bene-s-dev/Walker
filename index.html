@@ -123,27 +123,39 @@
 
     <main class="max-w-2xl mx-auto px-4 mt-5 space-y-5">
 
-        <!-- Stat Cards -->
+        <!-- Stat Cards (Klickbar für Deep-Dive Insights) -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80">
-                <div class="text-slate-500 text-xs font-medium">Heute</div>
+            <div id="card-stat-today" onclick="openInsightModal('today')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
+                <div class="flex items-center justify-between">
+                    <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Heute</div>
+                    <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
                 <div id="stat-today" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
                 <div class="text-[11px] text-teal-600 font-medium mt-0.5" id="stat-today-split">1. 🚶 0m · 2. 🚶 0m</div>
             </div>
-            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80">
-                <div class="text-slate-500 text-xs font-medium">7-Tage Schnitt</div>
+            <div id="card-stat-avg" onclick="openInsightModal('avg')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
+                <div class="flex items-center justify-between">
+                    <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">7-Tage Schnitt</div>
+                    <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
                 <div id="stat-avg" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
                 <div id="stat-avg-trend" class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
                     <span>pro Tag</span>
                 </div>
             </div>
-            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80">
-                <div class="text-slate-500 text-xs font-medium">Gesamtzeit</div>
+            <div id="card-stat-total" onclick="openInsightModal('total')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
+                <div class="flex items-center justify-between">
+                    <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Gesamtzeit</div>
+                    <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
                 <div id="stat-total" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
                 <div class="text-[11px] text-slate-400 mt-0.5" id="stat-total-sub">alle Einheiten</div>
             </div>
-            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80">
-                <div class="text-slate-500 text-xs font-medium">Gehzeit am Stück</div>
+            <div id="card-stat-single" onclick="openInsightModal('single')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
+                <div class="flex items-center justify-between">
+                    <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Gehzeit am Stück</div>
+                    <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
                 <div id="stat-single" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
                 <div id="stat-single-trend" class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
                     <span>Einzelsession</span>
@@ -314,6 +326,71 @@
         </section>
 
     </main>
+
+    <!-- Insights & Spezial-Chart Modal -->
+    <div id="insight-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="closeInsightModal()">
+        <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] transition-all my-auto" onclick="event.stopPropagation()">
+            
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+                <div class="flex items-center gap-3">
+                    <div id="modal-icon-badge" class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg shadow-2xs">
+                        📊
+                    </div>
+                    <div>
+                        <h3 id="modal-title" class="font-extrabold text-slate-900 text-base leading-tight">Insight-Analyse</h3>
+                        <p id="modal-subtitle" class="text-xs text-slate-500 font-medium mt-0.5">Detaillierte Metriken & Verlauf</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeInsightModal()" class="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition focus:outline-none" title="Schließen">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-5 space-y-4 overflow-y-auto">
+                
+                <!-- KPI Highlight Grid -->
+                <div id="modal-kpi-grid" class="grid grid-cols-2 gap-2.5">
+                    <!-- Dynamische KPIs -->
+                </div>
+
+                <!-- Spezial-Chart Card -->
+                <div class="bg-slate-50/90 p-4 rounded-2xl border border-slate-200/80">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-xs font-bold text-slate-800" id="modal-chart-title">Spezial-Diagramm</div>
+                        <div class="text-[11px] text-teal-700 font-semibold bg-teal-100/70 px-2 py-0.5 rounded-md" id="modal-chart-badge">Fokus</div>
+                    </div>
+                    <div class="relative h-48 sm:h-56 w-full">
+                        <canvas id="specialModalChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Smarter Insight Text -->
+                <div id="modal-insight-box" class="p-3.5 bg-teal-50/80 border border-teal-200/80 rounded-2xl text-xs text-teal-950 font-medium flex items-start gap-2.5">
+                    <span class="text-base flex-shrink-0">💡</span>
+                    <div id="modal-insight-text" class="leading-relaxed">
+                        <!-- Dynamischer Text -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer (Navigation Tabs) -->
+            <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2">
+                <div class="flex bg-slate-200/70 p-1 rounded-xl gap-1 text-xs" id="modal-nav-tabs">
+                    <button onclick="openInsightModal('today')" id="tab-today" class="px-2.5 py-1 rounded-lg font-medium transition">Heute</button>
+                    <button onclick="openInsightModal('avg')" id="tab-avg" class="px-2.5 py-1 rounded-lg font-medium transition">7-Tage</button>
+                    <button onclick="openInsightModal('total')" id="tab-total" class="px-2.5 py-1 rounded-lg font-medium transition">Gesamt</button>
+                    <button onclick="openInsightModal('single')" id="tab-single" class="px-2.5 py-1 rounded-lg font-medium transition">Am Stück</button>
+                </div>
+                <button type="button" onclick="closeInsightModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl transition">
+                    Schließen
+                </button>
+            </div>
+
+        </div>
+    </div>
 
     <script>
         // --- State & LocalStorage ---
@@ -1100,12 +1177,486 @@
             }
         });
 
+        // --- Deep-Dive Insights & Spezial-Chart Modal ---
+        let specialChartInstance = null;
+        let activeInsightMode = null;
+
+        function closeInsightModal() {
+            const modal = document.getElementById('insight-modal');
+            if (modal) modal.classList.add('hidden');
+            if (specialChartInstance) {
+                specialChartInstance.destroy();
+                specialChartInstance = null;
+            }
+            activeInsightMode = null;
+        }
+
+        window.closeInsightModal = closeInsightModal;
+
+        window.openInsightModal = function(type) {
+            const modal = document.getElementById('insight-modal');
+            if (!modal) return;
+
+            activeInsightMode = type;
+            modal.classList.remove('hidden');
+
+            // Footer Tabs hervorheben
+            const tabs = ['today', 'avg', 'total', 'single'];
+            tabs.forEach(t => {
+                const tabBtn = document.getElementById(`tab-${t}`);
+                if (tabBtn) {
+                    if (t === type) {
+                        tabBtn.className = 'px-2.5 py-1 rounded-lg font-bold transition bg-teal-600 text-white shadow-xs';
+                    } else {
+                        tabBtn.className = 'px-2.5 py-1 rounded-lg font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-300/50';
+                    }
+                }
+            });
+
+            const sortedRecords = [...records].sort((a, b) => b.date.localeCompare(a.date));
+            const todayStr = getLocalDateStr();
+            const todayEntry = records.find(r => r.date === todayStr);
+
+            // 7-Tage & Wochenschnitt Berechnungen
+            let last7Sec = 0, last7DaysCount = 0;
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const ds = getLocalDateStr(d);
+                const entry = records.find(r => r.date === ds);
+                if (entry) {
+                    last7Sec += entry.totalSeconds;
+                    last7DaysCount++;
+                }
+            }
+            const avg7 = last7DaysCount > 0 ? Math.round(last7Sec / last7DaysCount) : (sortedRecords.length > 0 ? Math.round(sortedRecords.slice(0, 7).reduce((s, r) => s + r.totalSeconds, 0) / Math.min(7, sortedRecords.length)) : 0);
+
+            let prev7Sec = 0, prev7DaysCount = 0;
+            for (let i = 7; i < 14; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const ds = getLocalDateStr(d);
+                const entry = records.find(r => r.date === ds);
+                if (entry) {
+                    prev7Sec += entry.totalSeconds;
+                    prev7DaysCount++;
+                }
+            }
+            const prevAvg7 = prev7DaysCount > 0 ? Math.round(prev7Sec / prev7DaysCount) : (sortedRecords.length > 7 ? Math.round(sortedRecords.slice(7, 14).reduce((s, r) => s + r.totalSeconds, 0) / Math.min(7, sortedRecords.slice(7, 14).length)) : 0);
+            const totalAllSec = records.reduce((acc, r) => acc + (r.totalSeconds || 0), 0);
+
+            // Altes Chart sauber entfernen
+            if (specialChartInstance) {
+                specialChartInstance.destroy();
+                specialChartInstance = null;
+            }
+
+            const canvas = document.getElementById('specialModalChart');
+            const ctx = canvas.getContext('2d');
+
+            const titleEl = document.getElementById('modal-title');
+            const subtitleEl = document.getElementById('modal-subtitle');
+            const iconBadgeEl = document.getElementById('modal-icon-badge');
+            const kpiGridEl = document.getElementById('modal-kpi-grid');
+            const chartTitleEl = document.getElementById('modal-chart-title');
+            const chartBadgeEl = document.getElementById('modal-chart-badge');
+            const insightTextEl = document.getElementById('modal-insight-text');
+
+            if (type === 'today') {
+                titleEl.textContent = 'Heutige Tagesanalyse';
+                subtitleEl.textContent = `${formatDatePretty(todayStr)} im Detail`;
+                iconBadgeEl.innerHTML = '📅';
+                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg shadow-2xs';
+                chartTitleEl.textContent = '1. vs. 2. Gehen Aufteilung';
+                chartBadgeEl.textContent = 'Balance';
+
+                const mSec = todayEntry ? todayEntry.morningSeconds : 0;
+                const eSec = todayEntry ? todayEntry.eveningSeconds : 0;
+                const tSec = todayEntry ? todayEntry.totalSeconds : 0;
+                const mPct = tSec > 0 ? Math.round((mSec / tSec) * 100) : 0;
+                const ePct = tSec > 0 ? Math.round((eSec / tSec) * 100) : 0;
+
+                const prevEntry = sortedRecords.find(r => r.date < todayStr);
+                const diffVortag = prevEntry && tSec > 0 ? tSec - prevEntry.totalSeconds : 0;
+                const diffVortagTxt = prevEntry ? formatTrendHTML(diffVortag, 'vs. Vortag') : '<span class="text-slate-400">Erster Eintrag</span>';
+
+                kpiGridEl.innerHTML = `
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Gesamtzeit Heute</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(tSec)}</div>
+                        <div class="text-[11px] mt-0.5">${diffVortagTxt}</div>
+                    </div>
+                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-amber-800">1. Gehen</div>
+                        <div class="text-lg font-bold text-amber-950 mt-0.5">${formatSecToMinSec(mSec)}</div>
+                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">${mPct}% Anteil</div>
+                    </div>
+                    <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-indigo-800">2. Gehen</div>
+                        <div class="text-lg font-bold text-indigo-950 mt-0.5">${formatSecToMinSec(eSec)}</div>
+                        <div class="text-[11px] font-medium text-indigo-700/80 mt-0.5">${ePct}% Anteil</div>
+                    </div>
+                    <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-teal-800">vs. 7-Tage-Schnitt</div>
+                        <div class="text-lg font-bold text-teal-950 mt-0.5">${avg7 > 0 ? (tSec >= avg7 ? '+' : '') + formatSecShort(tSec - avg7) : '—'}</div>
+                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">${avg7 > 0 ? (tSec >= avg7 ? 'Über dem Wochendurchschnitt 🎯' : 'Unter dem Wochendurchschnitt') : 'Wochendaten sammeln'}</div>
+                    </div>
+                `;
+
+                if (tSec > 0) {
+                    specialChartInstance = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['1. Gehen', '2. Gehen'],
+                            datasets: [{
+                                data: [Number((mSec / 60).toFixed(2)), Number((eSec / 60).toFixed(2))],
+                                backgroundColor: ['rgba(251, 191, 36, 0.9)', 'rgba(99, 102, 241, 0.9)'],
+                                borderColor: ['#f59e0b', '#6366f1'],
+                                borderWidth: 2,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { font: { size: 11, weight: 'bold' }, padding: 12 }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(c) {
+                                            const secVal = Math.round(c.raw * 60);
+                                            return ` ${c.label}: ${formatSecToMinSec(secVal)} (${tSec > 0 ? Math.round((secVal / tSec) * 100) : 0}%)`;
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '65%'
+                        }
+                    });
+                } else {
+                    const sample5 = sortedRecords.slice(0, 5).reverse();
+                    specialChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: sample5.map(r => {
+                                const p = r.date.split('-');
+                                return `${p[2]}.${p[1]}.`;
+                            }),
+                            datasets: [
+                                { label: '1. Gehen', data: sample5.map(r => (r.morningSeconds / 60).toFixed(1)), backgroundColor: 'rgba(251, 191, 36, 0.85)' },
+                                { label: '2. Gehen', data: sample5.map(r => (r.eveningSeconds / 60).toFixed(1)), backgroundColor: 'rgba(99, 102, 241, 0.85)' }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { position: 'bottom' } },
+                            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Minuten' } } }
+                        }
+                    });
+                }
+
+                insightTextEl.innerHTML = tSec > 0 
+                    ? `Heute bist du insgesamt <strong>${formatSecToMinSec(tSec)}</strong> gelaufen. Dein Schwerpunkt lag zu <strong>${mPct}%</strong> auf der 1. Einheit und zu <strong>${ePct}%</strong> auf der 2. Einheit. ${tSec >= avg7 && avg7 > 0 ? 'Sehr stark – du liegst über deinem aktuellen Wochenschnitt! 🚀' : 'Super Einsatz für den heutigen Tag.'}`
+                    : 'Für heute ist noch keine Gehzeit eingetragen. Trage oben deine Einheiten ein, um die Live-Tagesbalance zu sehen!';
+
+            } else if (type === 'avg') {
+                titleEl.textContent = '7-Tage-Schnitt & Trend';
+                subtitleEl.textContent = 'Entwicklung & Beständigkeit';
+                iconBadgeEl.innerHTML = '📈';
+                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg shadow-2xs';
+                chartTitleEl.textContent = '14-Tage-Entwicklungskurve';
+                chartBadgeEl.textContent = 'Schnitt vs. Tage';
+
+                const diffAvg = avg7 - prevAvg7;
+                kpiGridEl.innerHTML = `
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">7-Tage-Schnitt</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(avg7)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">pro aktivem Tag</div>
+                    </div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Vorwochen-Schnitt</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(prevAvg7)}</div>
+                        <div class="text-[11px] mt-0.5">${prevAvg7 > 0 ? formatTrendHTML(diffAvg, 'vs. Vorwoche') : '—'}</div>
+                    </div>
+                    <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-teal-800">Aktive Tage (7T)</div>
+                        <div class="text-lg font-bold text-teal-950 mt-0.5">${last7DaysCount} / 7 Tage</div>
+                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">${Math.round((last7DaysCount / 7) * 100)}% Trainingsfrequenz</div>
+                    </div>
+                    <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-emerald-800">Wochentrend</div>
+                        <div class="text-lg font-bold ${diffAvg >= 0 ? 'text-emerald-900' : 'text-rose-900'} mt-0.5">${diffAvg >= 0 ? '+' : ''}${formatSecShort(diffAvg)}</div>
+                        <div class="text-[11px] font-medium text-emerald-700/80 mt-0.5">${diffAvg >= 0 ? 'Steigerung pro Tag' : 'Rückgang pro Tag'}</div>
+                    </div>
+                `;
+
+                const days14 = [];
+                for (let i = 13; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const ds = getLocalDateStr(d);
+                    const found = records.find(r => r.date === ds);
+                    days14.push({
+                        date: ds,
+                        totalSec: found ? found.totalSeconds : 0
+                    });
+                }
+
+                specialChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: days14.map(d => {
+                            const p = d.date.split('-');
+                            return `${p[2]}.${p[1]}.`;
+                        }),
+                        datasets: [
+                            {
+                                label: 'Tageszeit (min)',
+                                data: days14.map(d => (d.totalSec / 60).toFixed(2)),
+                                borderColor: '#0f766e',
+                                backgroundColor: 'rgba(15, 118, 110, 0.12)',
+                                fill: true,
+                                tension: 0.3,
+                                borderWidth: 2.5,
+                                pointRadius: 3,
+                                pointBackgroundColor: '#0f766e'
+                            },
+                            {
+                                label: '7-Tage-Schnitt Ziel',
+                                data: days14.map(() => (avg7 / 60).toFixed(2)),
+                                borderColor: '#f59e0b',
+                                borderDash: [5, 5],
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { size: 10 } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(c) {
+                                        return ` ${c.dataset.label}: ${formatSecToMinSec(Math.round(c.raw * 60))}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Minuten', font: { size: 10 } } }
+                        }
+                    }
+                });
+
+                insightTextEl.innerHTML = `In den letzten 7 Tagen bist du an <strong>${last7DaysCount} von 7 Tagen</strong> aktiv gewesen. Dein Durchschnittswert liegt bei <strong>${formatSecToMinSec(avg7)}</strong> pro Trainingstag. ${diffAvg > 0 ? 'Das ist eine Steigerung um <strong>+' + formatSecShort(diffAvg) + '</strong> im Vergleich zur Vorwoche! 🌟' : 'Jede Trainingseinheit unterstützt deinen Heilungsverlauf.'}`;
+
+            } else if (type === 'total') {
+                titleEl.textContent = 'Gesamtzeit & Meilensteine';
+                subtitleEl.textContent = 'Gesamter Reha-Erfolg seit Beginn';
+                iconBadgeEl.innerHTML = '🏆';
+                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg shadow-2xs';
+                chartTitleEl.textContent = 'Kumuliertes Wachstum';
+                chartBadgeEl.textContent = 'Wegstrecke';
+
+                const hours = Math.floor(totalAllSec / 3600);
+                const mins = Math.floor((totalAllSec % 3600) / 60);
+                const km = (totalAllSec / 3600 * 3.6).toFixed(1);
+                const steps = Math.round(totalAllSec * 1.35).toLocaleString('de-DE');
+                
+                const bestDay = sortedRecords.length > 0 ? sortedRecords.reduce((max, r) => r.totalSeconds > max.totalSeconds ? r : max, sortedRecords[0]) : null;
+
+                kpiGridEl.innerHTML = `
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Gesamte Gehzeit</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${hours}h ${mins}m</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${records.length} Tage erfasst</div>
+                    </div>
+                    <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-teal-800">Geschätzte Distanz</div>
+                        <div class="text-lg font-bold text-teal-950 mt-0.5">~${km} km</div>
+                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">bei ca. 3.6 km/h</div>
+                    </div>
+                    <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-emerald-800">Geschätzte Schritte</div>
+                        <div class="text-lg font-bold text-emerald-950 mt-0.5">~${steps}</div>
+                        <div class="text-[11px] font-medium text-emerald-700/80 mt-0.5">Schrittfrequenz</div>
+                    </div>
+                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-amber-800">Rekordtag</div>
+                        <div class="text-lg font-bold text-amber-950 mt-0.5">${bestDay ? formatSecToMinSec(bestDay.totalSeconds) : '0m'}</div>
+                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">${bestDay ? formatDatePretty(bestDay.date) : '—'}</div>
+                    </div>
+                `;
+
+                const chronRecords = [...records].sort((a, b) => a.date.localeCompare(b.date));
+                let cumSec = 0;
+                const cumData = chronRecords.map(r => {
+                    cumSec += (r.totalSeconds || 0);
+                    return {
+                        date: r.date.split('-').slice(1).reverse().join('.'),
+                        cumMin: (cumSec / 60).toFixed(1)
+                    };
+                });
+
+                specialChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: cumData.map(c => c.date),
+                        datasets: [{
+                            label: 'Kumulierte Gehzeit (min)',
+                            data: cumData.map(c => c.cumMin),
+                            borderColor: '#0f766e',
+                            backgroundColor: 'rgba(15, 118, 110, 0.15)',
+                            fill: true,
+                            tension: 0.25,
+                            borderWidth: 2.5,
+                            pointRadius: cumData.length > 20 ? 1 : 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(c) {
+                                        const totM = Math.round(c.raw);
+                                        const h = Math.floor(totM / 60);
+                                        const m = totM % 60;
+                                        return ` Gesamt bis dahin: ${h}h ${m}m`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Gesamtminuten', font: { size: 10 } } }
+                        }
+                    }
+                });
+
+                insightTextEl.innerHTML = `Hervorragende Bilanz: Du hast bisher <strong>${hours} Stunden und ${mins} Minuten</strong> reine Gehzeit gesammelt. Das entspricht ca. <strong>${km} Kilometern</strong> zurückgelegter Reha-Distanz! 🚀`;
+
+            } else if (type === 'single') {
+                titleEl.textContent = 'Gehzeit am Stück';
+                subtitleEl.textContent = 'Ausdauer der Einzelsessions';
+                iconBadgeEl.innerHTML = '⏱️';
+                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center text-lg shadow-2xs';
+                chartTitleEl.textContent = 'Letzte Einzelsitzungen';
+                chartBadgeEl.textContent = '1. vs. 2. Gehen';
+
+                const allSessions = [];
+                records.forEach(r => {
+                    if (r.morningSeconds > 0) allSessions.push({ date: r.date, type: '1. Gehen', sec: r.morningSeconds });
+                    if (r.eveningSeconds > 0) allSessions.push({ date: r.date, type: '2. Gehen', sec: r.eveningSeconds });
+                });
+
+                const allTimeMaxSingle = allSessions.length > 0 ? Math.max(...allSessions.map(s => s.sec)) : 0;
+                const todayMaxSingle = todayEntry ? Math.max(todayEntry.morningSeconds || 0, todayEntry.eveningSeconds || 0) : 0;
+
+                const last7Singles = [];
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const ds = getLocalDateStr(d);
+                    const entry = records.find(r => r.date === ds);
+                    if (entry) {
+                        if (entry.morningSeconds > 0) last7Singles.push(entry.morningSeconds);
+                        if (entry.eveningSeconds > 0) last7Singles.push(entry.eveningSeconds);
+                    }
+                }
+                const avgSingle7 = last7Singles.length > 0 ? Math.round(last7Singles.reduce((a, b) => a + b, 0) / last7Singles.length) : 0;
+
+                kpiGridEl.innerHTML = `
+                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-amber-800">All-Time Rekord</div>
+                        <div class="text-lg font-bold text-amber-950 mt-0.5">${formatSecToMinSec(allTimeMaxSingle)}</div>
+                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">längste Einzelsession</div>
+                    </div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Heute am Stück</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(todayMaxSingle)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${todayMaxSingle > 0 ? 'heutiges Maximum' : 'noch keine Einheit'}</div>
+                    </div>
+                    <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-teal-800">7-Tage Ø am Stück</div>
+                        <div class="text-lg font-bold text-teal-950 mt-0.5">${formatSecToMinSec(avgSingle7)}</div>
+                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">Schnitt pro Einheit</div>
+                    </div>
+                    <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-indigo-800">Gesamte Sessions</div>
+                        <div class="text-lg font-bold text-indigo-950 mt-0.5">${allSessions.length}</div>
+                        <div class="text-[11px] font-medium text-indigo-700/80 mt-0.5">Einheiten absolviert</div>
+                    </div>
+                `;
+
+                const recentSessions = [...allSessions].sort((a, b) => a.date.localeCompare(b.date)).slice(-12);
+
+                specialChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: recentSessions.map(s => {
+                            const p = s.date.split('-');
+                            return `${s.type.slice(0, 2)} (${p[2]}.${p[1]}.)`;
+                        }),
+                        datasets: [
+                            {
+                                label: 'Dauer am Stück (min)',
+                                data: recentSessions.map(s => (s.sec / 60).toFixed(2)),
+                                backgroundColor: recentSessions.map(s => s.type.includes('1.') ? 'rgba(251, 191, 36, 0.85)' : 'rgba(99, 102, 241, 0.85)'),
+                                borderColor: recentSessions.map(s => s.type.includes('1.') ? '#f59e0b' : '#6366f1'),
+                                borderWidth: 1.5,
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(c) {
+                                        const s = recentSessions[c.dataIndex];
+                                        return ` ${s.type}: ${formatSecToMinSec(s.sec)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Minuten', font: { size: 10 } } }
+                        }
+                    }
+                });
+
+                insightTextEl.innerHTML = `Deine bisher längste am Stück gelaufene Einheit liegt bei <strong>${formatSecToMinSec(allTimeMaxSingle)}</strong>. Dein aktueller 7-Tage-Schnitt beträgt <strong>${formatSecToMinSec(avgSingle7)}</strong> pro Einzelsitzung ohne Unterbrechung. 💪`;
+            }
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeInsightModal();
+            }
+        });
+
         // --- Initialisierung ---
         function renderAll() {
             renderStats();
             renderHistory();
             renderChart();
             updateProfileUI();
+            if (activeInsightMode) {
+                openInsightModal(activeInsightMode);
+            }
         }
 
         dateInput.value = getLocalDateStr();
