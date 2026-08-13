@@ -140,12 +140,14 @@
             <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80">
                 <div class="text-slate-500 text-xs font-medium">Gesamtzeit</div>
                 <div id="stat-total" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">alle Einheiten</div>
+                <div class="text-[11px] text-slate-400 mt-0.5" id="stat-total-sub">alle Einheiten</div>
             </div>
             <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80">
-                <div class="text-slate-500 text-xs font-medium">Tage erfasst</div>
-                <div id="stat-days-count" class="text-lg font-bold text-teal-700 mt-1">0 Tage</div>
-                <div class="text-[11px] text-slate-400 mt-0.5">im Archiv</div>
+                <div class="text-slate-500 text-xs font-medium">Gehzeit am Stück</div>
+                <div id="stat-single" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
+                <div id="stat-single-trend" class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
+                    <span>Einzelsession</span>
+                </div>
             </div>
         </div>
 
@@ -552,44 +554,56 @@
             });
         });
 
+        // --- Trend-Helper mit gestochen scharfen SVG-Pfeilen ---
+        function formatTrendHTML(diff, label = 'vs. Vorwoche') {
+            if (diff > 0) {
+                const diffText = diff >= 60 ? `+${Math.floor(diff / 60)}m ${diff % 60}s` : `+${diff}s`;
+                return `
+                    <span class="text-emerald-600 font-semibold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                        <span>${diffText} ${label}</span>
+                    </span>
+                `;
+            } else if (diff < 0) {
+                const absDiff = Math.abs(diff);
+                const diffText = absDiff >= 60 ? `-${Math.floor(absDiff / 60)}m ${absDiff % 60}s` : `-${absDiff}s`;
+                return `
+                    <span class="text-rose-600 font-semibold flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/></svg>
+                        <span>${diffText} ${label}</span>
+                    </span>
+                `;
+            } else {
+                return `<span class="text-slate-400 font-medium flex items-center gap-1">→ ±0s ${label}</span>`;
+            }
+        }
+
         // --- Statistiken berechnen & anzeigen ---
         function renderStats() {
             const todayStr = getLocalDateStr();
             const todayEntry = records.find(r => r.date === todayStr);
             const sortedRecords = [...records].sort((a, b) => b.date.localeCompare(a.date));
+            const prevEntry = sortedRecords.find(r => r.date < todayStr);
 
             // 1. Heute
             if (todayEntry) {
                 document.getElementById('stat-today').textContent = formatSecToMinSec(todayEntry.totalSeconds);
                 
-                // Vergleich mit dem vorherigen erfassten Tag
-                const prevEntry = sortedRecords.find(r => r.date < todayStr);
                 if (prevEntry) {
                     const diffToday = todayEntry.totalSeconds - prevEntry.totalSeconds;
-                    let diffHtml = '';
-                    if (diffToday > 0) {
-                        const diffTxt = diffToday >= 60 ? `+${Math.floor(diffToday/60)}m ${diffToday%60}s` : `+${diffToday}s`;
-                        diffHtml = `<span class="text-emerald-600 font-semibold flex items-center gap-0.5">▲ ${diffTxt} vs. Vortag</span>`;
-                    } else if (diffToday < 0) {
-                        const absDiff = Math.abs(diffToday);
-                        const diffTxt = absDiff >= 60 ? `-${Math.floor(absDiff/60)}m ${absDiff%60}s` : `-${absDiff}s`;
-                        diffHtml = `<span class="text-rose-600 font-semibold flex items-center gap-0.5">▼ ${diffTxt} vs. Vortag</span>`;
-                    } else {
-                        diffHtml = `<span class="text-slate-400 font-medium">±0s vs. Vortag</span>`;
-                    }
                     document.getElementById('stat-today-split').innerHTML = `
-                        <div>☀️ ${formatSecToMinSec(todayEntry.morningSeconds)} · 🌙 ${formatSecToMinSec(todayEntry.eveningSeconds)}</div>
-                        <div class="mt-0.5">${diffHtml}</div>
+                        <div>☀️ ${formatSecShort(todayEntry.morningSeconds)} · 🌙 ${formatSecShort(todayEntry.eveningSeconds)}</div>
+                        <div class="mt-0.5">${formatTrendHTML(diffToday, 'vs. Vortag')}</div>
                     `;
                 } else {
-                    document.getElementById('stat-today-split').textContent = `☀️ ${formatSecToMinSec(todayEntry.morningSeconds)} · 🌙 ${formatSecToMinSec(todayEntry.eveningSeconds)}`;
+                    document.getElementById('stat-today-split').textContent = `☀️ ${formatSecShort(todayEntry.morningSeconds)} · 🌙 ${formatSecShort(todayEntry.eveningSeconds)}`;
                 }
             } else {
                 document.getElementById('stat-today').textContent = '0m 00s';
                 document.getElementById('stat-today-split').textContent = '☀️ 0m · 🌙 0m';
             }
 
-            // 2. 7-Tage Schnitt (Durchschnitt der aktiven Tage)
+            // 2. 7-Tage Schnitt (Tagesgesamtzeit pro aktivem Tag)
             let last7Sec = 0;
             let last7DaysCount = 0;
             for (let i = 0; i < 7; i++) {
@@ -603,7 +617,6 @@
                 }
             }
 
-            // Durchschnitt pro erfasstem Tag in der aktuellen 7-Tage-Periode
             let avg7 = 0;
             if (last7DaysCount > 0) {
                 avg7 = Math.round(last7Sec / last7DaysCount);
@@ -640,35 +653,11 @@
             const trendEl = document.getElementById('stat-avg-trend');
             if (prevAvg7 > 0 && avg7 > 0) {
                 const diff = avg7 - prevAvg7;
-                if (diff > 0) {
-                    const diffText = diff >= 60 ? `+${Math.floor(diff/60)}m ${diff%60}s` : `+${diff}s`;
-                    trendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-emerald-600';
-                    trendEl.innerHTML = `
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M12 7a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 9.586 14.586 6H13a1 1 0 01-1-1z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>${diffText} vs. Vorwoche</span>
-                    `;
-                } else if (diff < 0) {
-                    const absDiff = Math.abs(diff);
-                    const diffText = absDiff >= 60 ? `-${Math.floor(absDiff/60)}m ${absDiff%60}s` : `-${absDiff}s`;
-                    trendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-rose-600';
-                    trendEl.innerHTML = `
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M12 13a1 1 0 101 1h4a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 10.414 14.586 14H13a1 1 0 00-1 1z" clip-rule="evenodd"/>
-                        </svg>
-                        <span>${diffText} vs. Vorwoche</span>
-                    `;
-                } else {
-                    trendEl.className = 'text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400';
-                    trendEl.innerHTML = `<span>→ ±0s vs. Vorwoche</span>`;
-                }
+                trendEl.innerHTML = formatTrendHTML(diff, 'vs. Vorwoche');
             } else if (avg7 > 0) {
                 trendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-teal-600';
                 trendEl.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M12 7a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 9.586 14.586 6H13a1 1 0 01-1-1z" clip-rule="evenodd"/>
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
                     <span>Ø pro Tag</span>
                 `;
             } else {
@@ -676,10 +665,88 @@
                 trendEl.innerHTML = `<span>pro Tag</span>`;
             }
 
-            // Gesamtzeit
+            // 3. Gesamtzeit
             const totalAllSec = records.reduce((acc, r) => acc + (r.totalSeconds || 0), 0);
             document.getElementById('stat-total').textContent = formatSecToMinSec(totalAllSec);
-            document.getElementById('stat-days-count').textContent = `${records.length} Tag${records.length === 1 ? '' : 'e'}`;
+            const totalSub = document.getElementById('stat-total-sub');
+            if (totalSub) {
+                totalSub.textContent = `${records.length} Tag${records.length === 1 ? '' : 'e'} erfasst`;
+            }
+
+            // 4. Gehzeit am Stück (Nur Einzelsessions: Morgens oder Abends einzeln)
+            const todayMaxSingle = todayEntry ? Math.max(todayEntry.morningSeconds || 0, todayEntry.eveningSeconds || 0) : 0;
+            const prevMaxSingle = prevEntry ? Math.max(prevEntry.morningSeconds || 0, prevEntry.eveningSeconds || 0) : 0;
+
+            const last7Singles = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const ds = getLocalDateStr(d);
+                const entry = records.find(r => r.date === ds);
+                if (entry) {
+                    if (entry.morningSeconds > 0) last7Singles.push(entry.morningSeconds);
+                    if (entry.eveningSeconds > 0) last7Singles.push(entry.eveningSeconds);
+                }
+            }
+            if (last7Singles.length === 0 && sortedRecords.length > 0) {
+                sortedRecords.slice(0, 7).forEach(r => {
+                    if (r.morningSeconds > 0) last7Singles.push(r.morningSeconds);
+                    if (r.eveningSeconds > 0) last7Singles.push(r.eveningSeconds);
+                });
+            }
+
+            const prev7Singles = [];
+            for (let i = 7; i < 14; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const ds = getLocalDateStr(d);
+                const entry = records.find(r => r.date === ds);
+                if (entry) {
+                    if (entry.morningSeconds > 0) prev7Singles.push(entry.morningSeconds);
+                    if (entry.eveningSeconds > 0) prev7Singles.push(entry.eveningSeconds);
+                }
+            }
+            if (prev7Singles.length === 0 && sortedRecords.length > 7) {
+                sortedRecords.slice(7, 14).forEach(r => {
+                    if (r.morningSeconds > 0) prev7Singles.push(r.morningSeconds);
+                    if (r.eveningSeconds > 0) prev7Singles.push(r.eveningSeconds);
+                });
+            }
+
+            const avgSingle7 = last7Singles.length > 0 ? Math.round(last7Singles.reduce((a, b) => a + b, 0) / last7Singles.length) : 0;
+            const prevAvgSingle7 = prev7Singles.length > 0 ? Math.round(prev7Singles.reduce((a, b) => a + b, 0) / prev7Singles.length) : 0;
+
+            const singleValueEl = document.getElementById('stat-single');
+            const singleTrendEl = document.getElementById('stat-single-trend');
+
+            if (todayMaxSingle > 0) {
+                singleValueEl.textContent = formatSecToMinSec(todayMaxSingle);
+                if (prevMaxSingle > 0) {
+                    singleTrendEl.innerHTML = formatTrendHTML(todayMaxSingle - prevMaxSingle, 'vs. Vortag');
+                } else if (prevAvgSingle7 > 0) {
+                    singleTrendEl.innerHTML = formatTrendHTML(todayMaxSingle - prevAvgSingle7, 'vs. Vorwoche');
+                } else {
+                    singleTrendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-teal-600';
+                    singleTrendEl.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                        <span>Heute (am Stück)</span>
+                    `;
+                }
+            } else {
+                singleValueEl.textContent = formatSecToMinSec(avgSingle7);
+                if (prevAvgSingle7 > 0 && avgSingle7 > 0) {
+                    singleTrendEl.innerHTML = formatTrendHTML(avgSingle7 - prevAvgSingle7, 'vs. Vorwoche');
+                } else if (avgSingle7 > 0) {
+                    singleTrendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-teal-600';
+                    singleTrendEl.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                        <span>Ø Einzelsession</span>
+                    `;
+                } else {
+                    singleTrendEl.className = 'text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400';
+                    singleTrendEl.innerHTML = `<span>Einzelsession</span>`;
+                }
+            }
         }
 
         // --- Verlaufsliste rendern (Kompakt & Übersichtlich) ---
