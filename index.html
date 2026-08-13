@@ -410,61 +410,63 @@
                 <!-- Subtiler Zen-Lichtschleier -->
                 <div class="absolute inset-0 bg-radial from-transparent via-white/10 to-emerald-900/[0.02] pointer-events-none"></div>
 
-                <!-- Header / Back & Audio Toggle -->
-                <div class="flex items-center justify-between mb-6 relative z-10">
-                    <button type="button" onclick="switchView('dashboard')" class="px-3.5 py-1.5 bg-white/80 hover:bg-white text-slate-700 text-xs font-semibold rounded-xl transition border border-emerald-100 shadow-2xs flex items-center gap-1.5 active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                        <span>Dashboard</span>
-                    </button>
-                    
-                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/70 border border-emerald-200/80 text-emerald-900 text-xs font-bold tracking-wide">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Zen Stoppuhr</span>
-                    </div>
-
-                    <div class="flex items-center gap-1.5">
-                        <button type="button" id="btn-sw-sound" onclick="toggleStopwatchSound()" class="px-2.5 py-1.5 text-emerald-800 hover:text-emerald-950 bg-white/80 hover:bg-white border border-emerald-200/70 rounded-xl text-xs font-semibold transition flex items-center gap-1 shadow-2xs" title="Minuten-Ping Signal an/aus">
-                            <span id="sw-sound-icon">🔔</span>
-                            <span id="sw-sound-text" class="hidden sm:inline">Ping an</span>
-                        </button>
-                        <button type="button" onclick="resetStopwatch()" title="Zurücksetzen" class="px-2.5 py-1.5 text-slate-400 hover:text-rose-600 hover:bg-white/80 rounded-xl text-xs font-semibold transition border border-transparent hover:border-slate-200">
-                            Reset
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Session Selection (1. Gehen vs. 2. Gehen) -->
-                <div class="mb-6 relative z-10">
-                    <div class="text-xs font-medium text-emerald-900/70 mb-2">Einheit für heute auswählen:</div>
-                    <div class="grid grid-cols-2 gap-2.5 max-w-sm mx-auto p-1 bg-emerald-900/5 rounded-2xl border border-emerald-200/50 backdrop-blur-xs">
-                        <button type="button" id="sw-target-morning" onclick="setStopwatchTarget('morning')" class="py-2 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 bg-white text-slate-900 shadow-2xs border border-emerald-100">
+                <!-- Einheit-Auswahl (1. Gehen vs. 2. Gehen) mit viel Raum -->
+                <div class="mb-5 relative z-10">
+                    <div class="text-xs font-semibold text-emerald-900/70 mb-2.5">Für welche Einheit stoppst du?</div>
+                    <div class="grid grid-cols-2 gap-3 max-w-sm mx-auto p-1.5 bg-emerald-900/5 rounded-2xl border border-emerald-200/60 backdrop-blur-xs">
+                        <button type="button" id="sw-target-morning" onclick="setStopwatchTarget('morning')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 bg-white text-slate-900 shadow-2xs border border-emerald-100">
                             <span class="text-amber-900 font-extrabold text-sm">1. Gehen</span>
                             <span class="text-[10px] text-slate-400 font-medium" id="sw-morning-preview">Heute: 0m 00s</span>
                         </button>
-                        <button type="button" id="sw-target-evening" onclick="setStopwatchTarget('evening')" class="py-2 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-900">
+                        <button type="button" id="sw-target-evening" onclick="setStopwatchTarget('evening')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-900">
                             <span class="text-indigo-900 font-extrabold text-sm">2. Gehen</span>
                             <span class="text-[10px] text-slate-400 font-medium" id="sw-evening-preview">Heute: 0m 00s</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Big Timer Display mit atmender Aura -->
-                <div class="my-6 relative z-10">
-                    <div class="relative inline-flex flex-col items-center justify-center p-7 sm:p-9 bg-white/85 backdrop-blur-md border border-emerald-100/80 rounded-[2.5rem] w-full max-w-md mx-auto shadow-xl shadow-emerald-950/5">
+                <!-- Zeitfenster mit atmender Aura & integrierten Kreis-Buttons (Reset links, Ton rechts) -->
+                <div class="my-5 relative z-10">
+                    <div class="relative flex flex-col items-center justify-center p-6 sm:p-8 bg-white/90 backdrop-blur-md border border-emerald-100/90 rounded-[2.5rem] w-full max-w-md mx-auto shadow-xl shadow-emerald-950/5">
                         
                         <!-- Atmender Glow Halo -->
                         <div class="absolute -inset-1.5 bg-gradient-to-r from-emerald-400/20 via-teal-300/30 to-emerald-400/20 rounded-[2.75rem] blur-md animate-zen-breath pointer-events-none"></div>
 
-                        <div id="sw-status-badge" class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/60 mb-3 relative z-10">
-                            Bereit zum Gehen
+                        <!-- Obere Leiste im Zeitfenster -->
+                        <div class="w-full flex items-center justify-between mb-2 relative z-10">
+                            <!-- Reset Kreispfeil Button links oben -->
+                            <button type="button" onclick="resetStopwatch()" title="Stoppuhr zurücksetzen" class="w-9 h-9 rounded-full bg-slate-100/80 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition border border-slate-200/60 hover:border-rose-200 shadow-2xs active:scale-90">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </button>
+
+                            <!-- Status Badge mittig -->
+                            <div id="sw-status-badge" class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200/70">
+                                Bereit zum Gehen
+                            </div>
+
+                            <!-- Ton An/Aus Button (SVG Lautsprecher rechts oben) -->
+                            <button type="button" id="btn-sw-sound" onclick="toggleStopwatchSound()" title="Signal-Ton (30s: 1×, 1m: 2×) an/aus" class="w-9 h-9 rounded-full bg-emerald-50/90 hover:bg-emerald-100 text-emerald-800 flex items-center justify-center transition border border-emerald-200/70 shadow-2xs active:scale-90">
+                                <!-- Sound An Icon -->
+                                <svg id="sw-sound-icon-on" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                </svg>
+                                <!-- Sound Aus Icon -->
+                                <svg id="sw-sound-icon-off" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                                </svg>
+                            </button>
                         </div>
                         
-                        <div id="sw-display" class="font-mono text-5xl sm:text-6xl font-black text-emerald-950 tracking-tight leading-none drop-shadow-xs relative z-10">
+                        <!-- Digitale Ziffern -->
+                        <div id="sw-display" class="font-mono text-5xl sm:text-6xl font-black text-emerald-950 tracking-tight leading-none drop-shadow-xs my-2 relative z-10">
                             00:00<span class="text-2xl sm:text-3xl text-emerald-600/60 font-bold">.0</span>
                         </div>
                         
-                        <div class="text-xs text-emerald-800/80 font-medium mt-3.5 max-w-xs mx-auto leading-relaxed relative z-10" id="sw-motivation-hint">
-                            Tippe auf Start – finde deinen ruhigen, gleichmäßigen Rhythmus
+                        <div class="text-xs text-emerald-800/80 font-medium mt-2 max-w-xs mx-auto leading-relaxed relative z-10" id="sw-motivation-hint">
+                            Tippe auf Start – finde deinen ruhigen Rhythmus
                         </div>
                     </div>
                 </div>
@@ -1876,18 +1878,24 @@
 
         window.toggleStopwatchSound = function() {
             stopwatchSoundEnabled = !stopwatchSoundEnabled;
-            const icon = document.getElementById('sw-sound-icon');
-            const text = document.getElementById('sw-sound-text');
+            const iconOn = document.getElementById('sw-sound-icon-on');
+            const iconOff = document.getElementById('sw-sound-icon-off');
             const btn = document.getElementById('btn-sw-sound');
             if (stopwatchSoundEnabled) {
-                if (icon) icon.textContent = '🔔';
-                if (text) text.textContent = 'Ping an';
-                if (btn) btn.className = 'px-2.5 py-1.5 text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200/60 rounded-xl text-xs font-semibold transition flex items-center gap-1';
-                playPing(1); // Test-Ping
+                iconOn?.classList.remove('hidden');
+                iconOff?.classList.add('hidden');
+                if (btn) {
+                    btn.className = 'w-9 h-9 rounded-full bg-emerald-50/90 hover:bg-emerald-100 text-emerald-800 flex items-center justify-center transition border border-emerald-200/70 shadow-2xs active:scale-90';
+                    btn.title = 'Signal-Ton an (30s: 1×, 1m: 2×)';
+                }
+                playPing(1); // Kurzer Bestätigungs-Ping
             } else {
-                if (icon) icon.textContent = '🔕';
-                if (text) text.textContent = 'Ping aus';
-                if (btn) btn.className = 'px-2.5 py-1.5 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-xl text-xs font-semibold transition flex items-center gap-1';
+                iconOn?.classList.add('hidden');
+                iconOff?.classList.remove('hidden');
+                if (btn) {
+                    btn.className = 'w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 flex items-center justify-center transition border border-slate-200/60 shadow-2xs active:scale-90';
+                    btn.title = 'Signal-Ton stummgeschaltet';
+                }
             }
         };
 
