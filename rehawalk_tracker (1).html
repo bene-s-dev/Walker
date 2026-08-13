@@ -128,7 +128,7 @@
             <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80">
                 <div class="text-slate-500 text-xs font-medium">Heute</div>
                 <div id="stat-today" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                <div class="text-[11px] text-teal-600 font-medium mt-0.5" id="stat-today-split">☀️ 0m · 🌙 0m</div>
+                <div class="text-[11px] text-teal-600 font-medium mt-0.5" id="stat-today-split">1. 🚶 0m · 2. 🚶 0m</div>
             </div>
             <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80">
                 <div class="text-slate-500 text-xs font-medium">7-Tage Schnitt</div>
@@ -172,12 +172,12 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Morgens Box -->
+                    <!-- 1. Gehen Box -->
                     <div class="p-3.5 bg-amber-50/60 border border-amber-200/70 rounded-2xl">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-1.5 text-amber-900 font-bold text-sm">
-                                <span>☀️</span>
-                                <span>Morgens</span>
+                                <span>1. 🚶</span>
+                                <span>Gehen</span>
                             </div>
                             <span class="text-xs font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md" id="morning-total-display">0:00 min</span>
                         </div>
@@ -203,12 +203,12 @@
                         </div>
                     </div>
 
-                    <!-- Abends Box -->
+                    <!-- 2. Gehen Box -->
                     <div class="p-3.5 bg-indigo-50/60 border border-indigo-200/70 rounded-2xl">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-1.5 text-indigo-900 font-bold text-sm">
-                                <span>🌙</span>
-                                <span>Abends</span>
+                                <span>2. 🚶</span>
+                                <span>Gehen</span>
                             </div>
                             <span class="text-xs font-semibold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md" id="evening-total-display">0:00 min</span>
                         </div>
@@ -279,11 +279,11 @@
             <div class="flex items-center justify-center gap-6 mt-3 text-xs font-medium text-slate-600">
                 <div class="flex items-center gap-1.5">
                     <span class="w-3 h-3 rounded-md bg-amber-400 inline-block"></span>
-                    <span>Morgens</span>
+                    <span>1. 🚶 Gehen</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <span class="w-3 h-3 rounded-md bg-indigo-500 inline-block"></span>
-                    <span>Abends</span>
+                    <span>2. 🚶 Gehen</span>
                 </div>
                 <div class="flex items-center gap-1.5">
                     <span class="w-3 h-1 rounded bg-teal-600 inline-block"></span>
@@ -486,7 +486,7 @@
             const totalSeconds = morningSeconds + eveningSeconds;
 
             if (totalSeconds === 0) {
-                alert('Bitte trage für mindestens eine Tageszeit (Morgens oder Abends) eine Gehzeit ein.');
+                alert('Bitte trage für mindestens eine Einheit (1. oder 2. Gehen) eine Gehzeit ein.');
                 return;
             }
 
@@ -592,15 +592,15 @@
                 if (prevEntry) {
                     const diffToday = todayEntry.totalSeconds - prevEntry.totalSeconds;
                     document.getElementById('stat-today-split').innerHTML = `
-                        <div>☀️ ${formatSecShort(todayEntry.morningSeconds)} · 🌙 ${formatSecShort(todayEntry.eveningSeconds)}</div>
+                        <div>1. 🚶 ${formatSecShort(todayEntry.morningSeconds)} · 2. 🚶 ${formatSecShort(todayEntry.eveningSeconds)}</div>
                         <div class="mt-0.5">${formatTrendHTML(diffToday, 'vs. Vortag')}</div>
                     `;
                 } else {
-                    document.getElementById('stat-today-split').textContent = `☀️ ${formatSecShort(todayEntry.morningSeconds)} · 🌙 ${formatSecShort(todayEntry.eveningSeconds)}`;
+                    document.getElementById('stat-today-split').textContent = `1. 🚶 ${formatSecShort(todayEntry.morningSeconds)} · 2. 🚶 ${formatSecShort(todayEntry.eveningSeconds)}`;
                 }
             } else {
                 document.getElementById('stat-today').textContent = '0m 00s';
-                document.getElementById('stat-today-split').textContent = '☀️ 0m · 🌙 0m';
+                document.getElementById('stat-today-split').textContent = '1. 🚶 0m · 2. 🚶 0m';
             }
 
             // 2. 7-Tage Schnitt (Tagesgesamtzeit pro aktivem Tag)
@@ -790,13 +790,13 @@
                         ${isToday ? '<span class="px-1.5 py-0.5 bg-teal-100 text-teal-800 text-[10px] font-bold rounded">Heute</span>' : (isYesterday ? '<span class="px-1.5 py-0.5 bg-slate-200/80 text-slate-600 text-[10px] font-medium rounded">Gestern</span>' : '')}
                     </div>
 
-                    <!-- Morgens & Abends Badges -->
+                    <!-- 1. & 2. Gehen Badges -->
                     <div class="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-xs">
                         <span class="inline-flex items-center gap-1 font-medium bg-amber-50 text-amber-900 px-1.5 sm:px-2 py-0.5 rounded-md border border-amber-200/50 whitespace-nowrap">
-                            <span>☀️</span> <span>${morningFormatted}</span>
+                            <span>1. 🚶</span> <span>${morningFormatted}</span>
                         </span>
                         <span class="inline-flex items-center gap-1 font-medium bg-indigo-50 text-indigo-900 px-1.5 sm:px-2 py-0.5 rounded-md border border-indigo-200/50 whitespace-nowrap">
-                            <span>🌙</span> <span>${eveningFormatted}</span>
+                            <span>2. 🚶</span> <span>${eveningFormatted}</span>
                         </span>
                     </div>
 
@@ -883,7 +883,7 @@
                         },
                         {
                             type: 'bar',
-                            label: '☀️ Morgens (min)',
+                            label: '1. 🚶 Gehen (min)',
                             data: morningMinutes,
                             backgroundColor: 'rgba(251, 191, 36, 0.85)',
                             borderColor: '#f59e0b',
@@ -894,7 +894,7 @@
                         },
                         {
                             type: 'bar',
-                            label: '🌙 Abends (min)',
+                            label: '2. 🚶 Gehen (min)',
                             data: eveningMinutes,
                             backgroundColor: 'rgba(99, 102, 241, 0.85)',
                             borderColor: '#6366f1',
