@@ -1370,6 +1370,7 @@
         function closeInsightModal() {
             const modal = document.getElementById('insight-modal');
             if (modal) modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
             if (specialChartInstance) {
                 specialChartInstance.destroy();
                 specialChartInstance = null;
@@ -1385,6 +1386,7 @@
 
             activeInsightMode = type;
             modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
 
             // Footer Tabs hervorheben
             const tabs = ['today', 'avg', 'total', 'single'];
