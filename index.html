@@ -457,7 +457,7 @@
             <!-- Visualisierung / Charts -->
             <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <div class="flex flex-wrap items-center gap-2.5">
+                    <div>
                         <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
                             <svg class="text-teal-600 w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
@@ -466,20 +466,11 @@
                             </svg>
                             <span>Laufzeit-Visualisierung</span>
                         </h2>
-                        <button type="button" onclick="openMedicalForecastModal()"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-teal-900 bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 hover:from-teal-100 hover:to-emerald-100 border border-teal-200/90 shadow-2xs hover:shadow-xs transition active:scale-95 cursor-pointer">
-                            <svg class="w-3.5 h-3.5 text-teal-600" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                            <span>Prognose</span>
-                        </button>
                     </div>
 
                     <!-- Range Selector Buttons -->
                     <div
-                        class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600 self-start sm:self-auto">
+                        class="flex flex-wrap bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600 self-start sm:self-auto gap-0.5">
                         <button type="button"
                             class="range-btn px-2.5 py-1 rounded-lg transition bg-white text-slate-900 shadow-xs"
                             data-range="7">7 Tage</button>
@@ -492,6 +483,12 @@
                         <button type="button"
                             class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
                             data-range="all">Alle</button>
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition text-teal-700 hover:text-teal-900 font-bold"
+                            data-range="prognose">Prognose (7T)</button>
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition text-teal-700 hover:text-teal-900 font-bold"
+                            data-range="prognose60">Prognose 60T</button>
                     </div>
                 </div>
 
@@ -516,7 +513,7 @@
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="w-4 h-0 border-t-2 border-dashed border-teal-600 inline-block"></span>
-                        <span>Trend (aktive Tage)</span>
+                        <span>Trend</span>
                     </div>
                 </div>
             </section>
@@ -799,167 +796,6 @@
         </div>
     </div>
 
-    <!-- Prognose & Medizinische Einschätzung Modal -->
-    <div id="medical-forecast-modal"
-        class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
-        onclick="closeMedicalForecastModal()">
-        <div class="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[94vh] transition-all my-auto"
-            onclick="event.stopPropagation()">
-
-            <!-- Modal Header -->
-            <div
-                class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-teal-50/90 via-emerald-50/70 to-teal-50/90">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center text-lg shadow-sm">
-                        🩺
-                    </div>
-                    <div>
-                        <h3 class="font-extrabold text-slate-900 text-base leading-tight">Prognose & Medizinische Analyse</h3>
-                        <p class="text-xs text-slate-500 font-medium mt-0.5">Postvirale Dysfunktion / Kreislaufaufbau nach 7 Monaten Liegen</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeMedicalForecastModal()"
-                    class="w-8 h-8 rounded-full bg-white/80 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition focus:outline-none shadow-2xs"
-                    title="Schließen">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Modal Body (Scrollable) -->
-            <div class="p-5 space-y-4 overflow-y-auto">
-
-                <!-- Status & Datenbasis Badge -->
-                <div class="p-3.5 bg-teal-50/80 border border-teal-200/70 rounded-2xl flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-xl bg-teal-600/10 text-teal-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                        ⚡
-                    </div>
-                    <div class="text-xs text-teal-950 leading-relaxed">
-                        <div class="font-bold text-teal-900" id="m-fc-summary-title">Datengestützte Analyse deiner Gehzeiten</div>
-                        <div class="text-teal-800/90 mt-0.5" id="m-fc-summary-desc">Berechnung basiert ausschließlich auf deinen aktiven Gehtagen. Ruhetage schützen dein autonomes Nervensystem und verfälschen die Reha-Kurve nicht.</div>
-                    </div>
-                </div>
-
-                <!-- 4 KPI Badges -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    <div class="p-3 bg-slate-50/90 rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-slate-500">Aktuelle Baseline</div>
-                        <div class="text-base font-extrabold text-slate-900 mt-0.5" id="m-fc-kpi-baseline">0m 00s</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5" id="m-fc-kpi-baseline-sub">Ø aktive Tage</div>
-                    </div>
-                    <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/70 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-emerald-800">Trend-Dynamik</div>
-                        <div class="text-base font-extrabold text-emerald-950 mt-0.5" id="m-fc-kpi-trend">+0s / Woche</div>
-                        <div class="text-[10px] text-emerald-700 mt-0.5" id="m-fc-kpi-trend-sub">Reha-Steigung</div>
-                    </div>
-                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/70 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-amber-800">Erholungs-Faktor</div>
-                        <div class="text-base font-extrabold text-amber-950 mt-0.5" id="m-fc-kpi-recovery">0%</div>
-                        <div class="text-[10px] text-amber-700 mt-0.5" id="m-fc-kpi-recovery-sub">Pausentage</div>
-                    </div>
-                    <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/70 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-indigo-800">1. vs. 2. Gehen</div>
-                        <div class="text-base font-extrabold text-indigo-950 mt-0.5" id="m-fc-kpi-split">50% · 50%</div>
-                        <div class="text-[10px] text-indigo-700 mt-0.5" id="m-fc-kpi-split-sub">Orthostase-Split</div>
-                    </div>
-                </div>
-
-                <!-- Interaktive Reha-Prognose (Chart) -->
-                <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-900">Prognose-Rechner für Kreislaufaufbau</h4>
-                            <p class="text-[11px] text-slate-500">Projizierter Gehzeit-Korridor bei nachhaltigem Pacing</p>
-                        </div>
-                        <div class="flex items-center gap-1.5 self-start sm:self-auto">
-                            <button type="button" onclick="setMedicalForecastMode('conservative')" id="m-btn-mode-cons"
-                                class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-teal-600 text-white shadow-2xs">Konservativ (Empfohlen)</button>
-                            <button type="button" onclick="setMedicalForecastMode('moderate')" id="m-btn-mode-mod"
-                                class="px-2.5 py-1 rounded-lg text-xs font-medium transition bg-slate-100 text-slate-600 hover:text-slate-900">Moderat (+10%/Woche)</button>
-                        </div>
-                    </div>
-
-                    <!-- Prognose Chart Canvas -->
-                    <div class="relative h-52 sm:h-60 w-full">
-                        <canvas id="medicalForecastChart"></canvas>
-                    </div>
-
-                    <!-- Prognose Meilensteine -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-slate-100 text-center">
-                        <div class="p-2 bg-slate-50 rounded-xl">
-                            <div class="text-[10px] font-semibold text-slate-400 uppercase">In 2 Wochen</div>
-                            <div class="text-xs font-extrabold text-slate-800 mt-0.5" id="m-fc-target-2w">--</div>
-                            <div class="text-[9px] text-slate-500 font-medium" id="m-fc-split-2w">--</div>
-                        </div>
-                        <div class="p-2 bg-slate-50 rounded-xl">
-                            <div class="text-[10px] font-semibold text-slate-400 uppercase">In 4 Wochen</div>
-                            <div class="text-xs font-extrabold text-slate-800 mt-0.5" id="m-fc-target-4w">--</div>
-                            <div class="text-[9px] text-slate-500 font-medium" id="m-fc-split-4w">--</div>
-                        </div>
-                        <div class="p-2 bg-teal-50/70 border border-teal-200/50 rounded-xl">
-                            <div class="text-[10px] font-semibold text-teal-700 uppercase">In 8 Wochen</div>
-                            <div class="text-xs font-extrabold text-teal-900 mt-0.5" id="m-fc-target-8w">--</div>
-                            <div class="text-[9px] text-teal-700 font-medium" id="m-fc-split-8w">--</div>
-                        </div>
-                        <div class="p-2 bg-indigo-50/70 border border-indigo-200/50 rounded-xl">
-                            <div class="text-[10px] font-semibold text-indigo-700 uppercase">In 12 Wochen</div>
-                            <div class="text-xs font-extrabold text-indigo-900 mt-0.5" id="m-fc-target-12w">--</div>
-                            <div class="text-[9px] text-indigo-700 font-medium" id="m-fc-split-12w">--</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Medizinische Fach-Einordnung (3 Cards) -->
-                <div class="space-y-3">
-
-                    <!-- 1. Kreislauf-Physiologie nach 7 Monaten Liegen -->
-                    <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/80">
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <span class="text-base">🫀</span>
-                            <h4 class="text-xs font-bold text-slate-900">Physiologie nach 7 Monaten Liegen (Deconditioning & Orthostase)</h4>
-                        </div>
-                        <p class="text-xs text-slate-600 leading-relaxed">
-                            Nach 7 Monaten im Liegen (analog zu Astronauten in Schwerelosigkeit) verliert der Organismus typischerweise etwa <strong>10–20% des zirkulierenden Blutvolumens</strong>. Beim Aufstehen versackt das Blut durch die Schwerkraft rasch in den Bein- und Bauchvenen (<em>Venous Pooling</em>), weil die Barorezeptoren und der venöse Gefäßtonus deconditioniert sind.
-                        </p>
-                        <p class="text-xs text-slate-600 leading-relaxed mt-2">
-                            <strong>Jede einzelne Minute im Stehen/Gehen</strong> setzt einen unverzichtbaren biomechanischen und hormonellen Impuls: Sie aktiviert das Renin-Aldosteron-System zum stetigen Wiederaufbau des Plasmavolumens und bahnt die Baroreflexe für stabilen Blutdruck.
-                        </p>
-                    </div>
-
-                    <!-- 2. Postvirale Dysfunktion & Pacing (Warum Ruhetage heilen) -->
-                    <div class="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200/70">
-                        <div class="flex items-center gap-2 mb-1.5">
-                            <span class="text-base">🛡️</span>
-                            <h4 class="text-xs font-bold text-emerald-950">Postvirale Dysfunktion & Pacing: Warum 0-Tage heilen</h4>
-                        </div>
-                        <p class="text-xs text-emerald-900/90 leading-relaxed">
-                            Bei postviraler vegetativer Dysregulation (z.&thinsp;B. POTS oder Dysautonomie) ist das vegetative Nervensystem hochsensibel. <strong>Tage ohne Gehzeit (0 Minuten) sind keine Rückschritte, sondern lebenswichtige Erholungsfenster</strong>, in denen sich das autonome Nervensystem kalibriert und vor <em>Post-Exertional Malaise</em> (PEM) geschützt wird.
-                        </p>
-                        <p class="text-xs text-emerald-900/90 leading-relaxed mt-2">
-                            <strong>Vorteil der 2 Einheiten (1. & 2. Gehen):</strong> Durch die Aufteilung halbierst du die orthostatische Spitzenlast pro Gang und trainierst den Kreislauf doppelt so häufig am Tag, ohne das Nervensystem zu überreizen.
-                        </p>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/80 flex items-center justify-between">
-                <div class="text-[11px] text-slate-500 font-medium">
-                    🩺 Konsistenz & Pacing schlagen Spitzenbelastung
-                </div>
-                <button type="button" onclick="closeMedicalForecastModal()"
-                    class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl transition shadow-xs">
-                    Schließen
-                </button>
-            </div>
-
-        </div>
-    </div>
-
     <script>
         // --- State & LocalStorage ---
         const STORAGE_KEY = 'beneWalker_records_v1';
@@ -1192,7 +1028,11 @@
                 btn.classList.remove('text-slate-500');
 
                 const val = btn.getAttribute('data-range');
-                selectedRange = val === 'all' ? 'all' : parseInt(val);
+                if (val === 'all' || val === 'prognose' || val === 'prognose60') {
+                    selectedRange = val;
+                } else {
+                    selectedRange = parseInt(val);
+                }
                 renderChart();
             });
         });
@@ -1468,7 +1308,64 @@
 
             let filtered = [];
             if (selectedRange === 'all') {
-                filtered = sorted.length > 0 ? sorted : [];
+                filtered = sorted.length > 0 ? sorted.map(r => ({ ...r, isForecast: false })) : [];
+            } else if (selectedRange === 'prognose' || selectedRange === 'prognose60') {
+                // Prognose-Filter: 7 Tage bzw. 60 Tage Vorausberechnung basierend auf aktiven Daten
+                const futureDays = selectedRange === 'prognose60' ? 60 : 7;
+                const pastDays = selectedRange === 'prognose60' ? 14 : 7;
+
+                // 1. Vergangene Tage (Ist-Werte)
+                for (let i = pastDays - 1; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const ds = getLocalDateStr(d);
+                    const found = sorted.find(r => r.date === ds);
+                    if (found) {
+                        filtered.push({ ...found, isForecast: false });
+                    } else {
+                        filtered.push({
+                            date: ds,
+                            morningSeconds: 0,
+                            eveningSeconds: 0,
+                            totalSeconds: 0,
+                            isForecast: false
+                        });
+                    }
+                }
+
+                // 2. Baseline & Split aus den aktiven Tagen berechnen
+                const activeRecords = sorted.filter(r => (r.totalSeconds || 0) > 0);
+                let baselineSec = 0;
+                let morningShare = 0.5;
+                if (activeRecords.length > 0) {
+                    const recent = activeRecords.slice(-14);
+                    baselineSec = Math.round(recent.reduce((sum, r) => sum + r.totalSeconds, 0) / recent.length);
+                    const mSecTotal = recent.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
+                    const tSecTotal = recent.reduce((sum, r) => sum + (r.totalSeconds || 0), 0);
+                    if (tSecTotal > 0) morningShare = mSecTotal / tSecTotal;
+                } else {
+                    baselineSec = 180; // 3 Min Fallback
+                }
+
+                // Sanfte Pacing-Steigerung bei postviraler Dysfunktion (~6.5% pro Woche => täglicher Faktor)
+                const dailyRate = Math.pow(1 + 0.065, 1 / 7) - 1;
+
+                // 3. Kommende Tage als Prognose berechnen
+                for (let i = 1; i <= futureDays; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() + i);
+                    const ds = getLocalDateStr(d);
+                    const projectedTotal = Math.round(baselineSec * Math.pow(1 + dailyRate, i));
+                    const projectedMorning = Math.round(projectedTotal * morningShare);
+                    const projectedEvening = projectedTotal - projectedMorning;
+                    filtered.push({
+                        date: ds,
+                        morningSeconds: projectedMorning,
+                        eveningSeconds: projectedEvening,
+                        totalSeconds: projectedTotal,
+                        isForecast: true
+                    });
+                }
             } else {
                 const daysCount = selectedRange;
                 for (let i = daysCount - 1; i >= 0; i--) {
@@ -1477,13 +1374,14 @@
                     const ds = getLocalDateStr(d);
                     const found = sorted.find(r => r.date === ds);
                     if (found) {
-                        filtered.push(found);
+                        filtered.push({ ...found, isForecast: false });
                     } else {
                         filtered.push({
                             date: ds,
                             morningSeconds: 0,
                             eveningSeconds: 0,
-                            totalSeconds: 0
+                            totalSeconds: 0,
+                            isForecast: false
                         });
                     }
                 }
@@ -1494,7 +1392,8 @@
                 if (parts.length === 3) {
                     const dObj = new Date(parts[0], parts[1] - 1, parts[2]);
                     const weekday = dObj.toLocaleDateString('de-DE', { weekday: 'short' });
-                    return `${weekday}, ${parts[2]}.${parts[1]}.`;
+                    const forecastTag = r.isForecast ? ' (Prog.)' : '';
+                    return `${weekday}, ${parts[2]}.${parts[1]}.${forecastTag}`;
                 }
                 return r.date;
             });
@@ -1502,6 +1401,37 @@
             const morningMinutes = filtered.map(r => Number((r.morningSeconds / 60).toFixed(2)));
             const eveningMinutes = filtered.map(r => Number((r.eveningSeconds / 60).toFixed(2)));
             const totalMinutes = filtered.map(r => Number((r.totalSeconds / 60).toFixed(2)));
+
+            // Trendlinie berechnen (nur über Tage mit Gehzeit > 0, sodass Ruhetage den Reha-Verlauf nicht abwerten)
+            const activePoints = [];
+            filtered.forEach((r, idx) => {
+                if (r.totalSeconds > 0) {
+                    activePoints.push({ x: idx, y: r.totalSeconds / 60 });
+                }
+            });
+
+            let trendMinutes = new Array(filtered.length).fill(null);
+            if (activePoints.length === 1) {
+                const singleVal = Number(activePoints[0].y.toFixed(2));
+                trendMinutes = new Array(filtered.length).fill(singleVal);
+            } else if (activePoints.length > 1) {
+                const n = activePoints.length;
+                let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+                for (const pt of activePoints) {
+                    sumX += pt.x;
+                    sumY += pt.y;
+                    sumXY += pt.x * pt.y;
+                    sumXX += pt.x * pt.x;
+                }
+                const denom = (n * sumXX - sumX * sumX);
+                const slope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
+                const intercept = (sumY - slope * sumX) / n;
+
+                trendMinutes = filtered.map((_, idx) => {
+                    const val = slope * idx + intercept;
+                    return Number(Math.max(0, val).toFixed(2));
+                });
+            }
 
             if (chartInstance) {
                 chartInstance.destroy();
@@ -1518,30 +1448,44 @@
                             data: totalMinutes,
                             borderColor: '#0f766e',
                             backgroundColor: '#0f766e',
-                            borderWidth: 2.5,
-                            pointRadius: filtered.length > 20 ? 1 : 3,
+                            borderWidth: filtered.length > 50 ? 2 : 2.5,
+                            pointRadius: filtered.length > 40 ? 0 : (filtered.length > 20 ? 1 : 3),
                             pointHoverRadius: 5,
                             tension: 0.25,
                             order: 1
                         },
                         {
+                            type: 'line',
+                            label: 'Trend',
+                            data: trendMinutes,
+                            borderColor: '#0d9488',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [6, 4],
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            tension: 0,
+                            fill: false,
+                            order: 0
+                        },
+                        {
                             type: 'bar',
                             label: '1. Gehen (min)',
                             data: morningMinutes,
-                            backgroundColor: 'rgba(251, 191, 36, 0.85)',
+                            backgroundColor: filtered.map(r => r.isForecast ? 'rgba(251, 191, 36, 0.45)' : 'rgba(251, 191, 36, 0.85)'),
                             borderColor: '#f59e0b',
-                            borderWidth: 1,
-                            borderRadius: 4,
+                            borderWidth: filtered.length > 40 ? 0.5 : 1,
+                            borderRadius: filtered.length > 40 ? 2 : 4,
                             order: 2
                         },
                         {
                             type: 'bar',
                             label: '2. Gehen (min)',
                             data: eveningMinutes,
-                            backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                            backgroundColor: filtered.map(r => r.isForecast ? 'rgba(99, 102, 241, 0.45)' : 'rgba(99, 102, 241, 0.85)'),
                             borderColor: '#6366f1',
-                            borderWidth: 1,
-                            borderRadius: 4,
+                            borderWidth: filtered.length > 40 ? 0.5 : 1,
+                            borderRadius: filtered.length > 40 ? 2 : 4,
                             order: 3
                         }
                     ]
@@ -1570,7 +1514,9 @@
                                     const min = Math.floor(totalSec / 60);
                                     const sec = totalSec % 60;
                                     const formatted = `${min}m ${String(sec).padStart(2, '0')}s`;
-                                    return ` ${context.dataset.label}: ${formatted}`;
+                                    const item = filtered[context.dataIndex];
+                                    const progSuffix = (item && item.isForecast) ? ' (Prognose)' : '';
+                                    return ` ${context.dataset.label}: ${formatted}${progSuffix}`;
                                 }
                             }
                         }
@@ -1584,7 +1530,7 @@
                                 maxRotation: 45,
                                 minRotation: 0,
                                 autoSkip: true,
-                                maxTicksLimit: 10
+                                maxTicksLimit: 12
                             }
                         },
                         y: {
@@ -2213,277 +2159,8 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeInsightModal();
-                closeMedicalForecastModal();
             }
         });
-
-        // --- Reha-Prognose & Medizinische Einschätzung Modal ---
-        let medicalForecastChartInstance = null;
-        let medicalForecastMode = 'conservative'; // 'conservative' oder 'moderate'
-
-        function closeMedicalForecastModal() {
-            const modal = document.getElementById('medical-forecast-modal');
-            if (modal) modal.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-            if (medicalForecastChartInstance) {
-                medicalForecastChartInstance.destroy();
-                medicalForecastChartInstance = null;
-            }
-        }
-        window.closeMedicalForecastModal = closeMedicalForecastModal;
-
-        window.setMedicalForecastMode = function(mode) {
-            medicalForecastMode = mode;
-            const btnCons = document.getElementById('m-btn-mode-cons');
-            const btnMod = document.getElementById('m-btn-mode-mod');
-            if (mode === 'conservative') {
-                if (btnCons) btnCons.className = 'px-2.5 py-1 rounded-lg text-xs font-bold transition bg-teal-600 text-white shadow-2xs';
-                if (btnMod) btnMod.className = 'px-2.5 py-1 rounded-lg text-xs font-medium transition bg-slate-100 text-slate-600 hover:text-slate-900';
-            } else {
-                if (btnCons) btnCons.className = 'px-2.5 py-1 rounded-lg text-xs font-medium transition bg-slate-100 text-slate-600 hover:text-slate-900';
-                if (btnMod) btnMod.className = 'px-2.5 py-1 rounded-lg text-xs font-bold transition bg-teal-600 text-white shadow-2xs';
-            }
-            updateMedicalForecastUI();
-        };
-
-        window.openMedicalForecastModal = function() {
-            const modal = document.getElementById('medical-forecast-modal');
-            if (!modal) return;
-            modal.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-            updateMedicalForecastUI();
-        };
-
-        function updateMedicalForecastUI() {
-            const sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date));
-            const activeRecords = sortedRecords.filter(r => (r.totalSeconds || 0) > 0);
-
-            // 1. Berechne Baseline aus den aktiven Tagen (Ruhetage verfälschen nicht den Schnitt)
-            let baselineSec = 0;
-            if (activeRecords.length > 0) {
-                const recentActive = activeRecords.slice(-14);
-                baselineSec = Math.round(recentActive.reduce((sum, r) => sum + r.totalSeconds, 0) / recentActive.length);
-            } else {
-                baselineSec = 180; // 3 Min Fallback bei leeren Daten
-            }
-
-            // 2. Trend & Steigung über alle aktiven Reha-Tage
-            let trendSecPerWeek = 0;
-            if (activeRecords.length >= 2) {
-                const n = activeRecords.length;
-                let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-                activeRecords.forEach((r, idx) => {
-                    sumX += idx;
-                    sumY += r.totalSeconds;
-                    sumXY += idx * r.totalSeconds;
-                    sumXX += idx * idx;
-                });
-                const denom = (n * sumXX - sumX * sumX);
-                const slopePerEntry = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
-                trendSecPerWeek = Math.round(slopePerEntry * 5); // Bei ~5 aktiven Geh-Einheiten/Woche
-            }
-
-            // 3. Pausentage & Erholungs-Faktor
-            const totalDaysRecorded = sortedRecords.length;
-            const restDaysCount = sortedRecords.filter(r => (r.totalSeconds || 0) === 0).length;
-            const restRatio = totalDaysRecorded > 0 ? Math.round((restDaysCount / totalDaysRecorded) * 100) : 25;
-
-            // 4. Split Ratio (1. vs. 2. Gehen)
-            const totalMorningSec = activeRecords.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
-            const totalEveningSec = activeRecords.reduce((sum, r) => sum + (r.eveningSeconds || 0), 0);
-            const sumAllSec = totalMorningSec + totalEveningSec;
-            const morningRatio = sumAllSec > 0 ? Math.round((totalMorningSec / sumAllSec) * 100) : 50;
-            const eveningRatio = 100 - morningRatio;
-
-            // Update KPI Elements
-            const elBaseline = document.getElementById('m-fc-kpi-baseline');
-            const elTrend = document.getElementById('m-fc-kpi-trend');
-            const elRecovery = document.getElementById('m-fc-kpi-recovery');
-            const elSplit = document.getElementById('m-fc-kpi-split');
-
-            if (elBaseline) elBaseline.textContent = formatSecToMinSec(baselineSec);
-            if (elTrend) {
-                const prefix = trendSecPerWeek >= 0 ? '+' : '';
-                elTrend.textContent = `${prefix}${trendSecPerWeek}s / Wo`;
-                elTrend.className = `text-base font-extrabold mt-0.5 ${trendSecPerWeek >= 0 ? 'text-emerald-950' : 'text-amber-950'}`;
-            }
-            if (elRecovery) elRecovery.textContent = `${restRatio}% Schutz`;
-            if (elSplit) elSplit.textContent = `${morningRatio}% · ${eveningRatio}%`;
-
-            // Prognose-Steigerungsrate pro Woche
-            // Bei postviraler Dysfunktion nach 7 Monaten Liegen:
-            // Konservativ (Pacing-sicher): ~6.5% Steigerung pro Woche
-            // Moderat: ~10.5% Steigerung pro Woche
-            const weeklyRate = medicalForecastMode === 'conservative' ? 0.065 : 0.105;
-
-            const calcFutureSec = (weeks) => {
-                return Math.round(baselineSec * Math.pow(1 + weeklyRate, weeks));
-            };
-
-            const sec2w = calcFutureSec(2);
-            const sec4w = calcFutureSec(4);
-            const sec8w = calcFutureSec(8);
-            const sec12w = calcFutureSec(12);
-
-            const mRatio = morningRatio / 100;
-            const eRatio = eveningRatio / 100;
-
-            const setMilestone = (wId, sec) => {
-                const targetEl = document.getElementById(`m-fc-target-${wId}`);
-                const splitEl = document.getElementById(`m-fc-split-${wId}`);
-                if (targetEl) targetEl.textContent = formatSecToMinSec(sec);
-                if (splitEl) {
-                    const mSec = Math.round(sec * mRatio);
-                    const eSec = Math.round(sec * eRatio);
-                    splitEl.textContent = `1.: ${formatSecShort(mSec)} · 2.: ${formatSecShort(eSec)}`;
-                }
-            };
-
-            setMilestone('2w', sec2w);
-            setMilestone('4w', sec4w);
-            setMilestone('8w', sec8w);
-            setMilestone('12w', sec12w);
-
-            // Chart vorbereiten & rendern
-            if (medicalForecastChartInstance) {
-                medicalForecastChartInstance.destroy();
-                medicalForecastChartInstance = null;
-            }
-
-            const canvas = document.getElementById('medicalForecastChart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-
-            const chartLabels = [];
-            const historicData = [];
-            const forecastConsData = [];
-            const forecastModData = [];
-
-            // Historische Messpunkte (bis zu 5 jüngste aktive Tage)
-            const histPointsCount = Math.min(activeRecords.length, 5);
-            for (let i = 0; i < histPointsCount; i++) {
-                const rec = activeRecords[activeRecords.length - histPointsCount + i];
-                const parts = rec.date.split('-');
-                chartLabels.push(`${parts[2]}.${parts[1]}. (Ist)`);
-                historicData.push(Number((rec.totalSeconds / 60).toFixed(2)));
-                forecastConsData.push(null);
-                forecastModData.push(null);
-            }
-
-            // Startpunkt der Prognose
-            chartLabels.push('Heute (Baseline)');
-            const baseMin = Number((baselineSec / 60).toFixed(2));
-            historicData.push(baseMin);
-            forecastConsData.push(baseMin);
-            forecastModData.push(baseMin);
-
-            // Zukunfts-Projektionspunkte: Woche +2, +4, +6, +8, +10, +12
-            const futureWeeksArr = [2, 4, 6, 8, 10, 12];
-            futureWeeksArr.forEach(w => {
-                chartLabels.push(`Woche +${w}`);
-                historicData.push(null);
-                const valCons = Number(((baselineSec * Math.pow(1 + 0.065, w)) / 60).toFixed(2));
-                const valMod = Number(((baselineSec * Math.pow(1 + 0.105, w)) / 60).toFixed(2));
-                forecastConsData.push(valCons);
-                forecastModData.push(valMod);
-            });
-
-            medicalForecastChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: chartLabels,
-                    datasets: [
-                        {
-                            label: 'Gemessene Gehzeit (min)',
-                            data: historicData,
-                            borderColor: '#0f766e',
-                            backgroundColor: '#0f766e',
-                            borderWidth: 2.5,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            tension: 0.2,
-                            spanGaps: false
-                        },
-                        {
-                            label: 'Konservativer Reha-Pfad (+6.5%/Wo)',
-                            data: forecastConsData,
-                            borderColor: '#059669',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderDash: [5, 5],
-                            borderWidth: 2.2,
-                            pointRadius: 3,
-                            tension: 0.3,
-                            fill: medicalForecastMode === 'conservative' ? 'origin' : false
-                        },
-                        {
-                            label: 'Moderater Reha-Pfad (+10.5%/Wo)',
-                            data: forecastModData,
-                            borderColor: '#6366f1',
-                            backgroundColor: 'rgba(99, 102, 241, 0.08)',
-                            borderDash: [3, 3],
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            tension: 0.3,
-                            fill: medicalForecastMode === 'moderate' ? 'origin' : false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 12,
-                                boxHeight: 12,
-                                font: { size: 11, weight: '500' },
-                                padding: 12
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            padding: 10,
-                            cornerRadius: 10,
-                            callbacks: {
-                                label: function(context) {
-                                    if (context.raw === null || context.raw === undefined) return '';
-                                    const rawValInMin = context.raw || 0;
-                                    const totalSec = Math.round(rawValInMin * 60);
-                                    const min = Math.floor(totalSec / 60);
-                                    const sec = totalSec % 60;
-                                    return ` ${context.dataset.label}: ${min}m ${String(sec).padStart(2, '0')}s`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 10 } }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Tageszeit (Minuten)',
-                                font: { size: 11 }
-                            },
-                            ticks: {
-                                callback: val => `${val} min`,
-                                font: { size: 10 }
-                            },
-                            grid: { color: 'rgba(226, 232, 240, 0.8)' }
-                        }
-                    }
-                }
-            });
-        }
 
         // --- Tab / View Umschaltung (Dashboard vs. Live-Stoppuhr) ---
         let currentView = 'dashboard';
