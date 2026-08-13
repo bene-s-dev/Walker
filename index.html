@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,78 +24,105 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        body {
+            font-family: 'Inter', sans-serif;
         }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
         input[type=number] {
             -moz-appearance: textfield;
         }
 
         /* Beruhigende Zen-Waber-Animationen */
         @keyframes float-zen-1 {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translate(0px, 0px) scale(1) rotate(0deg);
             }
+
             33% {
                 transform: translate(35px, -25px) scale(1.15) rotate(10deg);
             }
+
             66% {
                 transform: translate(-20px, 20px) scale(0.92) rotate(-8deg);
             }
         }
+
         @keyframes float-zen-2 {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translate(0px, 0px) scale(1) rotate(0deg);
             }
+
             33% {
                 transform: translate(-30px, 35px) scale(1.18) rotate(-12deg);
             }
+
             66% {
                 transform: translate(25px, -20px) scale(0.9) rotate(8deg);
             }
         }
+
         @keyframes float-zen-3 {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translate(0px, 0px) scale(1);
             }
+
             50% {
                 transform: translate(20px, -30px) scale(1.22);
             }
         }
+
         @keyframes breath-glow {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: scale(0.98);
                 opacity: 0.35;
             }
+
             50% {
                 transform: scale(1.04);
                 opacity: 0.75;
             }
         }
+
         .animate-zen-1 {
             animation: float-zen-1 14s ease-in-out infinite;
         }
+
         .animate-zen-2 {
             animation: float-zen-2 18s ease-in-out infinite;
         }
+
         .animate-zen-3 {
             animation: float-zen-3 22s ease-in-out infinite;
         }
+
         .animate-zen-breath {
             animation: breath-glow 7s ease-in-out infinite;
         }
     </style>
 </head>
+
 <body class="bg-slate-100 text-slate-800 pb-16 min-h-screen">
 
     <!-- Header -->
     <header class="bg-gradient-to-r from-teal-700 via-teal-600 to-emerald-600 text-white shadow-lg sticky top-0 z-30">
         <div class="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-white/25 flex-shrink-0 bg-teal-800">
+                <div
+                    class="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-white/25 flex-shrink-0 bg-teal-800">
                     <img src="icon.jpg" alt="BeneWalker Icon" class="w-full h-full object-cover">
                 </div>
                 <div>
@@ -104,89 +132,130 @@
             </div>
             <div class="flex items-center gap-2">
                 <!-- Stoppuhr Tab Button -->
-                <button id="btn-toggle-view" onclick="toggleView()" title="Stoppuhr öffnen" class="h-10 px-3.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 border border-white/30 text-white flex items-center gap-1.5 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50 text-xs font-bold">
-                    <svg id="toggle-view-icon-stopwatch" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <button id="btn-toggle-view" onclick="toggleView()" title="Stoppuhr öffnen"
+                    class="h-10 px-3.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 border border-white/30 text-white flex items-center gap-1.5 transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50 text-xs font-bold">
+                    <svg id="toggle-view-icon-stopwatch" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v2m-3-2h6" />
                     </svg>
-                    <svg id="toggle-view-icon-dashboard" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    <svg id="toggle-view-icon-dashboard" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 hidden"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                     <span id="toggle-view-text" class="hidden sm:inline">Stoppuhr</span>
                 </button>
 
                 <!-- Profil Button & Dropdown -->
                 <div class="relative">
-                    <button id="btn-profile" aria-expanded="false" aria-haspopup="true" title="Profil & Optionen" class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 border border-white/30 text-white flex items-center justify-center transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <button id="btn-profile" aria-expanded="false" aria-haspopup="true" title="Profil & Optionen"
+                        class="w-10 h-10 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 border border-white/30 text-white flex items-center justify-center transition shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                     </button>
 
                     <!-- Profil Dropdown -->
-                    <div id="profile-dropdown" class="hidden absolute right-0 top-12 w-64 sm:w-72 bg-white rounded-2xl shadow-2xl border border-slate-200/90 py-2 z-50 text-slate-800 transition-all duration-150 ease-out origin-top-right">
-                    <!-- Profil Info -->
-                    <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
-                            👤
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <div class="font-bold text-slate-900 text-sm truncate">BeneWalker Profil</div>
-                            <div class="text-xs text-slate-500 truncate" id="profile-status-text">0 Tage erfasst</div>
-                        </div>
-                    </div>
-
-                    <div class="p-1.5 space-y-0.5">
-                        <!-- App installieren Button -->
-                        <button id="btn-install" class="w-full px-3 py-2.5 rounded-xl hover:bg-amber-50 text-left text-sm font-medium text-slate-700 hover:text-amber-900 transition flex items-center gap-3 group">
-                            <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <div id="profile-dropdown"
+                        class="hidden absolute right-0 top-12 w-64 sm:w-72 bg-white rounded-2xl shadow-2xl border border-slate-200/90 py-2 z-50 text-slate-800 transition-all duration-150 ease-out origin-top-right">
+                        <!-- Profil Info -->
+                        <div class="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
+                            <div
+                                class="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold flex-shrink-0">
+                                👤
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-semibold text-slate-800 group-hover:text-amber-900 flex items-center justify-between">
-                                    <span>App installieren</span>
-                                    <span id="install-badge" class="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded-md">PWA</span>
+                            <div class="min-w-0 flex-1">
+                                <div class="font-bold text-slate-900 text-sm truncate">BeneWalker Profil</div>
+                                <div class="text-xs text-slate-500 truncate" id="profile-status-text">0 Tage erfasst
                                 </div>
-                                <div class="text-xs text-slate-400 group-hover:text-amber-700/80 truncate" id="install-subtext">Zum Startbildschirm hinzufügen</div>
                             </div>
-                        </button>
+                        </div>
 
-                        <!-- Daten exportieren -->
-                        <button id="btn-export" class="w-full px-3 py-2.5 rounded-xl hover:bg-teal-50 text-left text-sm font-medium text-slate-700 hover:text-teal-900 transition flex items-center gap-3 group">
-                            <div class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-semibold text-slate-800 group-hover:text-teal-900">Daten exportieren</div>
-                                <div class="text-xs text-slate-400 group-hover:text-teal-700/80 truncate">JSON-Backup herunterladen</div>
-                            </div>
-                        </button>
+                        <div class="p-1.5 space-y-0.5">
+                            <!-- App installieren Button -->
+                            <button id="btn-install"
+                                class="w-full px-3 py-2.5 rounded-xl hover:bg-amber-50 text-left text-sm font-medium text-slate-700 hover:text-amber-900 transition flex items-center gap-3 group">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div
+                                        class="font-semibold text-slate-800 group-hover:text-amber-900 flex items-center justify-between">
+                                        <span>App installieren</span>
+                                        <span id="install-badge"
+                                            class="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded-md">PWA</span>
+                                    </div>
+                                    <div class="text-xs text-slate-400 group-hover:text-amber-700/80 truncate"
+                                        id="install-subtext">Zum Startbildschirm hinzufügen</div>
+                                </div>
+                            </button>
 
-                        <!-- Daten importieren -->
-                        <button id="btn-import" class="w-full px-3 py-2.5 rounded-xl hover:bg-emerald-50 text-left text-sm font-medium text-slate-700 hover:text-emerald-900 transition flex items-center gap-3 group">
-                            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-semibold text-slate-800 group-hover:text-emerald-900">Daten importieren</div>
-                                <div class="text-xs text-slate-400 group-hover:text-emerald-700/80 truncate">Backup-Datei wiederherstellen</div>
-                            </div>
-                        </button>
-                        <input type="file" id="file-import" accept=".json" class="hidden">
-                    </div>
+                            <!-- Daten exportieren -->
+                            <button id="btn-export"
+                                class="w-full px-3 py-2.5 rounded-xl hover:bg-teal-50 text-left text-sm font-medium text-slate-700 hover:text-teal-900 transition flex items-center gap-3 group">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-semibold text-slate-800 group-hover:text-teal-900">Daten
+                                        exportieren</div>
+                                    <div class="text-xs text-slate-400 group-hover:text-teal-700/80 truncate">
+                                        JSON-Backup herunterladen</div>
+                                </div>
+                            </button>
 
-                    <div class="border-t border-slate-100 my-1"></div>
+                            <!-- Daten importieren -->
+                            <button id="btn-import"
+                                class="w-full px-3 py-2.5 rounded-xl hover:bg-emerald-50 text-left text-sm font-medium text-slate-700 hover:text-emerald-900 transition flex items-center gap-3 group">
+                                <div
+                                    class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition-transform flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-semibold text-slate-800 group-hover:text-emerald-900">Daten
+                                        importieren</div>
+                                    <div class="text-xs text-slate-400 group-hover:text-emerald-700/80 truncate">
+                                        Backup-Datei wiederherstellen</div>
+                                </div>
+                            </button>
+                            <input type="file" id="file-import" accept=".json" class="hidden">
+                        </div>
 
-                    <!-- Alle Daten löschen -->
-                    <div class="p-1.5">
-                        <button id="btn-reset-data" class="w-full px-3 py-2 rounded-xl hover:bg-rose-50 text-left text-xs font-medium text-rose-600 transition flex items-center gap-2.5 group">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            <span class="truncate">Alle Daten zurücksetzen</span>
-                        </button>
+                        <div class="border-t border-slate-100 my-1"></div>
+
+                        <!-- Alle Daten löschen -->
+                        <div class="p-1.5">
+                            <button id="btn-reset-data"
+                                class="w-full px-3 py-2 rounded-xl hover:bg-rose-50 text-left text-xs font-medium text-rose-600 transition flex items-center gap-2.5 group">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500 flex-shrink-0"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                <span class="truncate">Alle Daten zurücksetzen</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
     </header>
 
     <main class="max-w-2xl mx-auto px-4 mt-5">
@@ -195,312 +264,450 @@
         <div id="view-dashboard" class="space-y-5">
             <!-- Stat Cards (Klickbar für Deep-Dive Insights) -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div id="card-stat-today" onclick="openInsightModal('today')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
-                <div class="flex items-center justify-between">
-                    <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Heute</div>
-                    <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </div>
-                <div id="stat-today" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                <div class="text-[11px] text-teal-600 font-medium mt-0.5" id="stat-today-split">1. 🚶 0m · 2. 🚶 0m</div>
-            </div>
-            <div id="card-stat-avg" onclick="openInsightModal('avg')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
-                <div class="flex items-center justify-between">
-                    <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">7-Tage Schnitt</div>
-                    <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </div>
-                <div id="stat-avg" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                <div id="stat-avg-trend" class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
-                    <span>pro Tag</span>
-                </div>
-            </div>
-            <div id="card-stat-total" onclick="openInsightModal('total')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
-                <div class="flex items-center justify-between">
-                    <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Gesamtzeit</div>
-                    <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </div>
-                <div id="stat-total" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                <div class="text-[11px] text-slate-400 mt-0.5" id="stat-total-sub">alle Einheiten</div>
-            </div>
-            <div id="card-stat-single" onclick="openInsightModal('single')" class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
-                <div class="flex items-center justify-between">
-                    <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Gehzeit am Stück</div>
-                    <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </div>
-                <div id="stat-single" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                <div id="stat-single-trend" class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
-                    <span>Einzelsession</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Formular: Gehzeit eintragen -->
-        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80" id="entry-section">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
-                    <span id="form-heading">Gehzeit eintragen</span>
-                </h2>
-                <div class="flex items-center gap-1.5 text-xs">
-                    <button type="button" id="btn-quick-today" class="px-2.5 py-1 bg-teal-50 text-teal-700 font-semibold rounded-lg hover:bg-teal-100 transition">Heute</button>
-                    <button type="button" id="btn-quick-yesterday" class="px-2.5 py-1 bg-slate-100 text-slate-600 font-medium rounded-lg hover:bg-slate-200 transition">Gestern</button>
-                </div>
-            </div>
-
-            <form id="walking-form" class="space-y-4">
-                <!-- Datumsauswahl -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5" for="input-date">Datum</label>
-                    <input type="date" id="input-date" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:bg-white focus:outline-none transition">
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- 1. Gehen Box -->
-                    <div class="p-3.5 bg-amber-50/60 border border-amber-200/70 rounded-2xl">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-1.5 text-amber-900 font-bold text-sm">
-                                <span>1. Gehen</span>
-                            </div>
-                            <span class="text-xs font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md" id="morning-total-display">0:00 min</span>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[11px] font-medium text-amber-800/80 mb-1" for="input-morning-min">Minuten</label>
-                                <input type="number" min="0" max="300" id="input-morning-min" placeholder="0" class="w-full p-2 bg-white border border-amber-200 rounded-xl text-center text-base font-bold text-slate-800 focus:ring-2 focus:ring-amber-400 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-medium text-amber-800/80 mb-1" for="input-morning-sec">Sekunden</label>
-                                <input type="number" min="0" max="59" id="input-morning-sec" placeholder="0" class="w-full p-2 bg-white border border-amber-200 rounded-xl text-center text-base font-bold text-slate-800 focus:ring-2 focus:ring-amber-400 focus:outline-none">
-                            </div>
-                        </div>
-
-                        <!-- Schnellauswahl Buttons -->
-                        <div class="flex gap-1.5 mt-2.5">
-                            <button type="button" onclick="addTime('morning', 0, 15)" class="flex-1 py-1 bg-amber-100 hover:bg-amber-200/70 text-amber-800 rounded-lg text-[11px] font-semibold transition">+15s</button>
-                            <button type="button" onclick="addTime('morning', 0, 30)" class="flex-1 py-1 bg-amber-100 hover:bg-amber-200/70 text-amber-800 rounded-lg text-[11px] font-semibold transition">+30s</button>
-                            <button type="button" onclick="addTime('morning', 0, 45)" class="flex-1 py-1 bg-amber-100 hover:bg-amber-200/70 text-amber-800 rounded-lg text-[11px] font-semibold transition">+45s</button>
-                            <button type="button" onclick="addTime('morning', 1, 0)" class="flex-1 py-1 bg-amber-100 hover:bg-amber-200/70 text-amber-800 rounded-lg text-[11px] font-semibold transition">+1m</button>
-                            <button type="button" onclick="clearTime('morning')" class="px-2 py-1 bg-white hover:bg-amber-100 text-amber-600 rounded-lg text-[11px] font-medium border border-amber-200 transition">0</button>
-                        </div>
-                    </div>
-
-                    <!-- 2. Gehen Box -->
-                    <div class="p-3.5 bg-indigo-50/60 border border-indigo-200/70 rounded-2xl">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-1.5 text-indigo-900 font-bold text-sm">
-                                <span>2. Gehen</span>
-                            </div>
-                            <span class="text-xs font-semibold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md" id="evening-total-display">0:00 min</span>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[11px] font-medium text-indigo-800/80 mb-1" for="input-evening-min">Minuten</label>
-                                <input type="number" min="0" max="300" id="input-evening-min" placeholder="0" class="w-full p-2 bg-white border border-indigo-200 rounded-xl text-center text-base font-bold text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-[11px] font-medium text-indigo-800/80 mb-1" for="input-evening-sec">Sekunden</label>
-                                <input type="number" min="0" max="59" id="input-evening-sec" placeholder="0" class="w-full p-2 bg-white border border-indigo-200 rounded-xl text-center text-base font-bold text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:outline-none">
-                            </div>
-                        </div>
-
-                        <!-- Schnellauswahl Buttons -->
-                        <div class="flex gap-1.5 mt-2.5">
-                            <button type="button" onclick="addTime('evening', 0, 15)" class="flex-1 py-1 bg-indigo-100 hover:bg-indigo-200/70 text-indigo-800 rounded-lg text-[11px] font-semibold transition">+15s</button>
-                            <button type="button" onclick="addTime('evening', 0, 30)" class="flex-1 py-1 bg-indigo-100 hover:bg-indigo-200/70 text-indigo-800 rounded-lg text-[11px] font-semibold transition">+30s</button>
-                            <button type="button" onclick="addTime('evening', 0, 45)" class="flex-1 py-1 bg-indigo-100 hover:bg-indigo-200/70 text-indigo-800 rounded-lg text-[11px] font-semibold transition">+45s</button>
-                            <button type="button" onclick="addTime('evening', 1, 0)" class="flex-1 py-1 bg-indigo-100 hover:bg-indigo-200/70 text-indigo-800 rounded-lg text-[11px] font-semibold transition">+1m</button>
-                            <button type="button" onclick="clearTime('evening')" class="px-2 py-1 bg-white hover:bg-indigo-100 text-indigo-600 rounded-lg text-[11px] font-medium border border-indigo-200 transition">0</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Info zu bestehendem Eintrag -->
-                <div id="edit-notice" class="hidden p-2.5 bg-blue-50 border border-blue-200 text-blue-800 text-xs rounded-xl flex items-center justify-between">
-                    <span>Für dieses Datum existiert bereits ein Eintrag. Du überschreibst/ergänzt ihn beim Speichern.</span>
-                </div>
-
-                <!-- Speichern Button -->
-                <div class="flex gap-2">
-                    <button type="submit" class="flex-1 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-xl shadow-md shadow-teal-700/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>
-                        <span>Eintrag speichern</span>
-                    </button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Visualisierung / Charts -->
-        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                <div>
-                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                        <svg class="text-teal-600 w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                <div id="card-stat-today" onclick="openInsightModal('today')"
+                    class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
+                    <div class="flex items-center justify-between">
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Heute</div>
+                        <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
-                        <span>Laufzeit-Visualisierung</span>
+                    </div>
+                    <div id="stat-today" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
+                    <div class="text-[11px] text-teal-600 font-medium mt-0.5" id="stat-today-split">1. 🚶 0m · 2. 🚶 0m
+                    </div>
+                </div>
+                <div id="card-stat-avg" onclick="openInsightModal('avg')"
+                    class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
+                    <div class="flex items-center justify-between">
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">7-Tage
+                            Schnitt</div>
+                        <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                    <div id="stat-avg" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
+                    <div id="stat-avg-trend"
+                        class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
+                        <span>pro Tag</span>
+                    </div>
+                </div>
+                <div id="card-stat-total" onclick="openInsightModal('total')"
+                    class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
+                    <div class="flex items-center justify-between">
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Gesamtzeit
+                        </div>
+                        <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                    <div id="stat-total" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5" id="stat-total-sub">alle Einheiten</div>
+                </div>
+                <div id="card-stat-single" onclick="openInsightModal('single')"
+                    class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
+                    <div class="flex items-center justify-between">
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Gehzeit am
+                            Stück</div>
+                        <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                    <div id="stat-single" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
+                    <div id="stat-single-trend"
+                        class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
+                        <span>Einzelsession</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formular: Gehzeit eintragen -->
+            <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80" id="entry-section">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+                        <span id="form-heading">Gehzeit eintragen</span>
                     </h2>
+                    <div class="flex items-center gap-1.5 text-xs">
+                        <button type="button" id="btn-quick-today"
+                            class="px-2.5 py-1 bg-teal-50 text-teal-700 font-semibold rounded-lg hover:bg-teal-100 transition">Heute</button>
+                        <button type="button" id="btn-quick-yesterday"
+                            class="px-2.5 py-1 bg-slate-100 text-slate-600 font-medium rounded-lg hover:bg-slate-200 transition">Gestern</button>
+                    </div>
                 </div>
 
-                <!-- Range Selector Buttons -->
-                <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600 self-start sm:self-auto">
-                    <button type="button" class="range-btn px-2.5 py-1 rounded-lg transition bg-white text-slate-900 shadow-xs" data-range="7">7 Tage</button>
-                    <button type="button" class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900" data-range="14">14 Tage</button>
-                    <button type="button" class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900" data-range="30">30 Tage</button>
-                    <button type="button" class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900" data-range="all">Alle</button>
-                </div>
-            </div>
+                <form id="walking-form" class="space-y-4">
+                    <!-- Datumsauswahl -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5"
+                            for="input-date">Datum</label>
+                        <input type="date" id="input-date" required
+                            class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:bg-white focus:outline-none transition">
+                    </div>
 
-            <!-- Chart Container -->
-            <div class="relative h-64 sm:h-72 w-full">
-                <canvas id="walkingChart"></canvas>
-            </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- 1. Gehen Box -->
+                        <div class="p-3.5 bg-amber-50/60 border border-amber-200/70 rounded-2xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-1.5 text-amber-900 font-bold text-sm">
+                                    <span>1. Gehen</span>
+                                </div>
+                                <span
+                                    class="text-xs font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md"
+                                    id="morning-total-display">0:00 min</span>
+                            </div>
 
-            <div class="flex items-center justify-center gap-6 mt-3 text-xs font-medium text-slate-600">
-                <div class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-md bg-amber-400 inline-block"></span>
-                    <span>1. Gehen</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="w-3 h-3 rounded-md bg-indigo-500 inline-block"></span>
-                    <span>2. Gehen</span>
-                </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="w-3 h-1 rounded bg-teal-600 inline-block"></span>
-                    <span>Tagesgesamtzeit</span>
-                </div>
-            </div>
-        </section>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[11px] font-medium text-amber-800/80 mb-1"
+                                        for="input-morning-min">Minuten</label>
+                                    <input type="number" min="0" max="300" id="input-morning-min" placeholder="0"
+                                        class="w-full p-2 bg-white border border-amber-200 rounded-xl text-center text-base font-bold text-slate-800 focus:ring-2 focus:ring-amber-400 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-amber-800/80 mb-1"
+                                        for="input-morning-sec">Sekunden</label>
+                                    <input type="number" min="0" max="59" id="input-morning-sec" placeholder="0"
+                                        class="w-full p-2 bg-white border border-amber-200 rounded-xl text-center text-base font-bold text-slate-800 focus:ring-2 focus:ring-amber-400 focus:outline-none">
+                                </div>
+                            </div>
 
-        <!-- Verlauf / Historie -->
-        <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="text-base font-bold text-slate-900">Verlauf aller Tage</h2>
-                    <p class="text-xs text-slate-500" id="history-subtitle">Alle gespeicherten Gehzeiten</p>
-                </div>
-            </div>
+                            <!-- Schnellauswahl Buttons -->
+                            <div class="flex gap-1.5 mt-2.5">
+                                <button type="button" onclick="addTime('morning', 0, 15)"
+                                    class="flex-1 py-1 bg-amber-100 hover:bg-amber-200/70 text-amber-800 rounded-lg text-[11px] font-semibold transition">+15s</button>
+                                <button type="button" onclick="addTime('morning', 0, 30)"
+                                    class="flex-1 py-1 bg-amber-100 hover:bg-amber-200/70 text-amber-800 rounded-lg text-[11px] font-semibold transition">+30s</button>
+                                <button type="button" onclick="addTime('morning', 0, 45)"
+                                    class="flex-1 py-1 bg-amber-100 hover:bg-amber-200/70 text-amber-800 rounded-lg text-[11px] font-semibold transition">+45s</button>
+                                <button type="button" onclick="addTime('morning', 1, 0)"
+                                    class="flex-1 py-1 bg-amber-100 hover:bg-amber-200/70 text-amber-800 rounded-lg text-[11px] font-semibold transition">+1m</button>
+                                <button type="button" onclick="clearTime('morning')"
+                                    class="px-2 py-1 bg-white hover:bg-amber-100 text-amber-600 rounded-lg text-[11px] font-medium border border-amber-200 transition">0</button>
+                            </div>
+                        </div>
 
-            <div id="history-list" class="space-y-1.5">
-                <!-- Dynamische Einträge -->
-            </div>
+                        <!-- 2. Gehen Box -->
+                        <div class="p-3.5 bg-indigo-50/60 border border-indigo-200/70 rounded-2xl">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-1.5 text-indigo-900 font-bold text-sm">
+                                    <span>2. Gehen</span>
+                                </div>
+                                <span
+                                    class="text-xs font-semibold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md"
+                                    id="evening-total-display">0:00 min</span>
+                            </div>
 
-            <!-- Leerer Zustand -->
-            <div id="empty-state" class="hidden py-8 text-center">
-                <div class="w-12 h-12 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center mx-auto mb-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[11px] font-medium text-indigo-800/80 mb-1"
+                                        for="input-evening-min">Minuten</label>
+                                    <input type="number" min="0" max="300" id="input-evening-min" placeholder="0"
+                                        class="w-full p-2 bg-white border border-indigo-200 rounded-xl text-center text-base font-bold text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-indigo-800/80 mb-1"
+                                        for="input-evening-sec">Sekunden</label>
+                                    <input type="number" min="0" max="59" id="input-evening-sec" placeholder="0"
+                                        class="w-full p-2 bg-white border border-indigo-200 rounded-xl text-center text-base font-bold text-slate-800 focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <!-- Schnellauswahl Buttons -->
+                            <div class="flex gap-1.5 mt-2.5">
+                                <button type="button" onclick="addTime('evening', 0, 15)"
+                                    class="flex-1 py-1 bg-indigo-100 hover:bg-indigo-200/70 text-indigo-800 rounded-lg text-[11px] font-semibold transition">+15s</button>
+                                <button type="button" onclick="addTime('evening', 0, 30)"
+                                    class="flex-1 py-1 bg-indigo-100 hover:bg-indigo-200/70 text-indigo-800 rounded-lg text-[11px] font-semibold transition">+30s</button>
+                                <button type="button" onclick="addTime('evening', 0, 45)"
+                                    class="flex-1 py-1 bg-indigo-100 hover:bg-indigo-200/70 text-indigo-800 rounded-lg text-[11px] font-semibold transition">+45s</button>
+                                <button type="button" onclick="addTime('evening', 1, 0)"
+                                    class="flex-1 py-1 bg-indigo-100 hover:bg-indigo-200/70 text-indigo-800 rounded-lg text-[11px] font-semibold transition">+1m</button>
+                                <button type="button" onclick="clearTime('evening')"
+                                    class="px-2 py-1 bg-white hover:bg-indigo-100 text-indigo-600 rounded-lg text-[11px] font-medium border border-indigo-200 transition">0</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info zu bestehendem Eintrag -->
+                    <div id="edit-notice"
+                        class="hidden p-2.5 bg-blue-50 border border-blue-200 text-blue-800 text-xs rounded-xl flex items-center justify-between">
+                        <span>Für dieses Datum existiert bereits ein Eintrag. Du überschreibst/ergänzt ihn beim
+                            Speichern.</span>
+                    </div>
+
+                    <!-- Speichern Button -->
+                    <div class="flex gap-2">
+                        <button type="submit"
+                            class="flex-1 py-3.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-xl shadow-md shadow-teal-700/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Eintrag speichern</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Visualisierung / Charts -->
+            <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <svg class="text-teal-600 w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            <span>Laufzeit-Visualisierung</span>
+                        </h2>
+                        <button type="button" onclick="openMedicalForecastModal()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-teal-900 bg-gradient-to-r from-teal-50 via-emerald-50 to-teal-50 hover:from-teal-100 hover:to-emerald-100 border border-teal-200/90 shadow-2xs hover:shadow-xs transition active:scale-95 cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-teal-600" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span>Prognose</span>
+                        </button>
+                    </div>
+
+                    <!-- Range Selector Buttons -->
+                    <div
+                        class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600 self-start sm:self-auto">
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition bg-white text-slate-900 shadow-xs"
+                            data-range="7">7 Tage</button>
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
+                            data-range="14">14 Tage</button>
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
+                            data-range="30">30 Tage</button>
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
+                            data-range="all">Alle</button>
+                    </div>
                 </div>
-                <p class="text-sm font-semibold text-slate-700">Noch keine Einträge vorhanden</p>
-                <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Trage oben deine morgendliche und abendliche Gehzeit ein, um deinen Fortschritt zu verfolgen.</p>
-            </div>
-        </section>
+
+                <!-- Chart Container -->
+                <div class="relative h-64 sm:h-72 w-full">
+                    <canvas id="walkingChart"></canvas>
+                </div>
+
+                <div
+                    class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-3 text-xs font-medium text-slate-600">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-md bg-amber-400 inline-block"></span>
+                        <span>1. Gehen</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-md bg-indigo-500 inline-block"></span>
+                        <span>2. Gehen</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-1 rounded bg-teal-600 inline-block"></span>
+                        <span>Tagesgesamtzeit</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-4 h-0 border-t-2 border-dashed border-teal-600 inline-block"></span>
+                        <span>Trend (aktive Tage)</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Verlauf / Historie -->
+            <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">Verlauf aller Tage</h2>
+                        <p class="text-xs text-slate-500" id="history-subtitle">Alle gespeicherten Gehzeiten</p>
+                    </div>
+                </div>
+
+                <div id="history-list" class="space-y-1.5">
+                    <!-- Dynamische Einträge -->
+                </div>
+
+                <!-- Leerer Zustand -->
+                <div id="empty-state" class="hidden py-8 text-center">
+                    <div
+                        class="w-12 h-12 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center mx-auto mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-700">Noch keine Einträge vorhanden</p>
+                    <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Trage oben deine morgendliche und abendliche
+                        Gehzeit ein, um deinen Fortschritt zu verfolgen.</p>
+                </div>
+            </section>
         </div>
 
         <!-- TAB 2: Live-Stoppuhr View (Beruhigende Zen-Atmosphäre) -->
         <div id="view-stopwatch" class="hidden space-y-5">
-            
+
             <!-- Beruhigende Haupt-Stoppuhr Card mit wabernden Bio-Elementen -->
-            <section class="relative rounded-3xl shadow-xl shadow-emerald-900/5 border border-emerald-200/70 p-6 sm:p-9 text-center overflow-hidden bg-gradient-to-b from-white/90 via-emerald-50/40 to-teal-50/60 backdrop-blur-2xl">
-                
+            <section
+                class="relative rounded-3xl shadow-xl shadow-emerald-900/5 border border-emerald-200/70 p-6 sm:p-9 text-center overflow-hidden bg-gradient-to-b from-white/90 via-emerald-50/40 to-teal-50/60 backdrop-blur-2xl">
+
                 <!-- Wabernde grüne Zen-Elemente im Hintergrund -->
-                <div class="absolute -top-16 -left-16 w-64 h-64 bg-gradient-to-br from-emerald-300/40 via-teal-200/30 to-lime-200/20 rounded-full blur-3xl pointer-events-none animate-zen-1"></div>
-                <div class="absolute -bottom-20 -right-16 w-72 h-72 bg-gradient-to-tl from-teal-400/35 via-emerald-300/25 to-cyan-200/20 rounded-full blur-3xl pointer-events-none animate-zen-2"></div>
-                <div class="absolute top-1/3 left-1/3 w-56 h-56 bg-gradient-to-r from-lime-300/25 to-emerald-300/20 rounded-full blur-2xl pointer-events-none animate-zen-3"></div>
-                
+                <div
+                    class="absolute -top-16 -left-16 w-64 h-64 bg-gradient-to-br from-emerald-300/40 via-teal-200/30 to-lime-200/20 rounded-full blur-3xl pointer-events-none animate-zen-1">
+                </div>
+                <div
+                    class="absolute -bottom-20 -right-16 w-72 h-72 bg-gradient-to-tl from-teal-400/35 via-emerald-300/25 to-cyan-200/20 rounded-full blur-3xl pointer-events-none animate-zen-2">
+                </div>
+                <div
+                    class="absolute top-1/3 left-1/3 w-56 h-56 bg-gradient-to-r from-lime-300/25 to-emerald-300/20 rounded-full blur-2xl pointer-events-none animate-zen-3">
+                </div>
+
                 <!-- Subtiler Zen-Lichtschleier -->
-                <div class="absolute inset-0 bg-radial from-transparent via-white/10 to-emerald-900/[0.02] pointer-events-none"></div>
+                <div
+                    class="absolute inset-0 bg-radial from-transparent via-white/10 to-emerald-900/[0.02] pointer-events-none">
+                </div>
 
                 <!-- Einheit-Auswahl (1. Gehen vs. 2. Gehen) mit viel Raum -->
                 <div class="mb-5 relative z-10">
-                    
-                    <div class="grid grid-cols-2 gap-3 max-w-sm mx-auto p-1.5 bg-emerald-900/5 rounded-2xl border border-emerald-200/60 backdrop-blur-xs">
-                        <button type="button" id="sw-target-morning" onclick="setStopwatchTarget('morning')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 bg-white text-slate-900 shadow-2xs border border-emerald-100">
+
+                    <div
+                        class="grid grid-cols-2 gap-3 max-w-sm mx-auto p-1.5 bg-emerald-900/5 rounded-2xl border border-emerald-200/60 backdrop-blur-xs">
+                        <button type="button" id="sw-target-morning" onclick="setStopwatchTarget('morning')"
+                            class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 bg-white text-slate-900 shadow-2xs border border-emerald-100">
                             <span class="text-amber-900 font-extrabold text-sm">1. Gehen</span>
-                            <span class="text-[10px] text-slate-400 font-medium" id="sw-morning-preview">Heute: 0m 00s</span>
+                            <span class="text-[10px] text-slate-400 font-medium" id="sw-morning-preview">Heute: 0m
+                                00s</span>
                         </button>
-                        <button type="button" id="sw-target-evening" onclick="setStopwatchTarget('evening')" class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-900">
+                        <button type="button" id="sw-target-evening" onclick="setStopwatchTarget('evening')"
+                            class="py-2.5 px-3 rounded-xl text-xs font-bold transition flex flex-col items-center gap-0.5 text-slate-500 hover:text-slate-900">
                             <span class="text-indigo-900 font-extrabold text-sm">2. Gehen</span>
-                            <span class="text-[10px] text-slate-400 font-medium" id="sw-evening-preview">Heute: 0m 00s</span>
+                            <span class="text-[10px] text-slate-400 font-medium" id="sw-evening-preview">Heute: 0m
+                                00s</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Zeitfenster mit atmender Aura & integrierten Kreis-Buttons (Reset links, Ton rechts) -->
                 <div class="my-5 relative z-10">
-                    <div class="relative flex flex-col items-center justify-center p-6 sm:p-8 bg-white/90 backdrop-blur-md border border-emerald-100/90 rounded-[2.5rem] w-full max-w-md mx-auto shadow-xl shadow-emerald-950/5">
-                        
+                    <div
+                        class="relative flex flex-col items-center justify-center p-6 sm:p-8 bg-white/90 backdrop-blur-md border border-emerald-100/90 rounded-[2.5rem] w-full max-w-md mx-auto shadow-xl shadow-emerald-950/5">
+
                         <!-- Atmender Glow Halo -->
-                        <div class="absolute -inset-1.5 bg-gradient-to-r from-emerald-400/20 via-teal-300/30 to-emerald-400/20 rounded-[2.75rem] blur-md animate-zen-breath pointer-events-none"></div>
+                        <div
+                            class="absolute -inset-1.5 bg-gradient-to-r from-emerald-400/20 via-teal-300/30 to-emerald-400/20 rounded-[2.75rem] blur-md animate-zen-breath pointer-events-none">
+                        </div>
 
                         <!-- Obere Leiste im Zeitfenster -->
                         <div class="w-full flex items-center justify-between mb-2 relative z-10">
                             <!-- Reset Kreispfeil Button links oben (dauerhaft rot) -->
-                            <button type="button" onclick="resetStopwatch()" title="Stoppuhr zurücksetzen" class="w-9 h-9 rounded-full bg-rose-50/90 hover:bg-rose-100 text-rose-600 hover:text-rose-700 flex items-center justify-center transition border border-rose-200/80 shadow-2xs active:scale-90">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            <button type="button" onclick="resetStopwatch()" title="Stoppuhr zurücksetzen"
+                                class="w-9 h-9 rounded-full bg-rose-50/90 hover:bg-rose-100 text-rose-600 hover:text-rose-700 flex items-center justify-center transition border border-rose-200/80 shadow-2xs active:scale-90">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
                             </button>
 
                             <!-- Status Badge mittig -->
-                            <div id="sw-status-badge" class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200/70">
+                            <div id="sw-status-badge"
+                                class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200/70">
                                 Bereit zum Gehen
                             </div>
 
                             <!-- Ton An/Aus Button (SVG Lautsprecher rechts oben) -->
-                            <button type="button" id="btn-sw-sound" onclick="toggleStopwatchSound()" title="Signal-Ton (30s: 1×, 1m: 2×) an/aus" class="w-9 h-9 rounded-full bg-emerald-50/90 hover:bg-emerald-100 text-emerald-800 flex items-center justify-center transition border border-emerald-200/70 shadow-2xs active:scale-90">
+                            <button type="button" id="btn-sw-sound" onclick="toggleStopwatchSound()"
+                                title="Signal-Ton (30s: 1×, 1m: 2×) an/aus"
+                                class="w-9 h-9 rounded-full bg-emerald-50/90 hover:bg-emerald-100 text-emerald-800 flex items-center justify-center transition border border-emerald-200/70 shadow-2xs active:scale-90">
                                 <!-- Sound An Icon -->
-                                <svg id="sw-sound-icon-on" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                <svg id="sw-sound-icon-on" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
                                 </svg>
                                 <!-- Sound Aus Icon -->
-                                <svg id="sw-sound-icon-off" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                                <svg id="sw-sound-icon-off" xmlns="http://www.w3.org/2000/svg"
+                                    class="w-4 h-4 text-slate-400 hidden" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
                                 </svg>
                             </button>
                         </div>
-                        
+
                         <!-- Digitale Ziffern -->
-                        <div id="sw-display" class="font-mono text-5xl sm:text-6xl font-black text-emerald-950 tracking-tight leading-none drop-shadow-xs my-2 relative z-10">
+                        <div id="sw-display"
+                            class="font-mono text-5xl sm:text-6xl font-black text-emerald-950 tracking-tight leading-none drop-shadow-xs my-2 relative z-10">
                             00:00<span class="text-2xl sm:text-3xl text-emerald-600/60 font-bold">.0</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Primary Action Controls -->
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto mt-6 relative z-10">
+                <div
+                    class="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto mt-6 relative z-10">
                     <!-- Start / Pause Button -->
-                    <button type="button" id="btn-sw-toggle" onclick="toggleStopwatch()" class="w-full sm:flex-1 py-4 px-6 bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-base rounded-2xl shadow-lg shadow-teal-700/25 active:scale-[0.98] transition flex items-center justify-center gap-2.5">
-                        <svg id="sw-icon-play" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        <svg id="sw-icon-pause" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 fill-current hidden" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <button type="button" id="btn-sw-toggle" onclick="toggleStopwatch()"
+                        class="w-full sm:flex-1 py-4 px-6 bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-700 hover:from-teal-500 hover:to-emerald-500 text-white font-black text-base rounded-2xl shadow-lg shadow-teal-700/25 active:scale-[0.98] transition flex items-center justify-center gap-2.5">
+                        <svg id="sw-icon-play" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 fill-current"
+                            viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        <svg id="sw-icon-pause" xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 fill-current hidden"
+                            viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                        </svg>
                         <span id="btn-sw-text">Starten</span>
                     </button>
 
                     <!-- Speichern Button -->
-                    <button type="button" id="btn-sw-save" onclick="saveStopwatchTime()" class="w-full sm:flex-1 py-4 px-6 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl shadow-md active:scale-[0.98] transition flex items-center justify-center gap-2" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/></svg>
+                    <button type="button" id="btn-sw-save" onclick="saveStopwatchTime()"
+                        class="w-full sm:flex-1 py-4 px-6 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl shadow-md active:scale-[0.98] transition flex items-center justify-center gap-2"
+                        disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-400" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                                d="M5 13l4 4L19 7" />
+                        </svg>
                         <span>Eintrag speichern</span>
                     </button>
                 </div>
 
                 <!-- Toast / Success Message -->
-                <div id="sw-success-banner" class="hidden mt-5 p-3.5 bg-emerald-100/90 border border-emerald-300 rounded-2xl text-xs font-semibold text-emerald-950 flex items-center justify-between shadow-xs relative z-10">
+                <div id="sw-success-banner"
+                    class="hidden mt-5 p-3.5 bg-emerald-100/90 border border-emerald-300 rounded-2xl text-xs font-semibold text-emerald-950 flex items-center justify-between shadow-xs relative z-10">
                     <span id="sw-success-text">✓ Zeit erfolgreich für heute gespeichert!</span>
-                    <button type="button" onclick="switchView('dashboard')" class="underline text-emerald-900 hover:text-black font-extrabold ml-2">Zum Dashboard</button>
+                    <button type="button" onclick="switchView('dashboard')"
+                        class="underline text-emerald-900 hover:text-black font-extrabold ml-2">Zum Dashboard</button>
                 </div>
 
                 <!-- Beruhigendes Zen-Motto -->
-                <div class="mt-6 pt-4 border-t border-emerald-100/80 text-[11px] text-emerald-800/70 font-medium flex items-center justify-center gap-1.5 relative z-10">
-                   
-                
+                <div
+                    class="mt-6 pt-4 border-t border-emerald-100/80 text-[11px] text-emerald-800/70 font-medium flex items-center justify-center gap-1.5 relative z-10">
+
+
             </section>
 
             <!-- Schnelle Tagesübersicht unter Stoppuhr -->
-            <div class="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between text-xs">
+            <div
+                class="bg-white/90 backdrop-blur-md p-4 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between text-xs">
                 <div class="font-bold text-slate-700">Heute erfasst:</div>
                 <div class="flex items-center gap-2">
-                    <span class="bg-amber-50 text-amber-900 px-2.5 py-1 rounded-lg border border-amber-200/60 font-semibold" id="sw-today-m-badge">1. Gehen: 0m 00s</span>
-                    <span class="bg-indigo-50 text-indigo-900 px-2.5 py-1 rounded-lg border border-indigo-200/60 font-semibold" id="sw-today-e-badge">2. Gehen: 0m 00s</span>
+                    <span
+                        class="bg-amber-50 text-amber-900 px-2.5 py-1 rounded-lg border border-amber-200/60 font-semibold"
+                        id="sw-today-m-badge">1. Gehen: 0m 00s</span>
+                    <span
+                        class="bg-indigo-50 text-indigo-900 px-2.5 py-1 rounded-lg border border-indigo-200/60 font-semibold"
+                        id="sw-today-e-badge">2. Gehen: 0m 00s</span>
                 </div>
             </div>
 
@@ -509,28 +716,40 @@
     </main>
 
     <!-- Insights & Spezial-Chart Modal -->
-    <div id="insight-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" onclick="closeInsightModal()">
-        <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] transition-all my-auto" onclick="event.stopPropagation()">
-            
+    <div id="insight-modal"
+        class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+        onclick="closeInsightModal()">
+        <div class="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[92vh] transition-all my-auto"
+            onclick="event.stopPropagation()">
+
             <!-- Modal Header -->
             <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
                 <div class="flex items-center gap-3">
-                    <div id="modal-icon-badge" class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg shadow-2xs">
+                    <div id="modal-icon-badge"
+                        class="w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg shadow-2xs">
                         📊
                     </div>
                     <div>
-                        <h3 id="modal-title" class="font-extrabold text-slate-900 text-base leading-tight">Insight-Analyse</h3>
-                        <p id="modal-subtitle" class="text-xs text-slate-500 font-medium mt-0.5">Detaillierte Metriken & Verlauf</p>
+                        <h3 id="modal-title" class="font-extrabold text-slate-900 text-base leading-tight">
+                            Insight-Analyse</h3>
+                        <p id="modal-subtitle" class="text-xs text-slate-500 font-medium mt-0.5">Detaillierte Metriken &
+                            Verlauf</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeInsightModal()" class="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition focus:outline-none" title="Schließen">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" onclick="closeInsightModal()"
+                    class="w-8 h-8 rounded-full bg-slate-200/70 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition focus:outline-none"
+                    title="Schließen">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
             </div>
 
             <!-- Modal Body (Scrollable) -->
             <div class="p-5 space-y-4 overflow-y-auto">
-                
+
                 <!-- KPI Highlight Grid -->
                 <div id="modal-kpi-grid" class="grid grid-cols-2 gap-2.5">
                     <!-- Dynamische KPIs -->
@@ -540,7 +759,8 @@
                 <div class="bg-slate-50/90 p-4 rounded-2xl border border-slate-200/80">
                     <div class="flex items-center justify-between mb-3">
                         <div class="text-xs font-bold text-slate-800" id="modal-chart-title">Spezial-Diagramm</div>
-                        <div class="text-[11px] text-teal-700 font-semibold bg-teal-100/70 px-2 py-0.5 rounded-md" id="modal-chart-badge">Fokus</div>
+                        <div class="text-[11px] text-teal-700 font-semibold bg-teal-100/70 px-2 py-0.5 rounded-md"
+                            id="modal-chart-badge">Fokus</div>
                     </div>
                     <div class="relative h-48 sm:h-56 w-full">
                         <canvas id="specialModalChart"></canvas>
@@ -548,7 +768,8 @@
                 </div>
 
                 <!-- Smarter Insight Text -->
-                <div id="modal-insight-box" class="p-3.5 bg-teal-50/80 border border-teal-200/80 rounded-2xl text-xs text-teal-950 font-medium flex items-start gap-2.5">
+                <div id="modal-insight-box"
+                    class="p-3.5 bg-teal-50/80 border border-teal-200/80 rounded-2xl text-xs text-teal-950 font-medium flex items-start gap-2.5">
                     <span class="text-base flex-shrink-0">💡</span>
                     <div id="modal-insight-text" class="leading-relaxed">
                         <!-- Dynamischer Text -->
@@ -560,12 +781,200 @@
             <!-- Modal Footer (Navigation Tabs) -->
             <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2">
                 <div class="flex bg-slate-200/70 p-1 rounded-xl gap-1 text-xs" id="modal-nav-tabs">
-                    <button onclick="openInsightModal('today')" id="tab-today" class="px-2.5 py-1 rounded-lg font-medium transition">Heute</button>
-                    <button onclick="openInsightModal('avg')" id="tab-avg" class="px-2.5 py-1 rounded-lg font-medium transition">7-Tage</button>
-                    <button onclick="openInsightModal('total')" id="tab-total" class="px-2.5 py-1 rounded-lg font-medium transition">Gesamt</button>
-                    <button onclick="openInsightModal('single')" id="tab-single" class="px-2.5 py-1 rounded-lg font-medium transition">Am Stück</button>
+                    <button onclick="openInsightModal('today')" id="tab-today"
+                        class="px-2.5 py-1 rounded-lg font-medium transition">Heute</button>
+                    <button onclick="openInsightModal('avg')" id="tab-avg"
+                        class="px-2.5 py-1 rounded-lg font-medium transition">7-Tage</button>
+                    <button onclick="openInsightModal('total')" id="tab-total"
+                        class="px-2.5 py-1 rounded-lg font-medium transition">Gesamt</button>
+                    <button onclick="openInsightModal('single')" id="tab-single"
+                        class="px-2.5 py-1 rounded-lg font-medium transition">Am Stück</button>
                 </div>
-                <button type="button" onclick="closeInsightModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl transition">
+                <button type="button" onclick="closeInsightModal()"
+                    class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl transition">
+                    Schließen
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Prognose & Medizinische Einschätzung Modal -->
+    <div id="medical-forecast-modal"
+        class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4"
+        onclick="closeMedicalForecastModal()">
+        <div class="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[94vh] transition-all my-auto"
+            onclick="event.stopPropagation()">
+
+            <!-- Modal Header -->
+            <div
+                class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-teal-50/90 via-emerald-50/70 to-teal-50/90">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center text-lg shadow-sm">
+                        🩺
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-base leading-tight">Prognose & Medizinische Analyse</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-0.5">Postvirale Dysfunktion / Kreislaufaufbau nach 7 Monaten Liegen</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeMedicalForecastModal()"
+                    class="w-8 h-8 rounded-full bg-white/80 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition focus:outline-none shadow-2xs"
+                    title="Schließen">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-5 space-y-4 overflow-y-auto">
+
+                <!-- Status & Datenbasis Badge -->
+                <div class="p-3.5 bg-teal-50/80 border border-teal-200/70 rounded-2xl flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-xl bg-teal-600/10 text-teal-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                        ⚡
+                    </div>
+                    <div class="text-xs text-teal-950 leading-relaxed">
+                        <div class="font-bold text-teal-900" id="m-fc-summary-title">Datengestützte Analyse deiner Gehzeiten</div>
+                        <div class="text-teal-800/90 mt-0.5" id="m-fc-summary-desc">Berechnung basiert ausschließlich auf deinen aktiven Gehtagen. Ruhetage schützen dein autonomes Nervensystem und verfälschen die Reha-Kurve nicht.</div>
+                    </div>
+                </div>
+
+                <!-- 4 KPI Badges -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div class="p-3 bg-slate-50/90 rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-slate-500">Aktuelle Baseline</div>
+                        <div class="text-base font-extrabold text-slate-900 mt-0.5" id="m-fc-kpi-baseline">0m 00s</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5" id="m-fc-kpi-baseline-sub">Ø aktive Tage</div>
+                    </div>
+                    <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/70 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-emerald-800">Trend-Dynamik</div>
+                        <div class="text-base font-extrabold text-emerald-950 mt-0.5" id="m-fc-kpi-trend">+0s / Woche</div>
+                        <div class="text-[10px] text-emerald-700 mt-0.5" id="m-fc-kpi-trend-sub">Reha-Steigung</div>
+                    </div>
+                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/70 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-amber-800">Erholungs-Faktor</div>
+                        <div class="text-base font-extrabold text-amber-950 mt-0.5" id="m-fc-kpi-recovery">0%</div>
+                        <div class="text-[10px] text-amber-700 mt-0.5" id="m-fc-kpi-recovery-sub">Pausentage</div>
+                    </div>
+                    <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/70 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-indigo-800">1. vs. 2. Gehen</div>
+                        <div class="text-base font-extrabold text-indigo-950 mt-0.5" id="m-fc-kpi-split">50% · 50%</div>
+                        <div class="text-[10px] text-indigo-700 mt-0.5" id="m-fc-kpi-split-sub">Orthostase-Split</div>
+                    </div>
+                </div>
+
+                <!-- Interaktive Reha-Prognose (Chart) -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900">Prognose-Rechner für Kreislaufaufbau</h4>
+                            <p class="text-[11px] text-slate-500">Projizierter Gehzeit-Korridor bei nachhaltigem Pacing</p>
+                        </div>
+                        <div class="flex items-center gap-1.5 self-start sm:self-auto">
+                            <button type="button" onclick="setMedicalForecastMode('conservative')" id="m-btn-mode-cons"
+                                class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-teal-600 text-white shadow-2xs">Konservativ (Empfohlen)</button>
+                            <button type="button" onclick="setMedicalForecastMode('moderate')" id="m-btn-mode-mod"
+                                class="px-2.5 py-1 rounded-lg text-xs font-medium transition bg-slate-100 text-slate-600 hover:text-slate-900">Moderat (+10%/Woche)</button>
+                        </div>
+                    </div>
+
+                    <!-- Prognose Chart Canvas -->
+                    <div class="relative h-52 sm:h-60 w-full">
+                        <canvas id="medicalForecastChart"></canvas>
+                    </div>
+
+                    <!-- Prognose Meilensteine -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 pt-3 border-t border-slate-100 text-center">
+                        <div class="p-2 bg-slate-50 rounded-xl">
+                            <div class="text-[10px] font-semibold text-slate-400 uppercase">In 2 Wochen</div>
+                            <div class="text-xs font-extrabold text-slate-800 mt-0.5" id="m-fc-target-2w">--</div>
+                            <div class="text-[9px] text-slate-500 font-medium" id="m-fc-split-2w">--</div>
+                        </div>
+                        <div class="p-2 bg-slate-50 rounded-xl">
+                            <div class="text-[10px] font-semibold text-slate-400 uppercase">In 4 Wochen</div>
+                            <div class="text-xs font-extrabold text-slate-800 mt-0.5" id="m-fc-target-4w">--</div>
+                            <div class="text-[9px] text-slate-500 font-medium" id="m-fc-split-4w">--</div>
+                        </div>
+                        <div class="p-2 bg-teal-50/70 border border-teal-200/50 rounded-xl">
+                            <div class="text-[10px] font-semibold text-teal-700 uppercase">In 8 Wochen</div>
+                            <div class="text-xs font-extrabold text-teal-900 mt-0.5" id="m-fc-target-8w">--</div>
+                            <div class="text-[9px] text-teal-700 font-medium" id="m-fc-split-8w">--</div>
+                        </div>
+                        <div class="p-2 bg-indigo-50/70 border border-indigo-200/50 rounded-xl">
+                            <div class="text-[10px] font-semibold text-indigo-700 uppercase">In 12 Wochen</div>
+                            <div class="text-xs font-extrabold text-indigo-900 mt-0.5" id="m-fc-target-12w">--</div>
+                            <div class="text-[9px] text-indigo-700 font-medium" id="m-fc-split-12w">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medizinische Fach-Einordnung (3 Cards) -->
+                <div class="space-y-3">
+
+                    <!-- 1. Kreislauf-Physiologie nach 7 Monaten Liegen -->
+                    <div class="p-4 bg-slate-50/90 rounded-2xl border border-slate-200/80">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="text-base">🫀</span>
+                            <h4 class="text-xs font-bold text-slate-900">Physiologie nach 7 Monaten Liegen (Deconditioning & Orthostase)</h4>
+                        </div>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            Nach 7 Monaten im Liegen (analog zu Astronauten in Schwerelosigkeit) verliert der Organismus typischerweise etwa <strong>10–20% des zirkulierenden Blutvolumens</strong>. Beim Aufstehen versackt das Blut durch die Schwerkraft rasch in den Bein- und Bauchvenen (<em>Venous Pooling</em>), weil die Barorezeptoren und der venöse Gefäßtonus deconditioniert sind.
+                        </p>
+                        <p class="text-xs text-slate-600 leading-relaxed mt-2">
+                            <strong>Jede einzelne Minute im Stehen/Gehen</strong> setzt einen unverzichtbaren biomechanischen und hormonellen Impuls: Sie aktiviert das Renin-Aldosteron-System zum stetigen Wiederaufbau des Plasmavolumens und bahnt die Baroreflexe für stabilen Blutdruck.
+                        </p>
+                    </div>
+
+                    <!-- 2. Postvirale Dysfunktion & Pacing (Warum Ruhetage heilen) -->
+                    <div class="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200/70">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="text-base">🛡️</span>
+                            <h4 class="text-xs font-bold text-emerald-950">Postvirale Dysfunktion & Pacing: Warum 0-Tage heilen</h4>
+                        </div>
+                        <p class="text-xs text-emerald-900/90 leading-relaxed">
+                            Bei postviraler vegetativer Dysregulation (z.&thinsp;B. POTS oder Dysautonomie) ist das vegetative Nervensystem hochsensibel. <strong>Tage ohne Gehzeit (0 Minuten) sind keine Rückschritte, sondern lebenswichtige Erholungsfenster</strong>, in denen sich das autonome Nervensystem kalibriert und vor <em>Post-Exertional Malaise</em> (PEM) geschützt wird.
+                        </p>
+                        <p class="text-xs text-emerald-900/90 leading-relaxed mt-2">
+                            <strong>Vorteil der 2 Einheiten (1. & 2. Gehen):</strong> Durch die Aufteilung halbierst du die orthostatische Spitzenlast pro Gang und trainierst den Kreislauf doppelt so häufig am Tag, ohne das Nervensystem zu überreizen.
+                        </p>
+                    </div>
+
+                    <!-- 3. Evidenzbasierte Alltags-Checkliste -->
+                    <div class="p-4 bg-teal-50/60 rounded-2xl border border-teal-200/70">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-base">📋</span>
+                            <h4 class="text-xs font-bold text-teal-950">Evidenzbasierte Alltags-Checkliste für den Kreislaufaufbau</h4>
+                        </div>
+                        <div class="space-y-2 text-xs text-teal-950">
+                            <div class="flex items-start gap-2">
+                                <span class="text-teal-600 font-bold">💧</span>
+                                <div><strong>Pressorisches Trinken:</strong> 300–400 ml Wasser ca. 15–20 Min. vor der Gehzeit trinken. Löst über osmotische Pfortader-Rezeptoren einen natürlichen Blutdruckanstieg aus.</div>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-teal-600 font-bold">🦵</span>
+                                <div><strong>Muskelpumpe voraktivieren:</strong> Vor dem ersten Schritt 30–60 Sek. im Sitzen/Liegen die Waden und das Gesäß fest anspannen (pumpt venöses Blut vorab zum Herzen).</div>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <span class="text-teal-600 font-bold">🛑</span>
+                                <div><strong>Strikte Pacing-Grenze:</strong> Bei Benommenheit, Tunnelblick, Nackenschmerzen (Coat-Hanger) oder Puls > 35 bpm über Ruhewert sofort hinsetzen und Beine hochlegen.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/80 flex items-center justify-between">
+                <div class="text-[11px] text-slate-500 font-medium">
+                    🩺 Konsistenz & Pacing schlagen Spitzenbelastung
+                </div>
+                <button type="button" onclick="closeMedicalForecastModal()"
+                    class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl transition shadow-xs">
                     Schließen
                 </button>
             </div>
@@ -638,7 +1047,7 @@
             const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
             const weekday = dateObj.toLocaleDateString('de-DE', { weekday: 'short' });
             const dayMonth = dateObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            
+
             const todayStr = getLocalDateStr();
             const yesterdayObj = new Date();
             yesterdayObj.setDate(yesterdayObj.getDate() - 1);
@@ -653,10 +1062,10 @@
         window.addTime = (timeOfDay, addMin, addSec) => {
             const minInput = document.getElementById(`input-${timeOfDay}-min`);
             const secInput = document.getElementById(`input-${timeOfDay}-sec`);
-            
+
             let currentMin = parseInt(minInput.value) || 0;
             let currentSec = parseInt(secInput.value) || 0;
-            
+
             let total = currentMin * 60 + currentSec + addMin * 60 + addSec;
             minInput.value = Math.floor(total / 60);
             secInput.value = total % 60;
@@ -803,7 +1212,7 @@
                 });
                 btn.classList.add('bg-white', 'text-slate-900', 'shadow-xs');
                 btn.classList.remove('text-slate-500');
-                
+
                 const val = btn.getAttribute('data-range');
                 selectedRange = val === 'all' ? 'all' : parseInt(val);
                 renderChart();
@@ -844,7 +1253,7 @@
             // 1. Heute
             if (todayEntry) {
                 document.getElementById('stat-today').textContent = formatSecToMinSec(todayEntry.totalSeconds);
-                
+
                 if (prevEntry) {
                     const diffToday = todayEntry.totalSeconds - prevEntry.totalSeconds;
                     document.getElementById('stat-today-split').innerHTML = `
@@ -1078,7 +1487,7 @@
         function renderChart() {
             const ctx = document.getElementById('walkingChart').getContext('2d');
             const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
-            
+
             let filtered = [];
             if (selectedRange === 'all') {
                 filtered = sorted.length > 0 ? sorted : [];
@@ -1177,7 +1586,7 @@
                             padding: 10,
                             cornerRadius: 10,
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     const rawValInMin = context.raw || 0;
                                     const totalSec = Math.round(rawValInMin * 60);
                                     const min = Math.floor(totalSec / 60);
@@ -1209,7 +1618,7 @@
                                 font: { size: 11 }
                             },
                             ticks: {
-                                callback: function(value) {
+                                callback: function (value) {
                                     return value + ' min';
                                 },
                                 font: { size: 10 }
@@ -1373,7 +1782,7 @@
 
         window.closeInsightModal = closeInsightModal;
 
-        window.openInsightModal = function(type) {
+        window.openInsightModal = function (type) {
             const modal = document.getElementById('insight-modal');
             if (!modal) return;
 
@@ -1507,7 +1916,7 @@
                                 },
                                 tooltip: {
                                     callbacks: {
-                                        label: function(c) {
+                                        label: function (c) {
                                             const secVal = Math.round(c.raw * 60);
                                             return ` ${c.label}: ${formatSecToMinSec(secVal)} (${tSec > 0 ? Math.round((secVal / tSec) * 100) : 0}%)`;
                                         }
@@ -1540,7 +1949,7 @@
                     });
                 }
 
-                insightTextEl.innerHTML = tSec > 0 
+                insightTextEl.innerHTML = tSec > 0
                     ? `Heute bist du insgesamt <strong>${formatSecToMinSec(tSec)}</strong> gelaufen. Dein Schwerpunkt lag zu <strong>${mPct}%</strong> auf der 1. Einheit und zu <strong>${ePct}%</strong> auf der 2. Einheit. ${tSec >= avg7 && avg7 > 0 ? 'Sehr stark – du liegst über deinem aktuellen Wochenschnitt! 🚀' : 'Super Einsatz für den heutigen Tag.'}`
                     : 'Für heute ist noch keine Gehzeit eingetragen. Trage oben deine Einheiten ein, um die Live-Tagesbalance zu sehen!';
 
@@ -1625,7 +2034,7 @@
                             legend: { position: 'bottom', labels: { font: { size: 10 } } },
                             tooltip: {
                                 callbacks: {
-                                    label: function(c) {
+                                    label: function (c) {
                                         return ` ${c.dataset.label}: ${formatSecToMinSec(Math.round(c.raw * 60))}`;
                                     }
                                 }
@@ -1651,7 +2060,7 @@
                 const mins = Math.floor((totalAllSec % 3600) / 60);
                 const km = (totalAllSec / 3600 * 3.6).toFixed(1);
                 const steps = Math.round(totalAllSec * 1.35).toLocaleString('de-DE');
-                
+
                 const bestDay = sortedRecords.length > 0 ? sortedRecords.reduce((max, r) => r.totalSeconds > max.totalSeconds ? r : max, sortedRecords[0]) : null;
 
                 kpiGridEl.innerHTML = `
@@ -1709,7 +2118,7 @@
                             legend: { display: false },
                             tooltip: {
                                 callbacks: {
-                                    label: function(c) {
+                                    label: function (c) {
                                         const totM = Math.round(c.raw);
                                         const h = Math.floor(totM / 60);
                                         const m = totM % 60;
@@ -1806,7 +2215,7 @@
                             legend: { display: false },
                             tooltip: {
                                 callbacks: {
-                                    label: function(c) {
+                                    label: function (c) {
                                         const s = recentSessions[c.dataIndex];
                                         return ` ${s.type}: ${formatSecToMinSec(s.sec)}`;
                                     }
@@ -1826,17 +2235,286 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeInsightModal();
+                closeMedicalForecastModal();
             }
         });
+
+        // --- Reha-Prognose & Medizinische Einschätzung Modal ---
+        let medicalForecastChartInstance = null;
+        let medicalForecastMode = 'conservative'; // 'conservative' oder 'moderate'
+
+        function closeMedicalForecastModal() {
+            const modal = document.getElementById('medical-forecast-modal');
+            if (modal) modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            if (medicalForecastChartInstance) {
+                medicalForecastChartInstance.destroy();
+                medicalForecastChartInstance = null;
+            }
+        }
+        window.closeMedicalForecastModal = closeMedicalForecastModal;
+
+        window.setMedicalForecastMode = function(mode) {
+            medicalForecastMode = mode;
+            const btnCons = document.getElementById('m-btn-mode-cons');
+            const btnMod = document.getElementById('m-btn-mode-mod');
+            if (mode === 'conservative') {
+                if (btnCons) btnCons.className = 'px-2.5 py-1 rounded-lg text-xs font-bold transition bg-teal-600 text-white shadow-2xs';
+                if (btnMod) btnMod.className = 'px-2.5 py-1 rounded-lg text-xs font-medium transition bg-slate-100 text-slate-600 hover:text-slate-900';
+            } else {
+                if (btnCons) btnCons.className = 'px-2.5 py-1 rounded-lg text-xs font-medium transition bg-slate-100 text-slate-600 hover:text-slate-900';
+                if (btnMod) btnMod.className = 'px-2.5 py-1 rounded-lg text-xs font-bold transition bg-teal-600 text-white shadow-2xs';
+            }
+            updateMedicalForecastUI();
+        };
+
+        window.openMedicalForecastModal = function() {
+            const modal = document.getElementById('medical-forecast-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+            updateMedicalForecastUI();
+        };
+
+        function updateMedicalForecastUI() {
+            const sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date));
+            const activeRecords = sortedRecords.filter(r => (r.totalSeconds || 0) > 0);
+
+            // 1. Berechne Baseline aus den aktiven Tagen (Ruhetage verfälschen nicht den Schnitt)
+            let baselineSec = 0;
+            if (activeRecords.length > 0) {
+                const recentActive = activeRecords.slice(-14);
+                baselineSec = Math.round(recentActive.reduce((sum, r) => sum + r.totalSeconds, 0) / recentActive.length);
+            } else {
+                baselineSec = 180; // 3 Min Fallback bei leeren Daten
+            }
+
+            // 2. Trend & Steigung über alle aktiven Reha-Tage
+            let trendSecPerWeek = 0;
+            if (activeRecords.length >= 2) {
+                const n = activeRecords.length;
+                let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+                activeRecords.forEach((r, idx) => {
+                    sumX += idx;
+                    sumY += r.totalSeconds;
+                    sumXY += idx * r.totalSeconds;
+                    sumXX += idx * idx;
+                });
+                const denom = (n * sumXX - sumX * sumX);
+                const slopePerEntry = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
+                trendSecPerWeek = Math.round(slopePerEntry * 5); // Bei ~5 aktiven Geh-Einheiten/Woche
+            }
+
+            // 3. Pausentage & Erholungs-Faktor
+            const totalDaysRecorded = sortedRecords.length;
+            const restDaysCount = sortedRecords.filter(r => (r.totalSeconds || 0) === 0).length;
+            const restRatio = totalDaysRecorded > 0 ? Math.round((restDaysCount / totalDaysRecorded) * 100) : 25;
+
+            // 4. Split Ratio (1. vs. 2. Gehen)
+            const totalMorningSec = activeRecords.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
+            const totalEveningSec = activeRecords.reduce((sum, r) => sum + (r.eveningSeconds || 0), 0);
+            const sumAllSec = totalMorningSec + totalEveningSec;
+            const morningRatio = sumAllSec > 0 ? Math.round((totalMorningSec / sumAllSec) * 100) : 50;
+            const eveningRatio = 100 - morningRatio;
+
+            // Update KPI Elements
+            const elBaseline = document.getElementById('m-fc-kpi-baseline');
+            const elTrend = document.getElementById('m-fc-kpi-trend');
+            const elRecovery = document.getElementById('m-fc-kpi-recovery');
+            const elSplit = document.getElementById('m-fc-kpi-split');
+
+            if (elBaseline) elBaseline.textContent = formatSecToMinSec(baselineSec);
+            if (elTrend) {
+                const prefix = trendSecPerWeek >= 0 ? '+' : '';
+                elTrend.textContent = `${prefix}${trendSecPerWeek}s / Wo`;
+                elTrend.className = `text-base font-extrabold mt-0.5 ${trendSecPerWeek >= 0 ? 'text-emerald-950' : 'text-amber-950'}`;
+            }
+            if (elRecovery) elRecovery.textContent = `${restRatio}% Schutz`;
+            if (elSplit) elSplit.textContent = `${morningRatio}% · ${eveningRatio}%`;
+
+            // Prognose-Steigerungsrate pro Woche
+            // Bei postviraler Dysfunktion nach 7 Monaten Liegen:
+            // Konservativ (Pacing-sicher): ~6.5% Steigerung pro Woche
+            // Moderat: ~10.5% Steigerung pro Woche
+            const weeklyRate = medicalForecastMode === 'conservative' ? 0.065 : 0.105;
+
+            const calcFutureSec = (weeks) => {
+                return Math.round(baselineSec * Math.pow(1 + weeklyRate, weeks));
+            };
+
+            const sec2w = calcFutureSec(2);
+            const sec4w = calcFutureSec(4);
+            const sec8w = calcFutureSec(8);
+            const sec12w = calcFutureSec(12);
+
+            const mRatio = morningRatio / 100;
+            const eRatio = eveningRatio / 100;
+
+            const setMilestone = (wId, sec) => {
+                const targetEl = document.getElementById(`m-fc-target-${wId}`);
+                const splitEl = document.getElementById(`m-fc-split-${wId}`);
+                if (targetEl) targetEl.textContent = formatSecToMinSec(sec);
+                if (splitEl) {
+                    const mSec = Math.round(sec * mRatio);
+                    const eSec = Math.round(sec * eRatio);
+                    splitEl.textContent = `1.: ${formatSecShort(mSec)} · 2.: ${formatSecShort(eSec)}`;
+                }
+            };
+
+            setMilestone('2w', sec2w);
+            setMilestone('4w', sec4w);
+            setMilestone('8w', sec8w);
+            setMilestone('12w', sec12w);
+
+            // Chart vorbereiten & rendern
+            if (medicalForecastChartInstance) {
+                medicalForecastChartInstance.destroy();
+                medicalForecastChartInstance = null;
+            }
+
+            const canvas = document.getElementById('medicalForecastChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const chartLabels = [];
+            const historicData = [];
+            const forecastConsData = [];
+            const forecastModData = [];
+
+            // Historische Messpunkte (bis zu 5 jüngste aktive Tage)
+            const histPointsCount = Math.min(activeRecords.length, 5);
+            for (let i = 0; i < histPointsCount; i++) {
+                const rec = activeRecords[activeRecords.length - histPointsCount + i];
+                const parts = rec.date.split('-');
+                chartLabels.push(`${parts[2]}.${parts[1]}. (Ist)`);
+                historicData.push(Number((rec.totalSeconds / 60).toFixed(2)));
+                forecastConsData.push(null);
+                forecastModData.push(null);
+            }
+
+            // Startpunkt der Prognose
+            chartLabels.push('Heute (Baseline)');
+            const baseMin = Number((baselineSec / 60).toFixed(2));
+            historicData.push(baseMin);
+            forecastConsData.push(baseMin);
+            forecastModData.push(baseMin);
+
+            // Zukunfts-Projektionspunkte: Woche +2, +4, +6, +8, +10, +12
+            const futureWeeksArr = [2, 4, 6, 8, 10, 12];
+            futureWeeksArr.forEach(w => {
+                chartLabels.push(`Woche +${w}`);
+                historicData.push(null);
+                const valCons = Number(((baselineSec * Math.pow(1 + 0.065, w)) / 60).toFixed(2));
+                const valMod = Number(((baselineSec * Math.pow(1 + 0.105, w)) / 60).toFixed(2));
+                forecastConsData.push(valCons);
+                forecastModData.push(valMod);
+            });
+
+            medicalForecastChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            label: 'Gemessene Gehzeit (min)',
+                            data: historicData,
+                            borderColor: '#0f766e',
+                            backgroundColor: '#0f766e',
+                            borderWidth: 2.5,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            tension: 0.2,
+                            spanGaps: false
+                        },
+                        {
+                            label: 'Konservativer Reha-Pfad (+6.5%/Wo)',
+                            data: forecastConsData,
+                            borderColor: '#059669',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderDash: [5, 5],
+                            borderWidth: 2.2,
+                            pointRadius: 3,
+                            tension: 0.3,
+                            fill: medicalForecastMode === 'conservative' ? 'origin' : false
+                        },
+                        {
+                            label: 'Moderater Reha-Pfad (+10.5%/Wo)',
+                            data: forecastModData,
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                            borderDash: [3, 3],
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            tension: 0.3,
+                            fill: medicalForecastMode === 'moderate' ? 'origin' : false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                boxHeight: 12,
+                                font: { size: 11, weight: '500' },
+                                padding: 12
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            padding: 10,
+                            cornerRadius: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.raw === null || context.raw === undefined) return '';
+                                    const rawValInMin = context.raw || 0;
+                                    const totalSec = Math.round(rawValInMin * 60);
+                                    const min = Math.floor(totalSec / 60);
+                                    const sec = totalSec % 60;
+                                    return ` ${context.dataset.label}: ${min}m ${String(sec).padStart(2, '0')}s`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Tageszeit (Minuten)',
+                                font: { size: 11 }
+                            },
+                            ticks: {
+                                callback: val => `${val} min`,
+                                font: { size: 10 }
+                            },
+                            grid: { color: 'rgba(226, 232, 240, 0.8)' }
+                        }
+                    }
+                }
+            });
+        }
 
         // --- Tab / View Umschaltung (Dashboard vs. Live-Stoppuhr) ---
         let currentView = 'dashboard';
 
-        window.toggleView = function() {
+        window.toggleView = function () {
             switchView(currentView === 'dashboard' ? 'stopwatch' : 'dashboard');
         };
 
-        window.switchView = function(targetView) {
+        window.switchView = function (targetView) {
             currentView = targetView;
             const viewDashboard = document.getElementById('view-dashboard');
             const viewStopwatch = document.getElementById('view-stopwatch');
@@ -1871,7 +2549,7 @@
         let lastPingInterval = 0;
         let stopwatchSoundEnabled = true;
 
-        window.toggleStopwatchSound = function() {
+        window.toggleStopwatchSound = function () {
             stopwatchSoundEnabled = !stopwatchSoundEnabled;
             const iconOn = document.getElementById('sw-sound-icon-on');
             const iconOff = document.getElementById('sw-sound-icon-off');
@@ -1932,7 +2610,7 @@
             }
         }
 
-        window.setStopwatchTarget = function(target) {
+        window.setStopwatchTarget = function (target) {
             stopwatchTarget = target;
             const btnM = document.getElementById('sw-target-morning');
             const btnE = document.getElementById('sw-target-evening');
@@ -1971,7 +2649,7 @@
             }
         }
 
-        window.toggleStopwatch = function() {
+        window.toggleStopwatch = function () {
             if (stopwatchIsRunning) {
                 pauseStopwatch();
             } else {
@@ -1979,7 +2657,7 @@
             }
         };
 
-        window.startStopwatch = function() {
+        window.startStopwatch = function () {
             if (stopwatchIsRunning) return;
             stopwatchIsRunning = true;
             stopwatchStartTime = Date.now() - stopwatchElapsedMs;
@@ -1992,12 +2670,12 @@
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
-            } catch (e) {}
+            } catch (e) { }
 
             document.getElementById('sw-icon-play')?.classList.add('hidden');
             document.getElementById('sw-icon-pause')?.classList.remove('hidden');
             document.getElementById('btn-sw-text').textContent = 'Pause';
-            
+
             const badge = document.getElementById('sw-status-badge');
             if (badge) {
                 badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 animate-pulse mb-2';
@@ -2012,7 +2690,7 @@
             }, 50);
         };
 
-        window.pauseStopwatch = function() {
+        window.pauseStopwatch = function () {
             if (!stopwatchIsRunning) return;
             stopwatchIsRunning = false;
             clearInterval(stopwatchTimer);
@@ -2029,7 +2707,7 @@
             }
         };
 
-        window.resetStopwatch = function() {
+        window.resetStopwatch = function () {
             pauseStopwatch();
             stopwatchElapsedMs = 0;
             lastPingInterval = 0;
@@ -2086,7 +2764,7 @@
             }
         }
 
-        window.saveStopwatchTime = function() {
+        window.saveStopwatchTime = function () {
             const elapsedSec = Math.round(stopwatchElapsedMs / 1000);
             if (elapsedSec <= 0) {
                 alert('Die gestoppte Zeit beträgt 0 Sekunden.');
@@ -2204,4 +2882,5 @@
         }
     </script>
 </body>
+
 </html>
