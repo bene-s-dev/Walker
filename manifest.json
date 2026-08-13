@@ -9,7 +9,11 @@
   "orientation": "portrait-primary",
   "background_color": "#f1f5f9",
   "theme_color": "#0f766e",
-  "categories": ["health", "fitness", "lifestyle"],
+  "categories": [
+    "health",
+    "fitness",
+    "lifestyle"
+  ],
   "icons": [
     {
       "src": "icon-192.png",

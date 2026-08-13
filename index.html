@@ -299,7 +299,7 @@
                 </div>
             </div>
 
-            <div id="history-list" class="space-y-2.5">
+            <div id="history-list" class="space-y-1.5">
                 <!-- Dynamische Einträge -->
             </div>
 
@@ -682,7 +682,7 @@
             document.getElementById('stat-days-count').textContent = `${records.length} Tag${records.length === 1 ? '' : 'e'}`;
         }
 
-        // --- Verlaufsliste rendern ---
+        // --- Verlaufsliste rendern (Kompakt & Übersichtlich) ---
         function renderHistory() {
             const listEl = document.getElementById('history-list');
             const emptyEl = document.getElementById('empty-state');
@@ -697,47 +697,53 @@
             }
             emptyEl.classList.add('hidden');
 
+            const todayStr = getLocalDateStr();
+            const yesterdayObj = new Date();
+            yesterdayObj.setDate(yesterdayObj.getDate() - 1);
+            const yesterdayStr = getLocalDateStr(yesterdayObj);
+
             listEl.innerHTML = records.map(r => {
-                const morningFormatted = formatSecToMinSec(r.morningSeconds);
-                const eveningFormatted = formatSecToMinSec(r.eveningSeconds);
+                const isToday = r.date === todayStr;
+                const isYesterday = r.date === yesterdayStr;
+
+                const parts = r.date.split('-');
+                const dObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                const weekday = dObj.toLocaleDateString('de-DE', { weekday: 'short' });
+                const dayMonth = dObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+
+                const morningFormatted = formatSecShort(r.morningSeconds);
+                const eveningFormatted = formatSecShort(r.eveningSeconds);
                 const totalFormatted = formatSecToMinSec(r.totalSeconds);
-                const isToday = r.date === getLocalDateStr();
 
                 return `
-                <div class="p-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border ${isToday ? 'border-teal-300 ring-1 ring-teal-400/30' : 'border-slate-200/80'} flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition">
-                    <div class="flex items-start sm:items-center gap-3">
-                        <div class="p-2 bg-white rounded-xl border border-slate-200 text-teal-700 shadow-xs flex flex-col items-center justify-center min-w-[50px]">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">${new Date(r.date + 'T00:00:00').toLocaleDateString('de-DE', { weekday: 'short' })}</span>
-                            <span class="text-base font-extrabold text-slate-800 leading-tight">${r.date.split('-')[2]}</span>
-                            <span class="text-[9px] font-medium text-slate-400">${new Date(r.date + 'T00:00:00').toLocaleDateString('de-DE', { month: 'short' })}</span>
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-sm text-slate-800">${formatDatePretty(r.date)}</span>
-                                ${isToday ? '<span class="px-1.5 py-0.5 bg-teal-100 text-teal-800 text-[10px] font-bold rounded">Heute</span>' : ''}
-                            </div>
-                            <div class="flex flex-wrap items-center gap-3 mt-1 text-xs">
-                                <span class="flex items-center gap-1 font-medium text-amber-900 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
-                                    <span>☀️</span> <span>${morningFormatted}</span>
-                                </span>
-                                <span class="flex items-center gap-1 font-medium text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/60">
-                                    <span>🌙</span> <span>${eveningFormatted}</span>
-                                </span>
-                            </div>
-                        </div>
+                <div class="px-3 py-2 sm:px-3.5 sm:py-2.5 bg-slate-50 hover:bg-slate-100/90 rounded-xl border ${isToday ? 'border-teal-400/80 bg-teal-50/25 ring-1 ring-teal-400/20' : 'border-slate-200/80'} flex items-center justify-between gap-2 sm:gap-4 transition">
+                    <!-- Datum (Einfach & Eindeutig) -->
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="font-bold text-xs sm:text-sm text-slate-800 tracking-tight whitespace-nowrap">${weekday}, ${dayMonth}</span>
+                        ${isToday ? '<span class="px-1.5 py-0.5 bg-teal-100 text-teal-800 text-[10px] font-bold rounded">Heute</span>' : (isYesterday ? '<span class="px-1.5 py-0.5 bg-slate-200/80 text-slate-600 text-[10px] font-medium rounded">Gestern</span>' : '')}
                     </div>
 
-                    <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
-                        <div class="text-right">
-                            <div class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Gesamt</div>
-                            <div class="text-sm font-extrabold text-teal-800">${totalFormatted}</div>
+                    <!-- Morgens & Abends Badges -->
+                    <div class="flex items-center gap-1 sm:gap-2 text-[11px] sm:text-xs">
+                        <span class="inline-flex items-center gap-1 font-medium bg-amber-50 text-amber-900 px-1.5 sm:px-2 py-0.5 rounded-md border border-amber-200/50 whitespace-nowrap">
+                            <span>☀️</span> <span>${morningFormatted}</span>
+                        </span>
+                        <span class="inline-flex items-center gap-1 font-medium bg-indigo-50 text-indigo-900 px-1.5 sm:px-2 py-0.5 rounded-md border border-indigo-200/50 whitespace-nowrap">
+                            <span>🌙</span> <span>${eveningFormatted}</span>
+                        </span>
+                    </div>
+
+                    <!-- Gesamtzeit & Aktionen -->
+                    <div class="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+                        <div class="text-right min-w-[55px] sm:min-w-[65px]">
+                            <div class="text-xs sm:text-sm font-extrabold text-teal-800 leading-tight">${totalFormatted}</div>
                         </div>
-                        <div class="flex items-center gap-1">
-                            <button onclick="editEntry('${r.date}')" title="Bearbeiten" class="p-2 text-slate-500 hover:text-teal-700 hover:bg-white rounded-lg transition border border-transparent hover:border-slate-200">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        <div class="flex items-center gap-0.5">
+                            <button onclick="editEntry('${r.date}')" title="Bearbeiten" class="p-1 sm:p-1.5 text-slate-400 hover:text-teal-700 hover:bg-white rounded-lg transition border border-transparent hover:border-slate-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                             </button>
-                            <button onclick="deleteEntry('${r.date}')" title="Löschen" class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition border border-transparent hover:border-red-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <button onclick="deleteEntry('${r.date}')" title="Löschen" class="p-1 sm:p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition border border-transparent hover:border-rose-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             </button>
                         </div>
                     </div>
