@@ -357,9 +357,15 @@
                         <span>Dashboard</span>
                     </button>
                     <span class="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200/60 px-3 py-1 rounded-full uppercase tracking-wider">Live Stoppuhr</span>
-                    <button type="button" onclick="resetStopwatch()" title="Zurücksetzen" class="px-3 py-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs font-semibold rounded-xl transition">
-                        Reset
-                    </button>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" id="btn-sw-sound" onclick="toggleStopwatchSound()" class="px-2.5 py-1.5 text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200/60 rounded-xl text-xs font-semibold transition flex items-center gap-1" title="Minuten-Ping Signal an/aus">
+                            <span id="sw-sound-icon">🔔</span>
+                            <span id="sw-sound-text" class="hidden sm:inline">Ping an</span>
+                        </button>
+                        <button type="button" onclick="resetStopwatch()" title="Zurücksetzen" class="px-2.5 py-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-xs font-semibold rounded-xl transition">
+                            Reset
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Session Selection (1. Gehen vs. 2. Gehen) -->
@@ -1787,6 +1793,59 @@
         let stopwatchElapsedMs = 0;
         let stopwatchIsRunning = false;
         let stopwatchTarget = 'morning'; // 'morning' oder 'evening'
+        let audioCtx = null;
+        let lastPingMinute = 0;
+        let stopwatchSoundEnabled = true;
+
+        window.toggleStopwatchSound = function() {
+            stopwatchSoundEnabled = !stopwatchSoundEnabled;
+            const icon = document.getElementById('sw-sound-icon');
+            const text = document.getElementById('sw-sound-text');
+            const btn = document.getElementById('btn-sw-sound');
+            if (stopwatchSoundEnabled) {
+                if (icon) icon.textContent = '🔔';
+                if (text) text.textContent = 'Ping an';
+                if (btn) btn.className = 'px-2.5 py-1.5 text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200/60 rounded-xl text-xs font-semibold transition flex items-center gap-1';
+                playMinutePing(); // Test-Ping
+            } else {
+                if (icon) icon.textContent = '🔕';
+                if (text) text.textContent = 'Ping aus';
+                if (btn) btn.className = 'px-2.5 py-1.5 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-xl text-xs font-semibold transition flex items-center gap-1';
+            }
+        };
+
+        function playMinutePing() {
+            if (!stopwatchSoundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                // Klarer, angenehmer Reha-Glockenton
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(987.77, now); // B5
+                osc.frequency.exponentialRampToValueAtTime(1975.53, now + 0.08); // B6 Glöckchen
+
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.exponentialRampToValueAtTime(0.35, now + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.7);
+            } catch (e) {
+                console.warn('Audio Context Fehler:', e);
+            }
+        }
 
         window.setStopwatchTarget = function(target) {
             stopwatchTarget = target;
@@ -1840,6 +1899,16 @@
             stopwatchIsRunning = true;
             stopwatchStartTime = Date.now() - stopwatchElapsedMs;
 
+            // AudioContext im Rahmen der User-Interaktion initialisieren
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } catch (e) {}
+
             document.getElementById('sw-icon-play')?.classList.add('hidden');
             document.getElementById('sw-icon-pause')?.classList.remove('hidden');
             document.getElementById('btn-sw-text').textContent = 'Pause';
@@ -1878,6 +1947,7 @@
         window.resetStopwatch = function() {
             pauseStopwatch();
             stopwatchElapsedMs = 0;
+            lastPingMinute = 0;
             renderStopwatchDisplay();
 
             document.getElementById('btn-sw-text').textContent = 'Starten';
@@ -1897,6 +1967,12 @@
             const mins = Math.floor(totalSec / 60);
             const secs = totalSec % 60;
             const tenths = Math.floor((stopwatchElapsedMs % 1000) / 100);
+
+            // Minuten-Ping bei jeder vollen Minute (1:00, 2:00, 3:00 ...)
+            if (stopwatchIsRunning && mins > 0 && mins !== lastPingMinute && secs === 0) {
+                lastPingMinute = mins;
+                playMinutePing();
+            }
 
             const minStr = String(mins).padStart(2, '0');
             const secStr = String(secs).padStart(2, '0');
