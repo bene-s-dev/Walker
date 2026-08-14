@@ -771,22 +771,18 @@
 
             </div>
 
-            <!-- Modal Footer (Navigation Tabs) -->
-            <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between gap-2">
-                <div class="flex bg-slate-200/70 p-1 rounded-xl gap-1 text-xs" id="modal-nav-tabs">
+            <!-- Modal Footer (Navigation Tabs / Filter) -->
+            <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/80">
+                <div class="grid grid-cols-4 bg-slate-200/70 p-1 rounded-2xl gap-1 text-xs" id="modal-nav-tabs">
                     <button onclick="openInsightModal('today')" id="tab-today"
-                        class="px-2.5 py-1 rounded-lg font-medium transition">Heute</button>
+                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Heute</button>
                     <button onclick="openInsightModal('avg')" id="tab-avg"
-                        class="px-2.5 py-1 rounded-lg font-medium transition">7-Tage</button>
+                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">7-Tage</button>
                     <button onclick="openInsightModal('total')" id="tab-total"
-                        class="px-2.5 py-1 rounded-lg font-medium transition">Gesamt</button>
+                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Gesamt</button>
                     <button onclick="openInsightModal('single')" id="tab-single"
-                        class="px-2.5 py-1 rounded-lg font-medium transition">Am Stück</button>
+                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Am Stück</button>
                 </div>
-                <button type="button" onclick="closeInsightModal()"
-                    class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-xl transition">
-                    Schließen
-                </button>
             </div>
 
         </div>
@@ -1745,9 +1741,9 @@
                 const tabBtn = document.getElementById(`tab-${t}`);
                 if (tabBtn) {
                     if (t === type) {
-                        tabBtn.className = 'px-2.5 py-1 rounded-lg font-bold transition bg-teal-600 text-white shadow-xs';
+                        tabBtn.className = 'w-full py-1.5 px-1 text-center rounded-xl font-bold transition bg-teal-600 text-white shadow-xs';
                     } else {
-                        tabBtn.className = 'px-2.5 py-1 rounded-lg font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-300/50';
+                        tabBtn.className = 'w-full py-1.5 px-1 text-center rounded-xl font-medium transition text-slate-600 hover:text-slate-900 hover:bg-slate-300/50';
                     }
                 }
             });
