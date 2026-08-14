@@ -359,7 +359,7 @@
                 </div>
 
                 <!-- Chart Container -->
-                <div class="relative h-64 sm:h-72 w-full">
+                <div class="relative h-72 sm:h-80 w-full">
                     <canvas id="walkingChart"></canvas>
                 </div>
 
@@ -1521,6 +1521,9 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: { left: 0, right: 0, top: 4, bottom: 0 }
+                    },
                     interaction: {
                         mode: 'index',
                         intersect: false
@@ -1580,15 +1583,14 @@
                             stacked: true,
                             beginAtZero: true,
                             title: {
-                                display: true,
-                                text: 'Dauer (Minuten)',
-                                font: { size: 11 }
+                                display: false
                             },
                             ticks: {
                                 callback: function (value) {
-                                    return value + ' min';
+                                    return value + 'm';
                                 },
-                                font: { size: 10 }
+                                font: { size: 10 },
+                                padding: 4
                             },
                             grid: {
                                 color: 'rgba(226, 232, 240, 0.8)'
