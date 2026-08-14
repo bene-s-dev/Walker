@@ -274,7 +274,7 @@
                         </svg>
                     </div>
                     <div id="stat-today" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                    <div class="text-[11px] text-teal-600 font-medium mt-0.5" id="stat-today-split">1. 🚶 0m · 2. 🚶 0m
+                    <div class="text-[11px] text-teal-600 font-medium mt-0.5" id="stat-today-split">1. Gehen 0m · 2. Gehen 0m
                     </div>
                 </div>
                 <div id="card-stat-avg" onclick="openInsightModal('avg')"
@@ -323,6 +323,67 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Visualisierung / Charts -->
+            <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <svg class="text-teal-600 w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            <span>Laufzeit-Visualisierung</span>
+                        </h2>
+                    </div>
+
+                    <!-- Range Selector Buttons -->
+                    <div
+                        class="flex flex-wrap bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600 self-start sm:self-auto gap-0.5">
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition bg-white text-slate-900 shadow-xs"
+                            data-range="7">7 Tage</button>
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
+                            data-range="14">14 Tage</button>
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
+                            data-range="30">30 Tage</button>
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
+                            data-range="all">Alle</button>
+                        <button type="button"
+                            class="range-btn px-2.5 py-1 rounded-lg transition text-teal-700 hover:text-teal-900 font-bold"
+                            data-range="prognose">Prognose</button>
+                    </div>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="relative h-64 sm:h-72 w-full">
+                    <canvas id="walkingChart"></canvas>
+                </div>
+
+                <div
+                    class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-3 text-xs font-medium text-slate-600">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-md bg-amber-400 inline-block"></span>
+                        <span>1. Gehen</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-md bg-indigo-500 inline-block"></span>
+                        <span>2. Gehen</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-1 rounded bg-teal-600 inline-block"></span>
+                        <span>Tagesgesamtzeit</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-4 h-0 border-t-2 border-dashed border-teal-600 inline-block"></span>
+                        <span>Trend</span>
+                    </div>
+                </div>
+            </section>
 
             <!-- Formular: Gehzeit eintragen -->
             <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80" id="entry-section">
@@ -452,74 +513,6 @@
                         </button>
                     </div>
                 </form>
-            </section>
-
-            <!-- Visualisierung / Charts -->
-            <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <div>
-                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <svg class="text-teal-600 w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            <span>Laufzeit-Visualisierung</span>
-                        </h2>
-                    </div>
-
-                    <!-- Range Selector Buttons -->
-                    <div
-                        class="flex flex-wrap bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600 self-start sm:self-auto gap-0.5">
-                        <button type="button"
-                            class="range-btn px-2.5 py-1 rounded-lg transition bg-white text-slate-900 shadow-xs"
-                            data-range="7">7 Tage</button>
-                        <button type="button"
-                            class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
-                            data-range="14">14 Tage</button>
-                        <button type="button"
-                            class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
-                            data-range="30">30 Tage</button>
-                        <button type="button"
-                            class="range-btn px-2.5 py-1 rounded-lg transition text-slate-500 hover:text-slate-900"
-                            data-range="all">Alle</button>
-                        <button type="button"
-                            class="range-btn px-2.5 py-1 rounded-lg transition text-teal-700 hover:text-teal-900 font-bold"
-                            data-range="prognose">Prognose (7T)</button>
-                        <button type="button"
-                            class="range-btn px-2.5 py-1 rounded-lg transition text-teal-700 hover:text-teal-900 font-bold"
-                            data-range="prognose60">Prognose 60T</button>
-                    </div>
-                </div>
-
-                <!-- Chart Container -->
-                <div class="relative h-64 sm:h-72 w-full">
-                    <canvas id="walkingChart"></canvas>
-                </div>
-
-                <div
-                    class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-3 text-xs font-medium text-slate-600">
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded-md bg-amber-400 inline-block"></span>
-                        <span>1. Gehen</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-3 h-3 rounded-md bg-indigo-500 inline-block"></span>
-                        <span>2. Gehen</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-3 h-1 rounded bg-teal-600 inline-block"></span>
-                        <span>Tagesgesamtzeit</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-4 h-0 border-t-2 border-dashed border-teal-600 inline-block"></span>
-                        <span>Ist-Trend (Daten)</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="w-4 h-0 border-t-2 border-dashed border-violet-500 inline-block"></span>
-                        <span>Empfohlener Trend (+6,5%/Wo)</span>
-                    </div>
-                </div>
             </section>
 
             <!-- Verlauf / Historie -->
@@ -1032,7 +1025,7 @@
                 btn.classList.remove('text-slate-500');
 
                 const val = btn.getAttribute('data-range');
-                if (val === 'all' || val === 'prognose' || val === 'prognose60') {
+                if (val === 'all' || val === 'prognose') {
                     selectedRange = val;
                 } else {
                     selectedRange = parseInt(val);
@@ -1079,15 +1072,15 @@
                 if (prevEntry) {
                     const diffToday = todayEntry.totalSeconds - prevEntry.totalSeconds;
                     document.getElementById('stat-today-split').innerHTML = `
-                        <div>1. 🚶 ${formatSecShort(todayEntry.morningSeconds)} · 2. 🚶 ${formatSecShort(todayEntry.eveningSeconds)}</div>
+                        <div>1. Gehen ${formatSecShort(todayEntry.morningSeconds)} · 2. Gehen ${formatSecShort(todayEntry.eveningSeconds)}</div>
                         <div class="mt-0.5">${formatTrendHTML(diffToday, 'vs. Vortag')}</div>
                     `;
                 } else {
-                    document.getElementById('stat-today-split').textContent = `1. 🚶 ${formatSecShort(todayEntry.morningSeconds)} · 2. 🚶 ${formatSecShort(todayEntry.eveningSeconds)}`;
+                    document.getElementById('stat-today-split').textContent = `1. Gehen ${formatSecShort(todayEntry.morningSeconds)} · 2. Gehen ${formatSecShort(todayEntry.eveningSeconds)}`;
                 }
             } else {
                 document.getElementById('stat-today').textContent = '0m 00s';
-                document.getElementById('stat-today-split').textContent = '1. 🚶 0m · 2. 🚶 0m';
+                document.getElementById('stat-today-split').textContent = '1. Gehen 0m · 2. Gehen 0m';
             }
 
             // 2. 7-Tage Schnitt (Tagesgesamtzeit pro aktivem Tag)
@@ -1313,12 +1306,13 @@
             let filtered = [];
             if (selectedRange === 'all') {
                 filtered = sorted.length > 0 ? sorted.map(r => ({ ...r, isForecast: false })) : [];
-            } else if (selectedRange === 'prognose' || selectedRange === 'prognose60') {
-                // Prognose-Filter: 7 Tage bzw. 60 Tage Vorausberechnung basierend auf aktiven Daten
-                const futureDays = selectedRange === 'prognose60' ? 60 : 7;
-                const pastDays = selectedRange === 'prognose60' ? 14 : 7;
+            } else if (selectedRange === 'prognose') {
+                // Prognose-Filter: 90 Tage Vorausschau, jeder 2. Tag wird visualisiert
+                const pastDays = 14;
+                const futureDays = 90;
+                const futureStep = 2;
 
-                // 1. Vergangene Tage (Ist-Werte)
+                // 1. Vergangene 14 Tage (Ist-Werte)
                 for (let i = pastDays - 1; i >= 0; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
@@ -1337,7 +1331,7 @@
                     }
                 }
 
-                // 2. Baseline & Split aus den aktiven Tagen berechnen
+                // 2. Baseline, Split und realer Trend aus den aktiven Tagen berechnen
                 const activeRecords = sorted.filter(r => (r.totalSeconds || 0) > 0);
                 let baselineSec = 0;
                 let morningShare = 0.5;
@@ -1351,15 +1345,27 @@
                     baselineSec = 180; // 3 Min Fallback
                 }
 
-                // Sanfte Pacing-Steigerung bei postviraler Dysfunktion (~6.5% pro Woche => täglicher Faktor)
-                const dailyRate = Math.pow(1 + 0.065, 1 / 7) - 1;
+                // Reale Steigung (Sekunden pro Tag) aus der Regression der aktiven Tage
+                let slopePerDaySec = 0;
+                if (activeRecords.length >= 2) {
+                    const n = activeRecords.length;
+                    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+                    activeRecords.forEach((r, idx) => {
+                        sumX += idx;
+                        sumY += r.totalSeconds;
+                        sumXY += idx * r.totalSeconds;
+                        sumXX += idx * idx;
+                    });
+                    const denom = (n * sumXX - sumX * sumX);
+                    slopePerDaySec = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
+                }
 
-                // 3. Kommende Tage als Prognose berechnen
-                for (let i = 1; i <= futureDays; i++) {
+                // 3. Kommende 90 Tage berechnen (jeder 2. Tag)
+                for (let i = futureStep; i <= futureDays; i += futureStep) {
                     const d = new Date();
                     d.setDate(d.getDate() + i);
                     const ds = getLocalDateStr(d);
-                    const projectedTotal = Math.round(baselineSec * Math.pow(1 + dailyRate, i));
+                    const projectedTotal = Math.max(0, Math.round(baselineSec + (slopePerDaySec * i)));
                     const projectedMorning = Math.round(projectedTotal * morningShare);
                     const projectedEvening = projectedTotal - projectedMorning;
                     filtered.push({
@@ -1406,60 +1412,65 @@
             const eveningMinutes = filtered.map(r => Number((r.eveningSeconds / 60).toFixed(2)));
             const totalMinutes = filtered.map(r => Number((r.totalSeconds / 60).toFixed(2)));
 
-            // 1. Tatsächlich errechneter Trend aus den vorangegangenen Daten (lineare Regression über reale aktive Tage)
-            const actualActivePoints = [];
+            // Trendlinie: Sanfte Glättung (gewichtete Regression & EMA), die Inaktivtage sanft einbezieht, ohne abrupt auf 0 abzustürzen
+            const pastPoints = [];
             filtered.forEach((r, idx) => {
-                if (!r.isForecast && r.totalSeconds > 0) {
-                    actualActivePoints.push({ x: idx, y: r.totalSeconds / 60 });
+                if (!r.isForecast) {
+                    const val = r.totalSeconds / 60;
+                    // Aktive Tage mit vollem Gewicht (1.0), Ruhetage sanft gedämpft (0.25)
+                    pastPoints.push({ x: idx, y: val, w: val > 0 ? 1.0 : 0.25 });
                 }
             });
 
-            let actualTrendMinutes = new Array(filtered.length).fill(null);
-            if (actualActivePoints.length === 1) {
-                const singleVal = Number(actualActivePoints[0].y.toFixed(2));
-                actualTrendMinutes = new Array(filtered.length).fill(singleVal);
-            } else if (actualActivePoints.length > 1) {
-                const n = actualActivePoints.length;
-                let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-                for (const pt of actualActivePoints) {
-                    sumX += pt.x;
-                    sumY += pt.y;
-                    sumXY += pt.x * pt.y;
-                    sumXX += pt.x * pt.x;
+            let trendMinutes = [];
+            if (pastPoints.length === 0) {
+                trendMinutes = new Array(filtered.length).fill(0);
+            } else if (pastPoints.length === 1) {
+                const singleVal = Number(pastPoints[0].y.toFixed(2));
+                trendMinutes = new Array(filtered.length).fill(singleVal);
+            } else {
+                // Gewichtete lineare Regression über historische Punkte
+                let sumW = 0, sumWX = 0, sumWY = 0, sumWXX = 0, sumWXY = 0;
+                for (const p of pastPoints) {
+                    sumW += p.w;
+                    sumWX += p.w * p.x;
+                    sumWY += p.w * p.y;
+                    sumWXX += p.w * p.x * p.x;
+                    sumWXY += p.w * p.x * p.y;
                 }
-                const denom = (n * sumXX - sumX * sumX);
-                const slope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
-                const intercept = (sumY - slope * sumX) / n;
+                const denom = (sumW * sumWXX - sumWX * sumWX);
+                const regSlope = denom !== 0 ? (sumW * sumWXY - sumWX * sumWY) / denom : 0;
+                const regIntercept = (sumWY - regSlope * sumWX) / sumW;
 
-                actualTrendMinutes = filtered.map((_, idx) => {
-                    const val = slope * idx + intercept;
-                    return Number(Math.max(0, val).toFixed(2));
+                // Geglätteter EMA-Trend über die Tage: Inaktive Tage dämpfen leicht (~7%), aktive Tage heben den Trend an
+                let currentEma = pastPoints[0].y > 0 ? pastPoints[0].y : Math.max(0, regIntercept);
+                const smoothedPast = [];
+                for (let i = 0; i < pastPoints.length; i++) {
+                    const rawVal = pastPoints[i].y;
+                    if (rawVal > 0) {
+                        currentEma = 0.65 * currentEma + 0.35 * rawVal;
+                    } else {
+                        currentEma = 0.93 * currentEma; // Sanfter Erholungs-Dip statt 0-Absturz
+                    }
+                    const regVal = Math.max(0, regSlope * i + regIntercept);
+                    // Harmonischer Mix aus geglättetem Verlauf (60%) und Regressionstrend (40%)
+                    const blended = 0.6 * currentEma + 0.4 * regVal;
+                    smoothedPast.push(blended);
+                }
+
+                const lastPastIdx = pastPoints.length - 1;
+                const lastSmoothedVal = smoothedPast[lastPastIdx] || 0;
+
+                filtered.forEach((r, idx) => {
+                    if (idx <= lastPastIdx) {
+                        trendMinutes.push(Number(Math.max(0, smoothedPast[idx]).toFixed(2)));
+                    } else {
+                        const stepsAhead = idx - lastPastIdx;
+                        const futureVal = Math.max(0, lastSmoothedVal + (regSlope * stepsAhead));
+                        trendMinutes.push(Number(futureVal.toFixed(2)));
+                    }
                 });
             }
-
-            // 2. Empfohlener Reha-Trend (+6.5% pro Woche / nachhaltiges Pacing)
-            let todayIdx = filtered.findIndex(r => r.isForecast);
-            if (todayIdx === -1) todayIdx = filtered.length - 1;
-
-            const allActiveRecords = sorted.filter(r => (r.totalSeconds || 0) > 0);
-            let baselineSec = 0;
-            if (allActiveRecords.length > 0) {
-                const recent = allActiveRecords.slice(-14);
-                baselineSec = Math.round(recent.reduce((sum, r) => sum + r.totalSeconds, 0) / recent.length);
-            } else {
-                baselineSec = 180;
-            }
-
-            const dailyPacingRate = Math.pow(1 + 0.065, 1 / 7) - 1;
-            const recommendedTrendMinutes = filtered.map((_, idx) => {
-                if (idx < todayIdx) {
-                    return Number((baselineSec / 60).toFixed(2));
-                } else {
-                    const daysAhead = idx - todayIdx;
-                    const valSec = baselineSec * Math.pow(1 + dailyPacingRate, daysAhead);
-                    return Number((valSec / 60).toFixed(2));
-                }
-            });
 
             if (chartInstance) {
                 chartInstance.destroy();
@@ -1484,29 +1495,15 @@
                         },
                         {
                             type: 'line',
-                            label: 'Ist-Trend (Daten)',
-                            data: actualTrendMinutes,
+                            label: 'Trend',
+                            data: trendMinutes,
                             borderColor: '#0d9488',
                             backgroundColor: 'transparent',
                             borderWidth: 2,
                             borderDash: [6, 4],
                             pointRadius: 0,
                             pointHoverRadius: 4,
-                            tension: 0,
-                            fill: false,
-                            order: 0
-                        },
-                        {
-                            type: 'line',
-                            label: 'Empfohlener Trend (+6,5%/Wo)',
-                            data: recommendedTrendMinutes,
-                            borderColor: '#8b5cf6',
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            borderDash: [3, 3],
-                            pointRadius: 0,
-                            pointHoverRadius: 4,
-                            tension: 0.2,
+                            tension: 0.35,
                             fill: false,
                             order: 0
                         },
