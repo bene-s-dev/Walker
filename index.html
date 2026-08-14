@@ -1263,7 +1263,7 @@
             if (selectedRange === 'all') {
                 filtered = sorted.length > 0 ? sorted.map(r => ({ ...r, isForecast: false })) : [];
             } else if (selectedRange === 'prognose') {
-                // Prognose-Filter: 90 Tage Vorausschau (jeder 2. Tag), basierend auf vollendeten Tagen bis gestern + 15s Steigerung heute
+                // Prognose-Modell: 90 Tage Vorausschau mit Sigmoid/Logistischem Wachstum (Compounding-Effekt)
                 const pastDays = 14;
                 const futureDays = 90;
                 const futureStep = 2;
@@ -1273,7 +1273,7 @@
                 const yesterdayStr = getLocalDateStr(yesterday);
                 const yesterdayEntry = sorted.find(r => r.date === yesterdayStr);
 
-                // 1. Vergangene 14 vollendete Tage (bis gestern)
+                // 1. Vergangene 14 vollendete Tage (bis gestern) als historische Referenz
                 for (let i = pastDays; i >= 1; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
@@ -1292,59 +1292,78 @@
                     }
                 }
 
-                // 2. Baseline & Split aus den vollendeten aktiven Tagen berechnen
+                // 2. Baseline & Split aus den vollendeten aktiven Tagen (letzte 14-30 Tage) kalibrieren
                 const completedActive = sorted.filter(r => r.date <= yesterdayStr && (r.totalSeconds || 0) > 0);
+                const sampleActive = completedActive.slice(-30); // Bis zu 30 Tage Realdaten
+
                 let baselineSec = 0;
                 let morningShare = 0.5;
-                if (completedActive.length > 0) {
-                    const recent = completedActive.slice(-14);
-                    baselineSec = Math.round(recent.reduce((sum, r) => sum + r.totalSeconds, 0) / recent.length);
-                    const mSecTotal = recent.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
-                    const tSecTotal = recent.reduce((sum, r) => sum + (r.totalSeconds || 0), 0);
-                    if (tSecTotal > 0) morningShare = mSecTotal / tSecTotal;
+                if (sampleActive.length > 0) {
+                    baselineSec = Math.round(sampleActive.reduce((sum, r) => sum + r.totalSeconds, 0) / sampleActive.length);
+                    const mSecTotal = sampleActive.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
+                    const tSecTotal = sampleActive.reduce((sum, r) => sum + (r.totalSeconds || 0), 0);
+                    if (tSecTotal > 0) morningShare = Math.min(0.8, Math.max(0.2, mSecTotal / tSecTotal));
                 } else {
                     baselineSec = 180; // 3 Min Fallback
                 }
 
-                // 3. Basis für den heutigen Tag & Prognose-Start:
-                // Wenn das 2. Training heute noch nicht eingetragen ist (oder noch gar nicht trainiert wurde),
-                // gehen wir für heute von gestern + 15s aus, um eine 0s-Datenverzerrung zu vermeiden.
-                // Sobald das 2. Training eingetragen ist, gilt der reale Gesamtwert von heute.
+                // 3. Startwert y0 für heute (Tag 0)
                 const todayStr = getLocalDateStr();
                 const todayEntry = sorted.find(r => r.date === todayStr);
                 const isTodayComplete = todayEntry && (todayEntry.morningSeconds > 0) && (todayEntry.eveningSeconds > 0);
 
-                let todayEffectiveSec = 0;
+                let y0 = 0;
                 if (isTodayComplete) {
-                    todayEffectiveSec = todayEntry.totalSeconds;
+                    y0 = todayEntry.totalSeconds;
                 } else {
                     const ySec = (yesterdayEntry && yesterdayEntry.totalSeconds > 0) ? yesterdayEntry.totalSeconds : baselineSec;
-                    todayEffectiveSec = Math.max(todayEntry ? todayEntry.totalSeconds : 0, ySec + 15);
+                    y0 = Math.max(todayEntry ? todayEntry.totalSeconds : 0, ySec + 15);
                 }
+                y0 = Math.max(180, y0); // Mindestens 3 Minuten Basis
 
-                // Reale Steigung (Sekunden pro Tag) aus der Regression der aktiven Tage
-                let slopePerDaySec = 0;
-                if (completedActive.length >= 2) {
-                    const n = completedActive.length;
+                // 4. Empirische Steigung s (Sekunden Zuwachs pro Tag) aus Regression berechnen
+                let empiricalSlope = 0;
+                if (sampleActive.length >= 2) {
+                    const n = sampleActive.length;
                     let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-                    completedActive.forEach((r, idx) => {
+                    sampleActive.forEach((r, idx) => {
                         sumX += idx;
                         sumY += r.totalSeconds;
                         sumXY += idx * r.totalSeconds;
                         sumXX += idx * idx;
                     });
                     const denom = (n * sumXX - sumX * sumX);
-                    slopePerDaySec = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
+                    empiricalSlope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
                 }
 
-                // 4. Kommende 90 Tage datenbasiert berechnen (jeder 2. Tag ab heute)
+                // Medizinisches physiologisches Fenster für die Anfangssteigung s:
+                // Bei kontinuierlicher Reha mindestens +15s/Tag, max +60s/Tag als Anfangsrate
+                const s = Math.min(60, Math.max(15, empiricalSlope > 0 ? empiricalSlope : 18));
+
+                // 5. Zielwert / Kapazitätsgrenze L (Standard: 120 Minuten = 7200s vollwertige Alltagsmobilität)
+                // Flexibel anpassbar, falls der Nutzer bereits über 80 Min liegt
+                const L = Math.max(120 * 60, Math.round(y0 * 1.6));
+
+                // 6. Parameter k und t0 der logistischen Funktion f(t) = L / (1 + exp(-k * (t - t0)))
+                // Aus f'(0) = k * y0 * (1 - y0 / L) = s  =>  k = s / (y0 * (1 - y0 / L))
+                const safeY0 = Math.min(y0, L - 60);
+                const k = Math.max(0.008, Math.min(0.08, s / (safeY0 * (1 - safeY0 / L))));
+                // Aus f(0) = y0  =>  t0 = ln((L - y0) / y0) / k
+                const t0 = Math.log((L - safeY0) / safeY0) / k;
+
+                // 7. Kommende 90 Tage nach dem Sigmoid-Modell berechnen (jeder 2. Tag ab heute)
                 for (let i = futureStep; i <= futureDays; i += futureStep) {
                     const d = new Date();
                     d.setDate(d.getDate() + i);
                     const ds = getLocalDateStr(d);
-                    const projectedTotal = Math.max(0, Math.round(todayEffectiveSec + (slopePerDaySec * i)));
+
+                    // Sigmoid-Formel
+                    const sigmoidVal = L / (1 + Math.exp(-k * (i - t0)));
+                    const projectedTotal = Math.max(Math.round(safeY0), Math.min(L, Math.round(sigmoidVal)));
+
                     const projectedMorning = Math.round(projectedTotal * morningShare);
                     const projectedEvening = projectedTotal - projectedMorning;
+
                     filtered.push({
                         date: ds,
                         morningSeconds: projectedMorning,
@@ -1390,7 +1409,7 @@
             const eveningMinutes = filtered.map(r => Number((r.eveningSeconds / 60).toFixed(2)));
             const totalMinutes = filtered.map(r => Number((r.totalSeconds / 60).toFixed(2)));
 
-            // Trendlinie: Sanfte Glättung (gewichtete Regression & EMA), die Inaktivtage sanft einbezieht, ohne abrupt auf 0 abzustürzen
+            // Trendlinie: Sanfte Glättung (gewichtete Regression & EMA) für historische Tage, Sigmoid für Prognose
             const pastPoints = [];
             filtered.forEach((r, idx) => {
                 if (!r.isForecast) {
@@ -1442,6 +1461,9 @@
                 filtered.forEach((r, idx) => {
                     if (idx <= lastPastIdx) {
                         trendMinutes.push(Number(Math.max(0, smoothedPast[idx]).toFixed(2)));
+                    } else if (r.isForecast) {
+                        // Bei Prognose folgt der Trend exakt der Sigmoid-Kurve
+                        trendMinutes.push(Number((r.totalSeconds / 60).toFixed(2)));
                     } else {
                         const stepsAhead = idx - lastPastIdx;
                         const futureVal = Math.max(0, lastSmoothedVal + (regSlope * stepsAhead));
