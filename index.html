@@ -376,7 +376,7 @@
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="w-3 h-1 rounded bg-teal-600 inline-block"></span>
-                        <span>Tagesgesamtzeit</span>
+                        <span>Gesamt</span>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <span class="w-4 h-0 border-t-2 border-dashed border-teal-600 inline-block"></span>
@@ -1083,15 +1083,15 @@
                 document.getElementById('stat-today-split').textContent = '1. Gehen 0m · 2. Gehen 0m';
             }
 
-            // 2. 7-Tage Schnitt (Tagesgesamtzeit pro aktivem Tag)
+            // 2. 7-Tage Schnitt (Tagesgesamtzeit vollendete Tage bis gestern)
             let last7Sec = 0;
             let last7DaysCount = 0;
-            for (let i = 0; i < 7; i++) {
+            for (let i = 1; i <= 7; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry) {
+                if (entry && entry.totalSeconds > 0) {
                     last7Sec += entry.totalSeconds;
                     last7DaysCount++;
                 }
@@ -1101,21 +1101,23 @@
             if (last7DaysCount > 0) {
                 avg7 = Math.round(last7Sec / last7DaysCount);
             } else if (sortedRecords.length > 0) {
-                const sample = sortedRecords.slice(0, 7);
-                avg7 = Math.round(sample.reduce((sum, r) => sum + r.totalSeconds, 0) / sample.length);
-                last7DaysCount = sample.length;
+                const sample = sortedRecords.filter(r => r.date < todayStr && r.totalSeconds > 0).slice(0, 7);
+                if (sample.length > 0) {
+                    avg7 = Math.round(sample.reduce((sum, r) => sum + r.totalSeconds, 0) / sample.length);
+                    last7DaysCount = sample.length;
+                }
             }
             document.getElementById('stat-avg').textContent = formatSecToMinSec(avg7);
 
-            // Vorherige 7 Tage (Tag 7 bis 13 zurück)
+            // Vorherige 7 Tage (Tag 8 bis 14 zurück)
             let prev7Sec = 0;
             let prev7DaysCount = 0;
-            for (let i = 7; i < 14; i++) {
+            for (let i = 8; i <= 14; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry) {
+                if (entry && entry.totalSeconds > 0) {
                     prev7Sec += entry.totalSeconds;
                     prev7DaysCount++;
                 }
@@ -1125,9 +1127,11 @@
             if (prev7DaysCount > 0) {
                 prevAvg7 = Math.round(prev7Sec / prev7DaysCount);
             } else if (sortedRecords.length > 7) {
-                const samplePrev = sortedRecords.slice(7, 14);
-                prevAvg7 = Math.round(samplePrev.reduce((sum, r) => sum + r.totalSeconds, 0) / samplePrev.length);
-                prev7DaysCount = samplePrev.length;
+                const samplePrev = sortedRecords.filter(r => r.date < todayStr && r.totalSeconds > 0).slice(7, 14);
+                if (samplePrev.length > 0) {
+                    prevAvg7 = Math.round(samplePrev.reduce((sum, r) => sum + r.totalSeconds, 0) / samplePrev.length);
+                    prev7DaysCount = samplePrev.length;
+                }
             }
 
             const trendEl = document.getElementById('stat-avg-trend');
@@ -1307,13 +1311,18 @@
             if (selectedRange === 'all') {
                 filtered = sorted.length > 0 ? sorted.map(r => ({ ...r, isForecast: false })) : [];
             } else if (selectedRange === 'prognose') {
-                // Prognose-Filter: 90 Tage Vorausschau, jeder 2. Tag wird visualisiert
+                // Prognose-Filter: 90 Tage Vorausschau (jeder 2. Tag), basierend auf vollendeten Tagen bis gestern + 15s Steigerung heute
                 const pastDays = 14;
                 const futureDays = 90;
                 const futureStep = 2;
 
-                // 1. Vergangene 14 Tage (Ist-Werte)
-                for (let i = pastDays - 1; i >= 0; i--) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayStr = getLocalDateStr(yesterday);
+                const yesterdayEntry = sorted.find(r => r.date === yesterdayStr);
+
+                // 1. Vergangene 14 vollendete Tage (bis gestern)
+                for (let i = pastDays; i >= 1; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     const ds = getLocalDateStr(d);
@@ -1331,12 +1340,12 @@
                     }
                 }
 
-                // 2. Baseline, Split und realer Trend aus den aktiven Tagen berechnen
-                const activeRecords = sorted.filter(r => (r.totalSeconds || 0) > 0);
+                // 2. Baseline & Split aus den vollendeten aktiven Tagen berechnen
+                const completedActive = sorted.filter(r => r.date <= yesterdayStr && (r.totalSeconds || 0) > 0);
                 let baselineSec = 0;
                 let morningShare = 0.5;
-                if (activeRecords.length > 0) {
-                    const recent = activeRecords.slice(-14);
+                if (completedActive.length > 0) {
+                    const recent = completedActive.slice(-14);
                     baselineSec = Math.round(recent.reduce((sum, r) => sum + r.totalSeconds, 0) / recent.length);
                     const mSecTotal = recent.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
                     const tSecTotal = recent.reduce((sum, r) => sum + (r.totalSeconds || 0), 0);
@@ -1345,12 +1354,28 @@
                     baselineSec = 180; // 3 Min Fallback
                 }
 
+                // 3. Basis für den heutigen Tag & Prognose-Start:
+                // Wenn das 2. Training heute noch nicht eingetragen ist (oder noch gar nicht trainiert wurde),
+                // gehen wir für heute von gestern + 15s aus, um eine 0s-Datenverzerrung zu vermeiden.
+                // Sobald das 2. Training eingetragen ist, gilt der reale Gesamtwert von heute.
+                const todayStr = getLocalDateStr();
+                const todayEntry = sorted.find(r => r.date === todayStr);
+                const isTodayComplete = todayEntry && (todayEntry.morningSeconds > 0) && (todayEntry.eveningSeconds > 0);
+
+                let todayEffectiveSec = 0;
+                if (isTodayComplete) {
+                    todayEffectiveSec = todayEntry.totalSeconds;
+                } else {
+                    const ySec = (yesterdayEntry && yesterdayEntry.totalSeconds > 0) ? yesterdayEntry.totalSeconds : baselineSec;
+                    todayEffectiveSec = Math.max(todayEntry ? todayEntry.totalSeconds : 0, ySec + 15);
+                }
+
                 // Reale Steigung (Sekunden pro Tag) aus der Regression der aktiven Tage
                 let slopePerDaySec = 0;
-                if (activeRecords.length >= 2) {
-                    const n = activeRecords.length;
+                if (completedActive.length >= 2) {
+                    const n = completedActive.length;
                     let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-                    activeRecords.forEach((r, idx) => {
+                    completedActive.forEach((r, idx) => {
                         sumX += idx;
                         sumY += r.totalSeconds;
                         sumXY += idx * r.totalSeconds;
@@ -1360,12 +1385,12 @@
                     slopePerDaySec = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
                 }
 
-                // 3. Kommende 90 Tage berechnen (jeder 2. Tag)
+                // 4. Kommende 90 Tage datenbasiert berechnen (jeder 2. Tag ab heute)
                 for (let i = futureStep; i <= futureDays; i += futureStep) {
                     const d = new Date();
                     d.setDate(d.getDate() + i);
                     const ds = getLocalDateStr(d);
-                    const projectedTotal = Math.max(0, Math.round(baselineSec + (slopePerDaySec * i)));
+                    const projectedTotal = Math.max(0, Math.round(todayEffectiveSec + (slopePerDaySec * i)));
                     const projectedMorning = Math.round(projectedTotal * morningShare);
                     const projectedEvening = projectedTotal - projectedMorning;
                     filtered.push({
@@ -1378,7 +1403,8 @@
                 }
             } else {
                 const daysCount = selectedRange;
-                for (let i = daysCount - 1; i >= 0; i--) {
+                // 7 / 14 / 30 Tage: Immer nur bis gestern (vollendete Tage)
+                for (let i = daysCount; i >= 1; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     const ds = getLocalDateStr(d);
@@ -1770,32 +1796,33 @@
             const todayStr = getLocalDateStr();
             const todayEntry = records.find(r => r.date === todayStr);
 
-            // 7-Tage & Wochenschnitt Berechnungen
+            // 7-Tage & Wochenschnitt Berechnungen (vollendete Tage bis gestern)
             let last7Sec = 0, last7DaysCount = 0;
-            for (let i = 0; i < 7; i++) {
+            for (let i = 1; i <= 7; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry) {
+                if (entry && entry.totalSeconds > 0) {
                     last7Sec += entry.totalSeconds;
                     last7DaysCount++;
                 }
             }
-            const avg7 = last7DaysCount > 0 ? Math.round(last7Sec / last7DaysCount) : (sortedRecords.length > 0 ? Math.round(sortedRecords.slice(0, 7).reduce((s, r) => s + r.totalSeconds, 0) / Math.min(7, sortedRecords.length)) : 0);
+            const completedPastRecords = sortedRecords.filter(r => r.date < todayStr && r.totalSeconds > 0);
+            const avg7 = last7DaysCount > 0 ? Math.round(last7Sec / last7DaysCount) : (completedPastRecords.length > 0 ? Math.round(completedPastRecords.slice(0, 7).reduce((s, r) => s + r.totalSeconds, 0) / Math.min(7, completedPastRecords.length)) : 0);
 
             let prev7Sec = 0, prev7DaysCount = 0;
-            for (let i = 7; i < 14; i++) {
+            for (let i = 8; i <= 14; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry) {
+                if (entry && entry.totalSeconds > 0) {
                     prev7Sec += entry.totalSeconds;
                     prev7DaysCount++;
                 }
             }
-            const prevAvg7 = prev7DaysCount > 0 ? Math.round(prev7Sec / prev7DaysCount) : (sortedRecords.length > 7 ? Math.round(sortedRecords.slice(7, 14).reduce((s, r) => s + r.totalSeconds, 0) / Math.min(7, sortedRecords.slice(7, 14).length)) : 0);
+            const prevAvg7 = prev7DaysCount > 0 ? Math.round(prev7Sec / prev7DaysCount) : (completedPastRecords.length > 7 ? Math.round(completedPastRecords.slice(7, 14).reduce((s, r) => s + r.totalSeconds, 0) / Math.min(7, completedPastRecords.slice(7, 14).length)) : 0);
             const totalAllSec = records.reduce((acc, r) => acc + (r.totalSeconds || 0), 0);
 
             // Altes Chart sauber entfernen
@@ -1949,7 +1976,7 @@
                 `;
 
                 const days14 = [];
-                for (let i = 13; i >= 0; i--) {
+                for (let i = 14; i >= 1; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     const ds = getLocalDateStr(d);
