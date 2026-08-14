@@ -121,9 +121,8 @@
     <header class="bg-gradient-to-r from-teal-700 via-teal-600 to-emerald-600 text-white shadow-lg sticky top-0 z-30">
         <div class="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div
-                    class="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-white/25 flex-shrink-0 bg-teal-800">
-                    <img src="icon.jpg" alt="BeneWalker Icon" class="w-full h-full object-cover">
+                <div class="w-10 h-10 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                    <img src="icon-192.png" alt="BeneWalker Icon" class="w-full h-full object-cover">
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">BeneWalker</h1>
@@ -1157,79 +1156,40 @@
                 totalSub.textContent = `${records.length} Tag${records.length === 1 ? '' : 'e'} erfasst`;
             }
 
-            // 4. Gehzeit am Stück (Nur Einzelsessions: Morgens oder Abends einzeln)
-            const todayMaxSingle = todayEntry ? Math.max(todayEntry.morningSeconds || 0, todayEntry.eveningSeconds || 0) : 0;
-            const prevMaxSingle = prevEntry ? Math.max(prevEntry.morningSeconds || 0, prevEntry.eveningSeconds || 0) : 0;
+            // 4. Gehzeit am Stück - All-Time Rekord
+            let allTimeMaxSingle = 0;
+            let recordDate = null;
 
-            const last7Singles = [];
-            for (let i = 0; i < 7; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const ds = getLocalDateStr(d);
-                const entry = records.find(r => r.date === ds);
-                if (entry) {
-                    if (entry.morningSeconds > 0) last7Singles.push(entry.morningSeconds);
-                    if (entry.eveningSeconds > 0) last7Singles.push(entry.eveningSeconds);
+            records.forEach(r => {
+                const mSec = r.morningSeconds || 0;
+                const eSec = r.eveningSeconds || 0;
+                if (mSec > allTimeMaxSingle) {
+                    allTimeMaxSingle = mSec;
+                    recordDate = r.date;
                 }
-            }
-            if (last7Singles.length === 0 && sortedRecords.length > 0) {
-                sortedRecords.slice(0, 7).forEach(r => {
-                    if (r.morningSeconds > 0) last7Singles.push(r.morningSeconds);
-                    if (r.eveningSeconds > 0) last7Singles.push(r.eveningSeconds);
-                });
-            }
-
-            const prev7Singles = [];
-            for (let i = 7; i < 14; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const ds = getLocalDateStr(d);
-                const entry = records.find(r => r.date === ds);
-                if (entry) {
-                    if (entry.morningSeconds > 0) prev7Singles.push(entry.morningSeconds);
-                    if (entry.eveningSeconds > 0) prev7Singles.push(entry.eveningSeconds);
+                if (eSec > allTimeMaxSingle) {
+                    allTimeMaxSingle = eSec;
+                    recordDate = r.date;
                 }
-            }
-            if (prev7Singles.length === 0 && sortedRecords.length > 7) {
-                sortedRecords.slice(7, 14).forEach(r => {
-                    if (r.morningSeconds > 0) prev7Singles.push(r.morningSeconds);
-                    if (r.eveningSeconds > 0) prev7Singles.push(r.eveningSeconds);
-                });
-            }
-
-            const avgSingle7 = last7Singles.length > 0 ? Math.round(last7Singles.reduce((a, b) => a + b, 0) / last7Singles.length) : 0;
-            const prevAvgSingle7 = prev7Singles.length > 0 ? Math.round(prev7Singles.reduce((a, b) => a + b, 0) / prev7Singles.length) : 0;
+            });
 
             const singleValueEl = document.getElementById('stat-single');
             const singleTrendEl = document.getElementById('stat-single-trend');
 
-            if (todayMaxSingle > 0) {
-                singleValueEl.textContent = formatSecToMinSec(todayMaxSingle);
-                if (prevMaxSingle > 0) {
-                    singleTrendEl.innerHTML = formatTrendHTML(todayMaxSingle - prevMaxSingle, 'vs. Vortag');
-                } else if (prevAvgSingle7 > 0) {
-                    singleTrendEl.innerHTML = formatTrendHTML(todayMaxSingle - prevAvgSingle7, 'vs. Vorwoche');
-                } else {
-                    singleTrendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-teal-600';
-                    singleTrendEl.innerHTML = `
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-                        <span>Heute (am Stück)</span>
-                    `;
-                }
+            singleValueEl.textContent = formatSecToMinSec(allTimeMaxSingle);
+
+            if (allTimeMaxSingle > 0) {
+                const isToday = recordDate === todayStr;
+                singleTrendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-amber-600';
+                singleTrendEl.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    <span>${isToday ? 'Heute aufgestellt!' : formatDatePretty(recordDate)}</span>
+                `;
             } else {
-                singleValueEl.textContent = formatSecToMinSec(avgSingle7);
-                if (prevAvgSingle7 > 0 && avgSingle7 > 0) {
-                    singleTrendEl.innerHTML = formatTrendHTML(avgSingle7 - prevAvgSingle7, 'vs. Vorwoche');
-                } else if (avgSingle7 > 0) {
-                    singleTrendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-teal-600';
-                    singleTrendEl.innerHTML = `
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-                        <span>Ø Einzelsession</span>
-                    `;
-                } else {
-                    singleTrendEl.className = 'text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400';
-                    singleTrendEl.innerHTML = `<span>Einzelsession</span>`;
-                }
+                singleTrendEl.className = 'text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400';
+                singleTrendEl.innerHTML = `<span>noch kein Rekord</span>`;
             }
         }
 
