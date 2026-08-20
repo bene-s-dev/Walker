@@ -1082,18 +1082,20 @@
         function renderStats() {
             const todayStr = getLocalDateStr();
             const todayEntry = records.find(r => r.date === todayStr);
-            const sortedRecords = [...records].sort((a, b) => b.date.localeCompare(a.date));
-            const prevEntry = sortedRecords.find(r => r.date < todayStr && (r.totalSeconds || 0) > 0);
+            const isTodayComplete = Boolean(todayEntry && (todayEntry.morningSeconds || 0) > 0 && (todayEntry.eveningSeconds || 0) > 0);
 
-            // 1. Tages-Steigerung: Heute vs. Vortag
-            const todaySec = todayEntry ? (todayEntry.totalSeconds || 0) : 0;
+            // Frühere Datensätze für Vortagesvergleich
+            const pastRecords = records.filter(r => r.date < todayStr && (r.totalSeconds || 0) > 0).sort((a, b) => b.date.localeCompare(a.date));
+            const prevEntry = pastRecords[0];
             const prevSec = prevEntry ? (prevEntry.totalSeconds || 0) : 0;
-            const diffToday = todaySec - prevSec;
 
+            // 1. Tages-Steigerung: Heute vs. Vortag (erst aktiv wenn 2 Einheiten für heute gespeichert wurden)
             const statTodayEl = document.getElementById('stat-today');
             const statTodaySplitEl = document.getElementById('stat-today-split');
 
-            if (todaySec > 0) {
+            if (isTodayComplete) {
+                const todaySec = todayEntry ? (todayEntry.totalSeconds || 0) : 0;
+                const diffToday = todaySec - prevSec;
                 const sign = diffToday >= 0 ? '+' : '';
                 statTodayEl.className = `text-lg font-bold ${diffToday >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-1`;
                 statTodayEl.textContent = `${sign}${formatSecShort(Math.abs(diffToday))}`;
@@ -1106,8 +1108,9 @@
             } else {
                 statTodayEl.className = 'text-lg font-bold text-slate-400 mt-1';
                 statTodayEl.textContent = '±0s';
+                const hasOneUnit = todayEntry && ((todayEntry.morningSeconds || 0) > 0 || (todayEntry.eveningSeconds || 0) > 0);
                 statTodaySplitEl.innerHTML = `
-                    <span class="text-slate-400">Heute noch offen</span>
+                    <span class="${hasOneUnit ? 'text-amber-600 font-medium' : 'text-slate-400'}">${hasOneUnit ? '1/2 Einheiten erfasst' : 'Heute noch offen'}</span>
                     <span class="text-[10px] text-slate-400 block mt-0.5">Gestern: ${formatSecShort(prevSec)}</span>
                 `;
             }
@@ -1200,10 +1203,11 @@
                 statWeekSubEl.textContent = 'vs. Vor-30-Tage';
             }
 
-            // 4. Rekorde: All-Time Rekord am Stück & Zuwachs seit Beginn
+            // 4. Rekorde: All-Time Rekord am Stück & Zuwachs seit Beginn (nur vollendete Tage bzw. heute ab 2 Einheiten)
             let allTimeMaxSingle = 0;
             let recordDate = null;
-            records.forEach(r => {
+            const displayRecords = records.filter(r => r.date !== todayStr || isTodayComplete);
+            displayRecords.forEach(r => {
                 const mSec = r.morningSeconds || 0;
                 const eSec = r.eveningSeconds || 0;
                 if (mSec > allTimeMaxSingle) {
@@ -1216,7 +1220,7 @@
                 }
             });
 
-            const chronRecords = [...records].filter(r => (r.totalSeconds || 0) > 0).sort((a, b) => a.date.localeCompare(b.date));
+            const chronRecords = [...displayRecords].filter(r => (r.totalSeconds || 0) > 0).sort((a, b) => a.date.localeCompare(b.date));
             const firstRecord = chronRecords[0];
             const firstMaxSingle = firstRecord ? Math.max(firstRecord.morningSeconds || 0, firstRecord.eveningSeconds || 0) : 0;
             const singleGainSinceStart = allTimeMaxSingle - firstMaxSingle;
@@ -1246,21 +1250,29 @@
             const emptyEl = document.getElementById('empty-state');
             const subtitleEl = document.getElementById('history-subtitle');
 
-            subtitleEl.textContent = `${records.length} Eintrag${records.length === 1 ? '' : 'e'} erfasst`;
+            const todayStr = getLocalDateStr();
+            // Daten des aktuellen Tages erst anzeigen, wenn 2 Einheiten gespeichert wurden
+            const displayRecords = records.filter(r => {
+                if (r.date === todayStr) {
+                    return (r.morningSeconds || 0) > 0 && (r.eveningSeconds || 0) > 0;
+                }
+                return true;
+            });
 
-            if (records.length === 0) {
+            subtitleEl.textContent = `${displayRecords.length} Eintrag${displayRecords.length === 1 ? '' : 'e'} erfasst`;
+
+            if (displayRecords.length === 0) {
                 listEl.innerHTML = '';
                 emptyEl.classList.remove('hidden');
                 return;
             }
             emptyEl.classList.add('hidden');
 
-            const todayStr = getLocalDateStr();
             const yesterdayObj = new Date();
             yesterdayObj.setDate(yesterdayObj.getDate() - 1);
             const yesterdayStr = getLocalDateStr(yesterdayObj);
 
-            listEl.innerHTML = records.map(r => {
+            listEl.innerHTML = displayRecords.map(r => {
                 const isToday = r.date === todayStr;
                 const isYesterday = r.date === yesterdayStr;
 
@@ -1312,13 +1324,21 @@
         // --- Chart.js Visualisierung rendern ---
         function renderChart() {
             const ctx = document.getElementById('walkingChart').getContext('2d');
-            const sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
+            const todayStr = getLocalDateStr();
+            // Aktuellen Tag nur einbeziehen, wenn beide Einheiten erfasst sind
+            const displayRecords = records.filter(r => {
+                if (r.date === todayStr) {
+                    return (r.morningSeconds || 0) > 0 && (r.eveningSeconds || 0) > 0;
+                }
+                return true;
+            });
+            const sorted = [...displayRecords].sort((a, b) => a.date.localeCompare(b.date));
 
             let filtered = [];
             if (selectedRange === 'all') {
                 filtered = sorted.length > 0 ? sorted.map(r => ({ ...r, isForecast: false })) : [];
             } else if (selectedRange === 'prognose') {
-                // Prognose-Modell: Basiert AUSSCHLIESSLICH auf den tatsächlich vorhandenen Datensätzen
+                // Prognose-Modell: Basiert AUSSCHLIESSLICH auf den tatsächlich vorhandenen Datensätzen (vollendete Tage)
                 const activeRecords = sorted.filter(r => (r.totalSeconds || 0) > 0);
 
                 if (activeRecords.length === 0) {
@@ -1334,19 +1354,9 @@
                     const morningSecSum = activeRecords.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
                     const morningShare = totalSecSum > 0 ? Math.min(0.85, Math.max(0.15, morningSecSum / totalSecSum)) : 0.5;
 
-                    // 3. Startwert y0: Basiert auf dem letzten vorhandenen Datensatz (bzw. aktuellem Tag)
+                    // 3. Startwert y0: Basiert auf dem letzten aktiven Datensatz
                     const lastActive = activeRecords[activeRecords.length - 1];
-                    const todayStr = getLocalDateStr();
-                    const todayEntry = activeRecords.find(r => r.date === todayStr);
-
-                    let y0 = 0;
-                    if (todayEntry && todayEntry.morningSeconds > 0 && todayEntry.eveningSeconds > 0) {
-                        y0 = todayEntry.totalSeconds;
-                    } else if (todayEntry && todayEntry.totalSeconds > 0) {
-                        y0 = todayEntry.totalSeconds;
-                    } else {
-                        y0 = lastActive.totalSeconds;
-                    }
+                    let y0 = lastActive ? lastActive.totalSeconds : 0;
                     y0 = Math.max(30, y0); // Mindestens 30s als rechnerische Untergrenze
 
                     // 4. Empirische Steigung s (Sekunden Zuwachs pro Tag) aus linearer Regression der vorhandenen Daten
@@ -1381,11 +1391,11 @@
                     const k = Math.max(0.006, Math.min(0.08, s / (safeY0 * (1 - safeY0 / L))));
                     const t0 = Math.log((L - safeY0) / safeY0) / k;
 
-                    // 7. Prognosetage: Vorausschau ab dem letzten Datums-Eintrag / heute für 90 Tage
+                    // 7. Prognosetage: Vorausschau ab dem letzten Datums-Eintrag für 90 Tage
                     const futureDays = 90;
                     const futureStep = 2;
 
-                    const lastDateStr = lastActive.date > todayStr ? lastActive.date : todayStr;
+                    const lastDateStr = lastActive.date;
                     const baseParts = lastDateStr.split('-');
                     const baseDate = new Date(parseInt(baseParts[0], 10), parseInt(baseParts[1], 10) - 1, parseInt(baseParts[2], 10));
 
@@ -1814,9 +1824,13 @@ document.body.classList.remove('overflow-hidden');
                 }
             });
 
-            const sortedRecords = [...records].sort((a, b) => b.date.localeCompare(a.date));
             const todayStr = getLocalDateStr();
             const todayEntry = records.find(r => r.date === todayStr);
+            const isTodayComplete = Boolean(todayEntry && (todayEntry.morningSeconds || 0) > 0 && (todayEntry.eveningSeconds || 0) > 0);
+
+            // Aktuellen Tag für Auswertungen/Rekorde erst einbeziehen, wenn 2 Einheiten gespeichert wurden
+            const displayRecords = records.filter(r => r.date !== todayStr || isTodayComplete);
+            const sortedRecords = [...displayRecords].sort((a, b) => b.date.localeCompare(a.date));
 
             // Altes Chart sauber entfernen
             if (specialChartInstance) {
@@ -1843,101 +1857,182 @@ document.body.classList.remove('overflow-hidden');
                 chartTitleEl.textContent = 'Tagesvergleich (1. vs. 2. Gehen)';
                 chartBadgeEl.textContent = 'Vorher / Nachher';
 
-                const todaySec = todayEntry ? (todayEntry.totalSeconds || 0) : 0;
-                const todayM = todayEntry ? (todayEntry.morningSeconds || 0) : 0;
-                const todayE = todayEntry ? (todayEntry.eveningSeconds || 0) : 0;
-
-                const prevEntry = sortedRecords.find(r => r.date < todayStr && (r.totalSeconds || 0) > 0);
+                const prevEntry = records.filter(r => r.date < todayStr && (r.totalSeconds || 0) > 0).sort((a, b) => b.date.localeCompare(a.date))[0];
                 const prevSec = prevEntry ? (prevEntry.totalSeconds || 0) : 0;
                 const prevM = prevEntry ? (prevEntry.morningSeconds || 0) : 0;
                 const prevE = prevEntry ? (prevEntry.eveningSeconds || 0) : 0;
 
-                const diffToday = todaySec - prevSec;
-                const diffM = todayM - prevM;
-                const diffE = todayE - prevE;
-                const sign = diffToday >= 0 ? '+' : '';
-                const pctToday = prevSec > 0 ? `${sign}${Math.round((diffToday / prevSec) * 100)}%` : '—';
+                if (isTodayComplete) {
+                    const todaySec = todayEntry ? (todayEntry.totalSeconds || 0) : 0;
+                    const todayM = todayEntry ? (todayEntry.morningSeconds || 0) : 0;
+                    const todayE = todayEntry ? (todayEntry.eveningSeconds || 0) : 0;
 
-                kpiGridEl.innerHTML = `
-                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Steigerung zum Vortag</div>
-                        <div class="text-lg font-bold ${diffToday >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${sign}${formatSecShort(Math.abs(diffToday))}</div>
-                        <div class="text-[11px] font-semibold ${diffToday >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${pctToday} Zuwachs</div>
-                    </div>
-                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Heute Gesamt</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(todaySec)}</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">1.: ${formatSecShort(todayM)} · 2.: ${formatSecShort(todayE)}</div>
-                    </div>
-                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Gestern Gesamt</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(prevSec)}</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">1.: ${formatSecShort(prevM)} · 2.: ${formatSecShort(prevE)}</div>
-                    </div>
-                    <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-teal-800">Einheiten-Delta</div>
-                        <div class="text-xs font-bold text-teal-950 mt-1">1. Gehen: ${diffM >= 0 ? '+' : ''}${formatSecShort(diffM)}</div>
-                        <div class="text-xs font-bold text-teal-950 mt-0.5">2. Gehen: ${diffE >= 0 ? '+' : ''}${formatSecShort(diffE)}</div>
-                    </div>
-                `;
+                    const diffToday = todaySec - prevSec;
+                    const diffM = todayM - prevM;
+                    const diffE = todayE - prevE;
+                    const sign = diffToday >= 0 ? '+' : '';
+                    const pctToday = prevSec > 0 ? `${sign}${Math.round((diffToday / prevSec) * 100)}%` : '—';
 
-                const sampleDays = sortedRecords.slice(0, 5).reverse();
-                if (sampleDays.length === 0) sampleDays.push({ date: todayStr, morningSeconds: 0, eveningSeconds: 0, totalSeconds: 0 });
+                    kpiGridEl.innerHTML = `
+                        <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                            <div class="text-[11px] font-medium text-slate-400">Steigerung zum Vortag</div>
+                            <div class="text-lg font-bold ${diffToday >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${sign}${formatSecShort(Math.abs(diffToday))}</div>
+                            <div class="text-[11px] font-semibold ${diffToday >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${pctToday} Zuwachs</div>
+                        </div>
+                        <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                            <div class="text-[11px] font-medium text-slate-400">Heute Gesamt</div>
+                            <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(todaySec)}</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">1.: ${formatSecShort(todayM)} · 2.: ${formatSecShort(todayE)}</div>
+                        </div>
+                        <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                            <div class="text-[11px] font-medium text-slate-400">Gestern Gesamt</div>
+                            <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(prevSec)}</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">1.: ${formatSecShort(prevM)} · 2.: ${formatSecShort(prevE)}</div>
+                        </div>
+                        <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
+                            <div class="text-[11px] font-semibold text-teal-800">Einheiten-Delta</div>
+                            <div class="text-xs font-bold text-teal-950 mt-1">1. Gehen: ${diffM >= 0 ? '+' : ''}${formatSecShort(diffM)}</div>
+                            <div class="text-xs font-bold text-teal-950 mt-0.5">2. Gehen: ${diffE >= 0 ? '+' : ''}${formatSecShort(diffE)}</div>
+                        </div>
+                    `;
 
-                specialChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: sampleDays.map(r => r.date === todayStr ? 'Heute' : formatDatePretty(r.date).split(',')[0]),
-                        datasets: [
-                            {
-                                label: '1. Gehen (min)',
-                                data: sampleDays.map(r => Number(((r.morningSeconds || 0) / 60).toFixed(2))),
-                                backgroundColor: 'rgba(251, 191, 36, 0.85)',
-                                borderColor: '#f59e0b',
-                                borderWidth: 1,
-                                borderRadius: 4,
-                                stack: 'day'
-                            },
-                            {
-                                label: '2. Gehen (min)',
-                                data: sampleDays.map(r => Number(((r.eveningSeconds || 0) / 60).toFixed(2))),
-                                backgroundColor: 'rgba(99, 102, 241, 0.85)',
-                                borderColor: '#6366f1',
-                                borderWidth: 1,
-                                borderRadius: 4,
-                                stack: 'day'
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: { mode: 'index', intersect: false },
-                        plugins: {
-                            legend: { position: 'bottom', labels: { font: { size: 10 } } },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (c) {
-                                        return ` ${c.dataset.label}: ${formatSecToMinSec(Math.round(c.raw * 60))}`;
-                                    },
-                                    footer: function (items) {
-                                        let tot = 0;
-                                        items.forEach(i => tot += (i.raw || 0));
-                                        return ` Gesamt: ${formatSecToMinSec(Math.round(tot * 60))}`;
+                    const sampleDays = sortedRecords.slice(0, 5).reverse();
+                    if (sampleDays.length === 0) sampleDays.push({ date: todayStr, morningSeconds: 0, eveningSeconds: 0, totalSeconds: 0 });
+
+                    specialChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: sampleDays.map(r => r.date === todayStr ? 'Heute' : formatDatePretty(r.date).split(',')[0]),
+                            datasets: [
+                                {
+                                    label: '1. Gehen (min)',
+                                    data: sampleDays.map(r => Number(((r.morningSeconds || 0) / 60).toFixed(2))),
+                                    backgroundColor: 'rgba(251, 191, 36, 0.85)',
+                                    borderColor: '#f59e0b',
+                                    borderWidth: 1,
+                                    borderRadius: 4,
+                                    stack: 'day'
+                                },
+                                {
+                                    label: '2. Gehen (min)',
+                                    data: sampleDays.map(r => Number(((r.eveningSeconds || 0) / 60).toFixed(2))),
+                                    backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                                    borderColor: '#6366f1',
+                                    borderWidth: 1,
+                                    borderRadius: 4,
+                                    stack: 'day'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { position: 'bottom', labels: { font: { size: 10 } } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (c) {
+                                            return ` ${c.dataset.label}: ${formatSecToMinSec(Math.round(c.raw * 60))}`;
+                                        },
+                                        footer: function (items) {
+                                            let tot = 0;
+                                            items.forEach(i => tot += (i.raw || 0));
+                                            return ` Gesamt: ${formatSecToMinSec(Math.round(tot * 60))}`;
+                                        }
                                     }
                                 }
+                            },
+                            scales: {
+                                x: { stacked: true },
+                                y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Minuten', font: { size: 10 } } }
                             }
-                        },
-                        scales: {
-                            x: { stacked: true },
-                            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Minuten', font: { size: 10 } } }
                         }
-                    }
-                });
+                    });
 
-                insightTextEl.innerHTML = todaySec > 0
-                    ? `Heute bist du insgesamt <strong>${formatSecToMinSec(todaySec)}</strong> gelaufen. Im direkten Vergleich zu gestern (${formatSecToMinSec(prevSec)}) ist das ein Zuwachs von <strong>${sign}${formatSecShort(Math.abs(diffToday))} (${pctToday})</strong>!`
-                    : `Heute wurde noch kein Spaziergang gestoppt. Gestern bist du <strong>${formatSecToMinSec(prevSec)}</strong> gelaufen. Starte deine Einheit, um das heutige Plus aufzubauen!`;
+                    insightTextEl.innerHTML = `Heute bist du insgesamt <strong>${formatSecToMinSec(todaySec)}</strong> gelaufen. Im direkten Vergleich zu gestern (${formatSecToMinSec(prevSec)}) ist das ein Zuwachs von <strong>${sign}${formatSecShort(Math.abs(diffToday))} (${pctToday})</strong>!`;
+                } else {
+                    const hasOneUnit = todayEntry && ((todayEntry.morningSeconds || 0) > 0 || (todayEntry.eveningSeconds || 0) > 0);
+                    kpiGridEl.innerHTML = `
+                        <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 shadow-2xs">
+                            <div class="text-[11px] font-medium text-slate-400">Tagesstatus</div>
+                            <div class="text-lg font-bold ${hasOneUnit ? 'text-amber-700' : 'text-slate-500'} mt-0.5">${hasOneUnit ? '1 / 2 Einheiten' : 'Noch offen'}</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">Wertung ab 2 Einheiten</div>
+                        </div>
+                        <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                            <div class="text-[11px] font-medium text-slate-400">Heute (Zwischenstand)</div>
+                            <div class="text-lg font-bold text-slate-400 mt-0.5">${todayEntry ? formatSecToMinSec(todayEntry.totalSeconds || 0) : '0m 00s'}</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">1.: ${todayEntry ? formatSecShort(todayEntry.morningSeconds || 0) : '0:00'} · 2.: ${todayEntry ? formatSecShort(todayEntry.eveningSeconds || 0) : '0:00'}</div>
+                        </div>
+                        <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                            <div class="text-[11px] font-medium text-slate-400">Gestern Gesamt</div>
+                            <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(prevSec)}</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">1.: ${formatSecShort(prevM)} · 2.: ${formatSecShort(prevE)}</div>
+                        </div>
+                        <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
+                            <div class="text-[11px] font-semibold text-amber-800">Hinweis</div>
+                            <div class="text-xs font-medium text-amber-950 mt-1">${hasOneUnit ? 'Auswertung aktiv ab 2. Einheit' : 'Heute noch kein Spaziergang gestoppt'}</div>
+                        </div>
+                    `;
+
+                    const sampleDays = sortedRecords.slice(0, 5).reverse();
+                    if (sampleDays.length === 0 && prevEntry) sampleDays.push(prevEntry);
+
+                    specialChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: sampleDays.map(r => r.date === todayStr ? 'Heute' : formatDatePretty(r.date).split(',')[0]),
+                            datasets: [
+                                {
+                                    label: '1. Gehen (min)',
+                                    data: sampleDays.map(r => Number(((r.morningSeconds || 0) / 60).toFixed(2))),
+                                    backgroundColor: 'rgba(251, 191, 36, 0.85)',
+                                    borderColor: '#f59e0b',
+                                    borderWidth: 1,
+                                    borderRadius: 4,
+                                    stack: 'day'
+                                },
+                                {
+                                    label: '2. Gehen (min)',
+                                    data: sampleDays.map(r => Number(((r.eveningSeconds || 0) / 60).toFixed(2))),
+                                    backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                                    borderColor: '#6366f1',
+                                    borderWidth: 1,
+                                    borderRadius: 4,
+                                    stack: 'day'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { position: 'bottom', labels: { font: { size: 10 } } },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (c) {
+                                            return ` ${c.dataset.label}: ${formatSecToMinSec(Math.round(c.raw * 60))}`;
+                                        },
+                                        footer: function (items) {
+                                            let tot = 0;
+                                            items.forEach(i => tot += (i.raw || 0));
+                                            return ` Gesamt: ${formatSecToMinSec(Math.round(tot * 60))}`;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: { stacked: true },
+                                y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Minuten', font: { size: 10 } } }
+                            }
+                        }
+                    });
+
+                    insightTextEl.innerHTML = hasOneUnit
+                        ? `Für heute ist erst eine Einheit (${formatSecToMinSec(todayEntry.totalSeconds)}) gespeichert. Der Tagesvergleich wird aktiviert, sobald beide Einheiten erfasst sind. Gestern: <strong>${formatSecToMinSec(prevSec)}</strong>.`
+                        : `Heute wurde noch kein Spaziergang gestoppt. Gestern bist du <strong>${formatSecToMinSec(prevSec)}</strong> gelaufen. Starte deine Einheiten, um das heutige Plus aufzubauen!`;
+                }
 
             } else if (type === 'week_trend') {
                 titleEl.textContent = '7-Tage Steigerungsanalyse';
@@ -2165,7 +2260,7 @@ document.body.classList.remove('overflow-hidden');
                 let maxEvening = 0;
                 let bestDay = null;
 
-                records.forEach(r => {
+                displayRecords.forEach(r => {
                     const m = r.morningSeconds || 0;
                     const e = r.eveningSeconds || 0;
                     const t = r.totalSeconds || 0;
@@ -2203,7 +2298,7 @@ document.body.classList.remove('overflow-hidden');
                 `;
 
                 // Rekord-Evolutionsdaten berechnen (jeder neue Höchststand)
-                const chronRecords = [...records].filter(r => (r.totalSeconds || 0) > 0).sort((a, b) => a.date.localeCompare(b.date));
+                const chronRecords = [...displayRecords].filter(r => (r.totalSeconds || 0) > 0).sort((a, b) => a.date.localeCompare(b.date));
                 let runningRecord = 0;
                 const milestoneData = [];
                 chronRecords.forEach(r => {
