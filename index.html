@@ -1350,31 +1350,32 @@
             if (selectedRange === 'all') {
                 filtered = sorted.length > 0 ? sorted.map(r => ({ ...r, isForecast: false })) : [];
             } else if (selectedRange === 'prognose') {
-                // Prognose-Modell: Basiert AUSSCHLIESSLICH auf den tatsächlich vorhandenen Datensätzen (vollendete Tage)
+                // Prognose-Modell: Basiert auf Datenlage, Muscle-Memory-Effekt & Grundlagen-Verstärkung
                 const activeRecords = sorted.filter(r => (r.totalSeconds || 0) > 0);
 
                 if (activeRecords.length === 0) {
                     filtered = [];
                 } else {
-                    // 1. Tatsächlich vorhandene historische Datensätze einfügen (ohne künstliche 0-Tage davor)
+                    // 1. Reale historische Datensätze einfügen
                     activeRecords.forEach(r => {
                         filtered.push({ ...r, isForecast: false });
                     });
 
-                    // 2. Tatsächliche Baseline & Morning/Evening-Split aus den vorhandenen Daten kalibrieren
+                    // 2. Morning/Evening-Split aus den tatsächlichen Daten ermitteln
                     const totalSecSum = activeRecords.reduce((sum, r) => sum + (r.totalSeconds || 0), 0);
                     const morningSecSum = activeRecords.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
                     const morningShare = totalSecSum > 0 ? Math.min(0.85, Math.max(0.15, morningSecSum / totalSecSum)) : 0.5;
 
-                    // 3. Startwert y0: Basiert auf dem letzten aktiven Datensatz
-                    const lastActive = activeRecords[activeRecords.length - 1];
-                    let y0 = lastActive ? lastActive.totalSeconds : 0;
-                    y0 = Math.max(30, y0); // Mindestens 30s als rechnerische Untergrenze
+                    // 3. Startlevel y0: Reale Datenlage (Gewichtetes Niveau der letzten Tage)
+                    const activeCount = activeRecords.length;
+                    const lastActive = activeRecords[activeCount - 1];
+                    const recentSlice = activeRecords.slice(-Math.min(5, activeCount));
+                    const recentAvg = Math.round(recentSlice.reduce((sum, r) => sum + r.totalSeconds, 0) / recentSlice.length);
+                    let y0 = Math.max(30, Math.max(lastActive.totalSeconds, recentAvg));
 
-                    // 4. Empirische Steigung s (Sekunden Zuwachs pro Tag) aus linearer Regression der vorhandenen Daten
-                    const n = activeRecords.length;
+                    // 4. Empirischer Trend aus den Daten (Sekunden Zuwachs pro Tag)
                     let empiricalSlope = 0;
-                    if (n >= 2) {
+                    if (activeCount >= 2) {
                         let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
                         activeRecords.forEach((r, idx) => {
                             sumX += idx;
@@ -1382,28 +1383,25 @@
                             sumXY += idx * r.totalSeconds;
                             sumXX += idx * idx;
                         });
-                        const denom = (n * sumXX - sumX * sumX);
-                        empiricalSlope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
+                        const denom = (activeCount * sumXX - sumX * sumX);
+                        empiricalSlope = denom !== 0 ? (activeCount * sumXY - sumX * sumY) / denom : 0;
                     }
 
-                    // Steigung s: Falls Daten einen Trend zeigen, diesen nutzen (innerhalb realistischer Grenzen)
-                    // Bei nur 1 Datensatz oder negativer/stagnierender Steigung: konservatives Basiswachstum (+2.5% oder mind. +5s)
-                    let s;
-                    if (empiricalSlope > 0) {
-                        s = Math.min(90, Math.max(5, empiricalSlope));
+                    // Basis-Steigung s: Verankert in Datenlage
+                    let baseSlope;
+                    if (empiricalSlope > 5) {
+                        baseSlope = Math.min(60, Math.max(10, empiricalSlope));
                     } else {
-                        s = Math.max(5, Math.round(y0 * 0.025));
+                        baseSlope = Math.max(12, Math.round(y0 * 0.035));
                     }
 
-                    // 5. Zielwert / Kapazitätsgrenze L basierend auf Reha-Ziel oder Leistungsstand
-                    const L = Math.max(120 * 60, Math.round(y0 * 1.8));
+                    // 5. Zielwert / Kapazitätsgrenze L (Gesunde Geh-Ausdauer, z.B. 60–90 min)
+                    const L = Math.max(60 * 60, Math.round(y0 * 2.5));
 
-                    // 6. Parameter k und t0 der logistischen Funktion f(t) = L / (1 + exp(-k * (t - t0)))
-                    const safeY0 = Math.min(y0, L - 30);
-                    const k = Math.max(0.006, Math.min(0.08, s / (safeY0 * (1 - safeY0 / L))));
-                    const t0 = Math.log((L - safeY0) / safeY0) / k;
-
-                    // 7. Prognosetage: Vorausschau ab dem letzten Datums-Eintrag für 90 Tage
+                    // 6. Prognose-Simulation über 90 Tage:
+                    // - Muscle Memory Effekt: Schnellere neuronale & muskuläre Reaktivierung in den ersten Wochen
+                    // - Grundlagen-Effekt: Je mehr Minuten bereits stabil gegangen werden, desto höher der absolute Tageszuwachs
+                    let currentTotalSec = y0;
                     const futureDays = 90;
                     const futureStep = 2;
 
@@ -1411,23 +1409,37 @@
                     const baseParts = lastDateStr.split('-');
                     const baseDate = new Date(parseInt(baseParts[0], 10), parseInt(baseParts[1], 10) - 1, parseInt(baseParts[2], 10));
 
-                    for (let i = futureStep; i <= futureDays; i += futureStep) {
-                        const d = new Date(baseDate);
-                        d.setDate(baseDate.getDate() + i);
-                        const ds = getLocalDateStr(d);
+                    for (let day = 1; day <= futureDays; day++) {
+                        // Grundlagen-Verstärker: Größere Ausdauerbasis erlaubt größere Trainingsreize
+                        const foundationMult = Math.pow(Math.max(1.0, currentTotalSec / 240), 0.42);
 
-                        const sigmoidVal = L / (1 + Math.exp(-k * (i - t0)));
-                        const projectedTotal = Math.max(Math.round(safeY0), Math.min(L, Math.round(sigmoidVal)));
-                        const projectedMorning = Math.round(projectedTotal * morningShare);
-                        const projectedEvening = projectedTotal - projectedMorning;
+                        // Muscle Memory Effekt: Steile Adaption & koordinative Reaktivierung
+                        const muscleMemoryMult = 1.0 + 0.65 * (1 - Math.exp(-day / 14));
 
-                        filtered.push({
-                            date: ds,
-                            morningSeconds: projectedMorning,
-                            eveningSeconds: projectedEvening,
-                            totalSeconds: projectedTotal,
-                            isForecast: true
-                        });
+                        // Physiologische Sättigung bei Annäherung an Zielkorridor L
+                        const saturation = Math.max(0.05, 1 - Math.pow(currentTotalSec / L, 1.8));
+
+                        // Netto-Zuwachs für diesen Tag
+                        const dailyGain = baseSlope * foundationMult * muscleMemoryMult * saturation;
+                        currentTotalSec = Math.min(L, currentTotalSec + dailyGain);
+
+                        if (day % futureStep === 0) {
+                            const d = new Date(baseDate);
+                            d.setDate(baseDate.getDate() + day);
+                            const ds = getLocalDateStr(d);
+
+                            const projectedTotal = Math.round(currentTotalSec);
+                            const projectedMorning = Math.round(projectedTotal * morningShare);
+                            const projectedEvening = projectedTotal - projectedMorning;
+
+                            filtered.push({
+                                date: ds,
+                                morningSeconds: projectedMorning,
+                                eveningSeconds: projectedEvening,
+                                totalSeconds: projectedTotal,
+                                isForecast: true
+                            });
+                        }
                     }
                 }
             } else {
