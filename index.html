@@ -828,15 +828,23 @@
 
         const formatSecToMinSec = (totalSec) => {
             if (!totalSec || totalSec <= 0) return '0m 00s';
-            const m = Math.floor(totalSec / 60);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
             const s = Math.round(totalSec % 60);
+            if (h > 0) {
+                return `${h}h ${m}m ${String(s).padStart(2, '0')}s`;
+            }
             return `${m}m ${String(s).padStart(2, '0')}s`;
         };
 
         const formatSecShort = (totalSec) => {
             if (!totalSec || totalSec <= 0) return '0:00';
-            const m = Math.floor(totalSec / 60);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
             const s = Math.round(totalSec % 60);
+            if (h > 0) {
+                return `${h}h ${m}m`;
+            }
             return `${m}:${String(s).padStart(2, '0')}`;
         };
 
@@ -1390,17 +1398,18 @@
                     // Basis-Steigung s: Verankert in Datenlage
                     let baseSlope;
                     if (empiricalSlope > 5) {
-                        baseSlope = Math.min(60, Math.max(10, empiricalSlope));
+                        baseSlope = Math.min(150, Math.max(15, empiricalSlope));
                     } else {
-                        baseSlope = Math.max(12, Math.round(y0 * 0.035));
+                        baseSlope = Math.max(20, Math.round(y0 * 0.05));
                     }
 
-                    // 5. Zielwert / Kapazitätsgrenze L (Gesunde Geh-Ausdauer, z.B. 60–90 min)
-                    const L = Math.max(60 * 60, Math.round(y0 * 2.5));
+                    // 5. Physiologische Kapazität: Der menschliche Körper ist evolutionär auf nahezu unbegrenzte Ultra-Gehausdauer ausgelegt
+                    // (Gehen liegt stoffwechselphysiologisch unter der 2,5× BMR Stoffwechselgrenze; Limit ist primär Schlaf/Ernährung, tagelanges Gehen ist möglich)
+                    const L = 24 * 3600; // 24h Ganztages-Gehausdauer
 
                     // 6. Prognose-Simulation über 90 Tage:
-                    // - Muscle Memory Effekt: Schnellere neuronale & muskuläre Reaktivierung in den ersten Wochen
-                    // - Grundlagen-Effekt: Je mehr Minuten bereits stabil gegangen werden, desto höher der absolute Tageszuwachs
+                    // - Vollständige Reaktivierung des Muscle-Memory-Effekts
+                    // - Grundlagen-Potenzierung: Mit wachsender Gehzeit wächst der täglich adaptierbare Zuwachs stetig an (keine künstliche Drosselung)
                     let currentTotalSec = y0;
                     const futureDays = 90;
                     const futureStep = 2;
@@ -1410,17 +1419,14 @@
                     const baseDate = new Date(parseInt(baseParts[0], 10), parseInt(baseParts[1], 10) - 1, parseInt(baseParts[2], 10));
 
                     for (let day = 1; day <= futureDays; day++) {
-                        // Grundlagen-Verstärker: Größere Ausdauerbasis erlaubt größere Trainingsreize
-                        const foundationMult = Math.pow(Math.max(1.0, currentTotalSec / 240), 0.42);
+                        // Grundlagen-Verstärker: Je stabiler die Basis, desto größer die Trainingsreize
+                        const foundationMult = Math.pow(Math.max(1.0, currentTotalSec / 180), 0.55);
 
-                        // Muscle Memory Effekt: Steile Adaption & koordinative Reaktivierung
-                        const muscleMemoryMult = 1.0 + 0.65 * (1 - Math.exp(-day / 14));
+                        // Muscle Memory Effekt: Progressive Reaktivierung neuromuskulärer Bahnen
+                        const muscleMemoryMult = 1.0 + 1.0 * (1 - Math.exp(-day / 14));
 
-                        // Physiologische Sättigung bei Annäherung an Zielkorridor L
-                        const saturation = Math.max(0.05, 1 - Math.pow(currentTotalSec / L, 1.8));
-
-                        // Netto-Zuwachs für diesen Tag
-                        const dailyGain = baseSlope * foundationMult * muscleMemoryMult * saturation;
+                        // Netto-Zuwachs für diesen Tag (organisches, ungedrosseltes Wachstum)
+                        const dailyGain = baseSlope * foundationMult * muscleMemoryMult;
                         currentTotalSec = Math.min(L, currentTotalSec + dailyGain);
 
                         if (day % futureStep === 0) {
