@@ -261,7 +261,7 @@
 
         <!-- TAB 1: Dashboard View -->
         <div id="view-dashboard" class="space-y-5">
-            <!-- Stat Cards: Fokus auf Steigerung, Trend & Rekorde -->
+            <!-- Stat Cards: Fokus auf Steigerung, Trend & Rekorde (Tag für Tag) -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div id="card-stat-today" onclick="openInsightModal('today_diff')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
@@ -278,30 +278,30 @@
                 <div id="card-stat-avg" onclick="openInsightModal('week_trend')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
                     <div class="flex items-center justify-between">
-                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">7-Tage Steigerung</div>
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">7-Tage Schnitt</div>
                         <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </div>
-                    <div id="stat-avg" class="text-lg font-bold text-slate-800 mt-1">+0m 00s</div>
+                    <div id="stat-avg" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
                     <div id="stat-avg-trend"
                         class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
-                        <span>vs. Vorwoche</span>
+                        <span>Ø pro Tag</span>
                     </div>
                 </div>
                 <div id="card-stat-week" onclick="openInsightModal('month_trend')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
                     <div class="flex items-center justify-between">
-                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">30-Tage Trend
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">30-Tage Schnitt
                         </div>
                         <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </div>
-                    <div id="stat-week" class="text-lg font-bold text-slate-800 mt-1">+0m 00s</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5" id="stat-week-sub">vs. Vor-30-Tage</div>
+                    <div id="stat-week" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5" id="stat-week-sub">Ø pro Tag</div>
                 </div>
                 <div id="card-stat-single" onclick="openInsightModal('records_all')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
@@ -1115,92 +1115,104 @@
                 `;
             }
 
-            // 2. 7-Tage Steigerung: Letzte 7 Tage vs. Tag 8–14
+            // 2. 7-Tage Schnitt (Tageszeit Ø pro Tag, verglichen mit Vorwochen-Ø pro Tag)
             let last7Sec = 0;
+            let last7DaysCount = 0;
             for (let i = 1; i <= 7; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) last7Sec += entry.totalSeconds;
+                if (entry && entry.totalSeconds > 0) {
+                    last7Sec += entry.totalSeconds;
+                    last7DaysCount++;
+                }
             }
+            const avg7 = last7DaysCount > 0 ? Math.round(last7Sec / last7DaysCount) : 0;
 
             let prev7Sec = 0;
+            let prev7DaysCount = 0;
             for (let i = 8; i <= 14; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) prev7Sec += entry.totalSeconds;
+                if (entry && entry.totalSeconds > 0) {
+                    prev7Sec += entry.totalSeconds;
+                    prev7DaysCount++;
+                }
             }
+            const prevAvg7 = prev7DaysCount > 0 ? Math.round(prev7Sec / prev7DaysCount) : 0;
 
-            const diff7 = last7Sec - prev7Sec;
             const statAvgEl = document.getElementById('stat-avg');
             const trendEl = document.getElementById('stat-avg-trend');
 
-            if (last7Sec > 0 || prev7Sec > 0) {
-                const sign7 = diff7 >= 0 ? '+' : '';
-                statAvgEl.className = `text-lg font-bold ${diff7 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-1`;
-                statAvgEl.textContent = `${sign7}${formatSecToMinSec(Math.abs(diff7))}`;
-
-                if (prev7Sec > 0) {
-                    const pct7 = Math.round((diff7 / prev7Sec) * 100);
-                    trendEl.className = `text-[11px] font-semibold mt-0.5 flex items-center gap-1 ${diff7 >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
-                    trendEl.innerHTML = `<span>${sign7}${pct7}% vs. Vorwoche</span>`;
+            statAvgEl.textContent = formatSecToMinSec(avg7);
+            if (avg7 > 0) {
+                if (prevAvg7 > 0) {
+                    const diffAvg7 = avg7 - prevAvg7;
+                    const sign7 = diffAvg7 >= 0 ? '+' : '';
+                    const pct7 = Math.round((diffAvg7 / prevAvg7) * 100);
+                    trendEl.className = `text-[11px] font-semibold mt-0.5 flex items-center gap-1 ${diffAvg7 >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+                    trendEl.innerHTML = `<span>${sign7}${formatSecShort(Math.abs(diffAvg7))}/Tag (${sign7}${pct7}%)</span>`;
                 } else {
                     trendEl.className = 'text-[11px] font-medium mt-0.5 text-teal-600';
-                    trendEl.textContent = `${formatSecToMinSec(last7Sec)} in 7 Tagen`;
+                    trendEl.textContent = `Ø über ${last7DaysCount} Tag${last7DaysCount === 1 ? '' : 'e'}`;
                 }
             } else {
-                statAvgEl.className = 'text-lg font-bold text-slate-800 mt-1';
-                statAvgEl.textContent = '+0m 00s';
+                statAvgEl.textContent = '0m 00s';
                 trendEl.className = 'text-[11px] font-medium mt-0.5 text-slate-400';
-                trendEl.textContent = 'vs. Vorwoche';
+                trendEl.textContent = 'Ø pro Tag';
             }
 
-            // 3. 30-Tage Steigerung: Letzte 30 Tage vs. vorherige 30 Tage
+            // 3. 30-Tage Schnitt (Tageszeit Ø pro Tag, verglichen mit Vor-30-Tage-Ø pro Tag)
             let last30Sec = 0;
+            let last30DaysCount = 0;
             for (let i = 1; i <= 30; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) last30Sec += entry.totalSeconds;
+                if (entry && entry.totalSeconds > 0) {
+                    last30Sec += entry.totalSeconds;
+                    last30DaysCount++;
+                }
             }
+            const avg30 = last30DaysCount > 0 ? Math.round(last30Sec / last30DaysCount) : 0;
 
             let prev30Sec = 0;
+            let prev30DaysCount = 0;
             for (let i = 31; i <= 60; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) prev30Sec += entry.totalSeconds;
+                if (entry && entry.totalSeconds > 0) {
+                    prev30Sec += entry.totalSeconds;
+                    prev30DaysCount++;
+                }
             }
+            const prevAvg30 = prev30DaysCount > 0 ? Math.round(prev30Sec / prev30DaysCount) : 0;
 
-            const diff30 = last30Sec - prev30Sec;
             const statWeekEl = document.getElementById('stat-week');
             const statWeekSubEl = document.getElementById('stat-week-sub');
 
-            if (last30Sec > 0 || prev30Sec > 0) {
-                const sign30 = diff30 >= 0 ? '+' : '';
-                const h30 = Math.floor(Math.abs(diff30) / 3600);
-                const m30 = Math.floor((Math.abs(diff30) % 3600) / 60);
-                statWeekEl.className = `text-lg font-bold ${diff30 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-1`;
-                statWeekEl.textContent = h30 > 0 ? `${sign30}${h30}h ${m30}m` : `${sign30}${formatSecToMinSec(Math.abs(diff30))}`;
-
-                if (prev30Sec > 0) {
-                    const pct30 = Math.round((diff30 / prev30Sec) * 100);
-                    statWeekSubEl.className = `text-[11px] font-semibold mt-0.5 ${diff30 >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
-                    statWeekSubEl.textContent = `${sign30}${pct30}% vs. Vor-30-Tage`;
+            statWeekEl.textContent = formatSecToMinSec(avg30);
+            if (avg30 > 0) {
+                if (prevAvg30 > 0) {
+                    const diffAvg30 = avg30 - prevAvg30;
+                    const sign30 = diffAvg30 >= 0 ? '+' : '';
+                    const pct30 = Math.round((diffAvg30 / prevAvg30) * 100);
+                    statWeekSubEl.className = `text-[11px] font-semibold mt-0.5 ${diffAvg30 >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+                    statWeekSubEl.textContent = `${sign30}${formatSecShort(Math.abs(diffAvg30))}/Tag (${sign30}${pct30}%)`;
                 } else {
                     statWeekSubEl.className = 'text-[11px] font-medium mt-0.5 text-indigo-600';
-                    statWeekSubEl.textContent = 'Aufbauzeitraum';
+                    statWeekSubEl.textContent = `Ø über ${last30DaysCount} Tag${last30DaysCount === 1 ? '' : 'e'}`;
                 }
             } else {
-                statWeekEl.className = 'text-lg font-bold text-slate-800 mt-1';
-                statWeekEl.textContent = '+0m 00s';
+                statWeekEl.textContent = '0m 00s';
                 statWeekSubEl.className = 'text-[11px] font-medium mt-0.5 text-slate-400';
-                statWeekSubEl.textContent = 'vs. Vor-30-Tage';
+                statWeekSubEl.textContent = 'Ø pro Tag';
             }
 
             // 4. Rekorde: All-Time Rekord am Stück & Zuwachs seit Beginn (nur vollendete Tage bzw. heute ab 2 Einheiten)
@@ -2035,14 +2047,17 @@ document.body.classList.remove('overflow-hidden');
                 }
 
             } else if (type === 'week_trend') {
-                titleEl.textContent = '7-Tage Steigerungsanalyse';
-                subtitleEl.textContent = 'Letzte 7 Tage vs. vorherige 7 Tage';
+                titleEl.textContent = '7-Tage Schnitt & Trend';
+                subtitleEl.textContent = 'Tagesdurchschnitt letzte 7 Tage vs. Vorwoche';
                 iconBadgeEl.innerHTML = '🚀';
                 iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg shadow-2xs';
-                chartTitleEl.textContent = '7-Tage Tagesvergleich';
-                chartBadgeEl.textContent = 'Aktuell vs. Vorperiode';
+                chartTitleEl.textContent = '7-Tage Verlauf (Tag für Tag)';
+                chartBadgeEl.textContent = 'Tageswerte vs. Vorwoche';
 
                 let last7Sec = 0;
+                let last7DaysCount = 0;
+                let maxDay7 = 0;
+                let maxDay7Date = null;
                 const last7DaysArr = [];
                 for (let i = 1; i <= 7; i++) {
                     const d = new Date();
@@ -2050,11 +2065,20 @@ document.body.classList.remove('overflow-hidden');
                     const ds = getLocalDateStr(d);
                     const entry = records.find(r => r.date === ds);
                     const sec = entry ? (entry.totalSeconds || 0) : 0;
-                    last7Sec += sec;
+                    if (sec > 0) {
+                        last7Sec += sec;
+                        last7DaysCount++;
+                        if (sec > maxDay7) {
+                            maxDay7 = sec;
+                            maxDay7Date = ds;
+                        }
+                    }
                     last7DaysArr.unshift({ date: ds, sec: sec });
                 }
+                const avg7 = last7DaysCount > 0 ? Math.round(last7Sec / last7DaysCount) : 0;
 
                 let prev7Sec = 0;
+                let prev7DaysCount = 0;
                 const prev7DaysArr = [];
                 for (let i = 8; i <= 14; i++) {
                     const d = new Date();
@@ -2062,48 +2086,48 @@ document.body.classList.remove('overflow-hidden');
                     const ds = getLocalDateStr(d);
                     const entry = records.find(r => r.date === ds);
                     const sec = entry ? (entry.totalSeconds || 0) : 0;
-                    prev7Sec += sec;
+                    if (sec > 0) {
+                        prev7Sec += sec;
+                        prev7DaysCount++;
+                    }
                     prev7DaysArr.unshift({ date: ds, sec: sec });
                 }
+                const prevAvg7 = prev7DaysCount > 0 ? Math.round(prev7Sec / prev7DaysCount) : 0;
 
-                const diff7 = last7Sec - prev7Sec;
-                const sign7 = diff7 >= 0 ? '+' : '';
-                const pct7 = prev7Sec > 0 ? `${sign7}${Math.round((diff7 / prev7Sec) * 100)}%` : '—';
-                const hours7 = Math.floor(last7Sec / 3600);
-                const mins7 = Math.floor((last7Sec % 3600) / 60);
-                const prevHours7 = Math.floor(prev7Sec / 3600);
-                const prevMins7 = Math.floor((prev7Sec % 3600) / 60);
+                const diffAvg7 = avg7 - prevAvg7;
+                const sign7 = diffAvg7 >= 0 ? '+' : '';
+                const pct7 = prevAvg7 > 0 ? `${sign7}${Math.round((diffAvg7 / prevAvg7) * 100)}%` : '—';
 
                 kpiGridEl.innerHTML = `
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">7-Tage Zuwachs</div>
-                        <div class="text-lg font-bold ${diff7 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${sign7}${formatSecToMinSec(Math.abs(diff7))}</div>
-                        <div class="text-[11px] font-semibold ${diff7 >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${pct7} vs. Vorperiode</div>
+                        <div class="text-[11px] font-medium text-slate-400">7-Tage Tages-Ø</div>
+                        <div class="text-lg font-bold text-teal-900 mt-0.5">${formatSecToMinSec(avg7)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Schnitt pro Tag</div>
                     </div>
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Aktuelle 7 Tage</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${hours7 > 0 ? hours7 + 'h ' : ''}${mins7}m</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">Letzte 7 vollendete Tage</div>
+                        <div class="text-[11px] font-medium text-slate-400">Zuwachs pro Tag</div>
+                        <div class="text-lg font-bold ${diffAvg7 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${sign7}${formatSecShort(Math.abs(diffAvg7))}</div>
+                        <div class="text-[11px] font-semibold ${diffAvg7 >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${pct7} vs. Vorwoche</div>
                     </div>
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Vorherige 7 Tage</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${prevHours7 > 0 ? prevHours7 + 'h ' : ''}${prevMins7}m</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">Tag 8 bis 14 zurück</div>
+                        <div class="text-[11px] font-medium text-slate-400">Vorwoche Tages-Ø</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(prevAvg7)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Schnitt Tag 8–14</div>
                     </div>
                     <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-teal-800">Tages-Steigerung Ø</div>
-                        <div class="text-lg font-bold text-teal-950 mt-0.5">${sign7}${formatSecShort(Math.round(Math.abs(diff7) / 7))}</div>
-                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">pro Tag mehr</div>
+                        <div class="text-[11px] font-semibold text-teal-800">Stärkster Einzeltag (7T)</div>
+                        <div class="text-lg font-bold text-teal-950 mt-0.5">${formatSecToMinSec(maxDay7)}</div>
+                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">${maxDay7Date ? formatDatePretty(maxDay7Date) : '—'}</div>
                     </div>
                 `;
 
                 specialChartInstance = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: last7DaysArr.map((d, idx) => `Tag ${idx + 1}`),
+                        labels: last7DaysArr.map(d => formatDatePretty(d.date).split(',')[0]),
                         datasets: [
                             {
-                                label: 'Aktuelle 7 Tage (min)',
+                                label: 'Tageszeit (min)',
                                 data: last7DaysArr.map(d => Number((d.sec / 60).toFixed(2))),
                                 backgroundColor: 'rgba(15, 118, 110, 0.85)',
                                 borderColor: '#0f766e',
@@ -2113,7 +2137,7 @@ document.body.classList.remove('overflow-hidden');
                             },
                             {
                                 type: 'line',
-                                label: 'Vorherige 7 Tage (min)',
+                                label: 'Vorwoche gleicher Tag (min)',
                                 data: prev7DaysArr.map(d => Number((d.sec / 60).toFixed(2))),
                                 borderColor: '#94a3b8',
                                 borderDash: [4, 4],
@@ -2144,17 +2168,20 @@ document.body.classList.remove('overflow-hidden');
                     }
                 });
 
-                insightTextEl.innerHTML = `In den letzten 7 Tagen hast du insgesamt <strong>${hours7 > 0 ? hours7 + 'h ' : ''}${mins7}m</strong> Gehzeit absolviert. Das bedeutet ein Netto-Plus von <strong>${sign7}${formatSecToMinSec(Math.abs(diff7))} (${pct7})</strong> gegenüber der vorherigen 7-Tage-Periode!`;
+                insightTextEl.innerHTML = `Dein täglicher 7-Tage-Schnitt liegt bei <strong>${formatSecToMinSec(avg7)} pro Tag</strong>. Im Vergleich zur Vorwoche (Ø ${formatSecToMinSec(prevAvg7)} / Tag) ${diffAvg7 >= 0 ? 'erzielst du einen täglichen Zuwachs von' : 'liegt die Differenz bei'} <strong>${sign7}${formatSecShort(Math.abs(diffAvg7))} pro Tag (${pct7})</strong>!`;
 
             } else if (type === 'month_trend') {
-                titleEl.textContent = '30-Tage Trend & Monatszuwachs';
-                subtitleEl.textContent = 'Letzte 30 Tage vs. vorherige 30 Tage';
+                titleEl.textContent = '30-Tage Schnitt & Monats-Trend';
+                subtitleEl.textContent = 'Tagesdurchschnitt letzte 30 Tage vs. Vorperiode';
                 iconBadgeEl.innerHTML = '📈';
                 iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center text-lg shadow-2xs';
-                chartTitleEl.textContent = '30-Tage Steigerungsverlauf';
-                chartBadgeEl.textContent = 'Monats-Entwicklung';
+                chartTitleEl.textContent = '30-Tage Verlauf (Tag für Tag)';
+                chartBadgeEl.textContent = 'Tägliche Gehzeit';
 
                 let last30Sec = 0;
+                let last30DaysCount = 0;
+                let maxDay30 = 0;
+                let maxDay30Date = null;
                 const last30Arr = [];
                 for (let i = 1; i <= 30; i++) {
                     const d = new Date();
@@ -2162,47 +2189,57 @@ document.body.classList.remove('overflow-hidden');
                     const ds = getLocalDateStr(d);
                     const entry = records.find(r => r.date === ds);
                     const sec = entry ? (entry.totalSeconds || 0) : 0;
-                    last30Sec += sec;
+                    if (sec > 0) {
+                        last30Sec += sec;
+                        last30DaysCount++;
+                        if (sec > maxDay30) {
+                            maxDay30 = sec;
+                            maxDay30Date = ds;
+                        }
+                    }
                     last30Arr.unshift({ date: ds, sec: sec });
                 }
+                const avg30 = last30DaysCount > 0 ? Math.round(last30Sec / last30DaysCount) : 0;
 
                 let prev30Sec = 0;
+                let prev30DaysCount = 0;
                 for (let i = 31; i <= 60; i++) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     const ds = getLocalDateStr(d);
                     const entry = records.find(r => r.date === ds);
-                    if (entry && entry.totalSeconds > 0) prev30Sec += entry.totalSeconds;
+                    const sec = entry ? (entry.totalSeconds || 0) : 0;
+                    if (sec > 0) {
+                        prev30Sec += sec;
+                        prev30DaysCount++;
+                    }
                 }
+                const prevAvg30 = prev30DaysCount > 0 ? Math.round(prev30Sec / prev30DaysCount) : 0;
 
-                const diff30 = last30Sec - prev30Sec;
-                const sign30 = diff30 >= 0 ? '+' : '';
-                const pct30 = prev30Sec > 0 ? `${sign30}${Math.round((diff30 / prev30Sec) * 100)}%` : '—';
-                const h30 = Math.floor(last30Sec / 3600);
-                const m30 = Math.floor((last30Sec % 3600) / 60);
-                const prevH30 = Math.floor(prev30Sec / 3600);
-                const prevM30 = Math.floor((prev30Sec % 3600) / 60);
+                const diffAvg30 = avg30 - prevAvg30;
+                const sign30 = diffAvg30 >= 0 ? '+' : '';
+                const pct30 = prevAvg30 > 0 ? `${sign30}${Math.round((diffAvg30 / prevAvg30) * 100)}%` : '—';
 
                 kpiGridEl.innerHTML = `
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">30-Tage Steigerung</div>
-                        <div class="text-lg font-bold ${diff30 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${sign30}${formatSecToMinSec(Math.abs(diff30))}</div>
-                        <div class="text-[11px] font-semibold ${diff30 >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${pct30} vs. Vor-30-Tage</div>
+                        <div class="text-[11px] font-medium text-slate-400">30-Tage Tages-Ø</div>
+                        <div class="text-lg font-bold text-indigo-900 mt-0.5">${formatSecToMinSec(avg30)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Schnitt pro Tag</div>
                     </div>
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Letzte 30 Tage</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${h30}h ${m30}m</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">Gesamte Monatszeit</div>
+                        <div class="text-[11px] font-medium text-slate-400">Zuwachs pro Tag</div>
+                        <div class="text-lg font-bold ${diffAvg30 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${sign30}${formatSecShort(Math.abs(diffAvg30))}</div>
+                        <div class="text-[11px] font-semibold ${diffAvg30 >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${pct30} vs. Vor-30-Tage</div>
                     </div>
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Vorherige 30 Tage</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${prevH30}h ${prevM30}m</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">Tag 31 bis 60 zurück</div>
+                        <div class="text-[11px] font-medium text-slate-400">Vor-30-Tage Tages-Ø</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(prevAvg30)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Schnitt Tag 31–60</div>
                     </div>
                     <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-indigo-800">Wachstumsfaktor</div>
-                        <div class="text-lg font-bold text-indigo-950 mt-0.5">${prev30Sec > 0 ? (last30Sec / prev30Sec).toFixed(2) + '×' : '1.0×'}</div>
-                        <div class="text-[11px] font-medium text-indigo-700/80 mt-0.5">Leistungsfaktor</div>
+                        <div class="text-[11px] font-semibold text-indigo-800">Stärkster Einzeltag (30T)</div>
+                        <div class="text-lg font-bold text-indigo-950 mt-0.5">${formatSecToMinSec(maxDay30)}</div>
+                        <div class="text-[11px] font-medium text-indigo-700/80 mt-0.5">${maxDay30Date ? formatDatePretty(maxDay30Date) : '—'}</div>
                     </div>
                 `;
 
@@ -2245,7 +2282,7 @@ document.body.classList.remove('overflow-hidden');
                     }
                 });
 
-                insightTextEl.innerHTML = `In den vergangenen 30 Tagen bist du insgesamt <strong>${h30} Stunden und ${m30} Minuten</strong> gelaufen. Im Vergleich zu den 30 Tagen davor hast du dich um <strong>${sign30}${formatSecToMinSec(Math.abs(diff30))} (${pct30})</strong> gesteigert!`;
+                insightTextEl.innerHTML = `In den letzten 30 Tagen läufst du im Schnitt <strong>${formatSecToMinSec(avg30)} pro Tag</strong>. Im Vergleich zu den 30 Tagen davor (Ø ${formatSecToMinSec(prevAvg30)} / Tag) hast du dich um <strong>${sign30}${formatSecShort(Math.abs(diffAvg30))} pro Tag (${pct30})</strong> gesteigert!`;
 
             } else if (type === 'records_all') {
                 titleEl.textContent = 'Rekorde & Bestmarken';
