@@ -1396,18 +1396,16 @@
                         empiricalSlope = denom !== 0 ? (activeCount * sumXY - sumX * sumY) / denom : 0;
                     }
 
-                    // Basis-Steigung s: Verankert in Datenlage
+                    // Basis-Steigung s aus der realen Datenlage (Sekunden Zuwachs pro Tag)
                     let baseSlope;
-                    if (empiricalSlope > 5) {
-                        baseSlope = Math.min(150, Math.max(15, empiricalSlope));
+                    if (empiricalSlope > 3) {
+                        baseSlope = Math.min(35, Math.max(8, empiricalSlope));
                     } else {
-                        baseSlope = Math.max(20, Math.round(y0 * 0.05));
+                        // Solider, physiologisch realistischer Reha-Zuwachs (ca. +12s bis +25s pro Tag)
+                        baseSlope = Math.max(12, Math.min(25, Math.round(y0 * 0.025)));
                     }
 
-                    // 5. Physiologische Kapazität: Unbegrenzte Ultra-Gehausdauer (24h)
-                    const L = 24 * 3600;
-
-                    // 6. Prognose-Simulation über 90 Tage ab dem letzten tatsächlich vorhandenen Datensatz
+                    // 5. Prognose-Simulation über 90 Tage ab dem letzten tatsächlich vorhandenen Datensatz
                     let currentTotalSec = y0;
                     const futureDays = 90;
                     const futureStep = 2;
@@ -1417,15 +1415,15 @@
                     const baseDate = new Date(parseInt(baseParts[0], 10), parseInt(baseParts[1], 10) - 1, parseInt(baseParts[2], 10));
 
                     for (let day = 1; day <= futureDays; day++) {
-                        // Grundlagen-Verstärker: Je stabiler die Basis, desto größer die Trainingsreize
-                        const foundationMult = Math.pow(Math.max(1.0, currentTotalSec / 180), 0.55);
+                        // 1. Grundlagen-Verstärker: Mit wachsender Basis (10m, 20m, 40m) wächst der täglich machbare Zuwachs sanft & kontrolliert
+                        const foundationMult = Math.min(2.2, 1.0 + 0.45 * Math.log(1 + (currentTotalSec / 300)));
 
-                        // Muscle Memory Effekt: Progressive Reaktivierung neuromuskulärer Bahnen
-                        const muscleMemoryMult = 1.0 + 1.0 * (1 - Math.exp(-day / 14));
+                        // 2. Muscle Memory & Reha-Adaption: Sanfte Unterstützung in der Anfangsphase
+                        const muscleMemoryMult = 1.0 + 0.35 * Math.exp(-day / 35);
 
-                        // Netto-Zuwachs für diesen Tag (organisches, ungedrosseltes Wachstum)
+                        // Netto-Zuwachs für diesen Tag (z. B. ca. +18s/Tag am Start bis ca. +45s/Tag bei 45min Basis)
                         const dailyGain = baseSlope * foundationMult * muscleMemoryMult;
-                        currentTotalSec = Math.min(L, currentTotalSec + dailyGain);
+                        currentTotalSec += dailyGain;
 
                         if (day % futureStep === 0) {
                             const d = new Date(baseDate);
