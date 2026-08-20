@@ -263,7 +263,7 @@
         <div id="view-dashboard" class="space-y-5">
             <!-- Stat Cards (Klickbar für Deep-Dive Insights) -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div id="card-stat-today" onclick="openInsightModal('today')"
+                <div id="card-stat-today" onclick="openInsightModal('progress')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
                     <div class="flex items-center justify-between">
                         <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Heute</div>
@@ -292,18 +292,18 @@
                         <span>pro Tag</span>
                     </div>
                 </div>
-                <div id="card-stat-total" onclick="openInsightModal('total')"
+                <div id="card-stat-week" onclick="openInsightModal('week')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
                     <div class="flex items-center justify-between">
-                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Gesamtzeit
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Diese Woche
                         </div>
                         <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </div>
-                    <div id="stat-total" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5" id="stat-total-sub">alle Einheiten</div>
+                    <div id="stat-week" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5" id="stat-week-sub">0 von 7 Tagen aktiv</div>
                 </div>
                 <div id="card-stat-single" onclick="openInsightModal('single')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
@@ -613,7 +613,7 @@
 
                             <!-- Ton An/Aus Button (SVG Lautsprecher rechts oben) -->
                             <button type="button" id="btn-sw-sound" onclick="toggleStopwatchSound()"
-                                title="Signal-Ton (30s: 1×, 1m: 2×) an/aus"
+                                title="Audio (30s: Piepton, 1m: Sprachansage) an/aus"
                                 class="w-9 h-9 rounded-full bg-emerald-50/90 hover:bg-emerald-100 text-emerald-800 flex items-center justify-center transition border border-emerald-200/70 shadow-2xs active:scale-90">
                                 <!-- Sound An Icon -->
                                 <svg id="sw-sound-icon-on" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
@@ -770,12 +770,12 @@
             <!-- Modal Footer (Navigation Tabs / Filter) -->
             <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/80">
                 <div class="grid grid-cols-4 bg-slate-200/70 p-1 rounded-2xl gap-1 text-xs" id="modal-nav-tabs">
-                    <button onclick="openInsightModal('today')" id="tab-today"
-                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Heute</button>
+                    <button onclick="openInsightModal('progress')" id="tab-progress"
+                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Fortschritt</button>
                     <button onclick="openInsightModal('avg')" id="tab-avg"
                         class="py-1.5 px-1 text-center rounded-xl font-medium transition">7-Tage</button>
-                    <button onclick="openInsightModal('total')" id="tab-total"
-                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Gesamt</button>
+                    <button onclick="openInsightModal('week')" id="tab-week"
+                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Woche</button>
                     <button onclick="openInsightModal('single')" id="tab-single"
                         class="py-1.5 px-1 text-center rounded-xl font-medium transition">Am Stück</button>
                 </div>
@@ -858,6 +858,38 @@
             if (dateStr === todayStr) return `Heute (${dayMonth})`;
             if (dateStr === yesterdayStr) return `Gestern (${dayMonth})`;
             return `${weekday}, ${dayMonth}`;
+        };
+
+        const getCurrentWeekDays = () => {
+            const now = new Date();
+            const currentDay = now.getDay(); // 0 ist Sonntag
+            const distanceToMonday = (currentDay === 0 ? -6 : 1) - currentDay;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + distanceToMonday);
+
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                days.push(getLocalDateStr(d));
+            }
+            return days;
+        };
+
+        const getPreviousWeekDays = () => {
+            const now = new Date();
+            const currentDay = now.getDay();
+            const distanceToMonday = (currentDay === 0 ? -6 : 1) - currentDay - 7;
+            const prevMonday = new Date(now);
+            prevMonday.setDate(now.getDate() + distanceToMonday);
+
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(prevMonday);
+                d.setDate(prevMonday.getDate() + i);
+                days.push(getLocalDateStr(d));
+            }
+            return days;
         };
 
         // --- Schnellauswahl & Formular-Handling ---
@@ -1126,26 +1158,59 @@
             }
 
             const trendEl = document.getElementById('stat-avg-trend');
-            if (prevAvg7 > 0 && avg7 > 0) {
-                const diff = avg7 - prevAvg7;
-                trendEl.innerHTML = formatTrendHTML(diff, 'vs. Vorwoche');
+            if (prev7Sec > 0 && last7Sec > 0) {
+                const diffWeekTotal = last7Sec - prev7Sec;
+                trendEl.innerHTML = formatTrendHTML(diffWeekTotal, 'pro Woche vs. Vorwoche');
             } else if (avg7 > 0) {
                 trendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-teal-600';
                 trendEl.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-                    <span>Ø pro Tag</span>
+                    <span>Ø pro aktivem Tag</span>
                 `;
             } else {
                 trendEl.className = 'text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400';
-                trendEl.innerHTML = `<span>pro Tag</span>`;
+                trendEl.innerHTML = `<span>pro Woche</span>`;
             }
 
-            // 3. Gesamtzeit
-            const totalAllSec = records.reduce((acc, r) => acc + (r.totalSeconds || 0), 0);
-            document.getElementById('stat-total').textContent = formatSecToMinSec(totalAllSec);
-            const totalSub = document.getElementById('stat-total-sub');
-            if (totalSub) {
-                totalSub.textContent = `${records.length} Tag${records.length === 1 ? '' : 'e'} erfasst`;
+            // 3. Diese Woche (Aktuelle Kalenderwoche Mo - So)
+            const currentWeekDays = getCurrentWeekDays();
+            const prevWeekDays = getPreviousWeekDays();
+
+            let thisWeekSec = 0;
+            let thisWeekActiveDays = 0;
+            currentWeekDays.forEach(ds => {
+                const entry = records.find(r => r.date === ds);
+                if (entry && entry.totalSeconds > 0) {
+                    thisWeekSec += entry.totalSeconds;
+                    thisWeekActiveDays++;
+                }
+            });
+
+            let prevWeekSec = 0;
+            prevWeekDays.forEach(ds => {
+                const entry = records.find(r => r.date === ds);
+                if (entry && entry.totalSeconds > 0) {
+                    prevWeekSec += entry.totalSeconds;
+                }
+            });
+
+            const statWeekEl = document.getElementById('stat-week');
+            if (statWeekEl) {
+                statWeekEl.textContent = formatSecToMinSec(thisWeekSec);
+            }
+
+            const statWeekSubEl = document.getElementById('stat-week-sub');
+            if (statWeekSubEl) {
+                if (prevWeekSec > 0 && thisWeekSec > 0) {
+                    const diffWeek = thisWeekSec - prevWeekSec;
+                    statWeekSubEl.innerHTML = formatTrendHTML(diffWeek, 'vs. Vorwoche');
+                } else if (thisWeekActiveDays > 0) {
+                    statWeekSubEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-teal-600';
+                    statWeekSubEl.innerHTML = `<span>${thisWeekActiveDays} von 7 Tagen aktiv</span>`;
+                } else {
+                    statWeekSubEl.className = 'text-[11px] font-medium mt-0.5 text-slate-400';
+                    statWeekSubEl.textContent = `0 von 7 Tagen aktiv`;
+                }
             }
 
             // 4. Gehzeit am Stück - All-Time Rekord
@@ -1263,114 +1328,95 @@
             if (selectedRange === 'all') {
                 filtered = sorted.length > 0 ? sorted.map(r => ({ ...r, isForecast: false })) : [];
             } else if (selectedRange === 'prognose') {
-                // Prognose-Modell: 90 Tage Vorausschau mit Sigmoid/Logistischem Wachstum (Compounding-Effekt)
-                const pastDays = 14;
-                const futureDays = 90;
-                const futureStep = 2;
+                // Prognose-Modell: Basiert AUSSCHLIESSLICH auf den tatsächlich vorhandenen Datensätzen
+                const activeRecords = sorted.filter(r => (r.totalSeconds || 0) > 0);
 
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayStr = getLocalDateStr(yesterday);
-                const yesterdayEntry = sorted.find(r => r.date === yesterdayStr);
+                if (activeRecords.length === 0) {
+                    filtered = [];
+                } else {
+                    // 1. Tatsächlich vorhandene historische Datensätze einfügen (ohne künstliche 0-Tage davor)
+                    activeRecords.forEach(r => {
+                        filtered.push({ ...r, isForecast: false });
+                    });
 
-                // 1. Vergangene 14 vollendete Tage (bis gestern) als historische Referenz
-                for (let i = pastDays; i >= 1; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    const ds = getLocalDateStr(d);
-                    const found = sorted.find(r => r.date === ds);
-                    if (found) {
-                        filtered.push({ ...found, isForecast: false });
+                    // 2. Tatsächliche Baseline & Morning/Evening-Split aus den vorhandenen Daten kalibrieren
+                    const totalSecSum = activeRecords.reduce((sum, r) => sum + (r.totalSeconds || 0), 0);
+                    const morningSecSum = activeRecords.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
+                    const morningShare = totalSecSum > 0 ? Math.min(0.85, Math.max(0.15, morningSecSum / totalSecSum)) : 0.5;
+
+                    // 3. Startwert y0: Basiert auf dem letzten vorhandenen Datensatz (bzw. aktuellem Tag)
+                    const lastActive = activeRecords[activeRecords.length - 1];
+                    const todayStr = getLocalDateStr();
+                    const todayEntry = activeRecords.find(r => r.date === todayStr);
+
+                    let y0 = 0;
+                    if (todayEntry && todayEntry.morningSeconds > 0 && todayEntry.eveningSeconds > 0) {
+                        y0 = todayEntry.totalSeconds;
+                    } else if (todayEntry && todayEntry.totalSeconds > 0) {
+                        y0 = todayEntry.totalSeconds;
                     } else {
+                        y0 = lastActive.totalSeconds;
+                    }
+                    y0 = Math.max(30, y0); // Mindestens 30s als rechnerische Untergrenze
+
+                    // 4. Empirische Steigung s (Sekunden Zuwachs pro Tag) aus linearer Regression der vorhandenen Daten
+                    const n = activeRecords.length;
+                    let empiricalSlope = 0;
+                    if (n >= 2) {
+                        let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
+                        activeRecords.forEach((r, idx) => {
+                            sumX += idx;
+                            sumY += r.totalSeconds;
+                            sumXY += idx * r.totalSeconds;
+                            sumXX += idx * idx;
+                        });
+                        const denom = (n * sumXX - sumX * sumX);
+                        empiricalSlope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
+                    }
+
+                    // Steigung s: Falls Daten einen Trend zeigen, diesen nutzen (innerhalb realistischer Grenzen)
+                    // Bei nur 1 Datensatz oder negativer/stagnierender Steigung: konservatives Basiswachstum (+2.5% oder mind. +5s)
+                    let s;
+                    if (empiricalSlope > 0) {
+                        s = Math.min(90, Math.max(5, empiricalSlope));
+                    } else {
+                        s = Math.max(5, Math.round(y0 * 0.025));
+                    }
+
+                    // 5. Zielwert / Kapazitätsgrenze L basierend auf Reha-Ziel oder Leistungsstand
+                    const L = Math.max(120 * 60, Math.round(y0 * 1.8));
+
+                    // 6. Parameter k und t0 der logistischen Funktion f(t) = L / (1 + exp(-k * (t - t0)))
+                    const safeY0 = Math.min(y0, L - 30);
+                    const k = Math.max(0.006, Math.min(0.08, s / (safeY0 * (1 - safeY0 / L))));
+                    const t0 = Math.log((L - safeY0) / safeY0) / k;
+
+                    // 7. Prognosetage: Vorausschau ab dem letzten Datums-Eintrag / heute für 90 Tage
+                    const futureDays = 90;
+                    const futureStep = 2;
+
+                    const lastDateStr = lastActive.date > todayStr ? lastActive.date : todayStr;
+                    const baseParts = lastDateStr.split('-');
+                    const baseDate = new Date(parseInt(baseParts[0], 10), parseInt(baseParts[1], 10) - 1, parseInt(baseParts[2], 10));
+
+                    for (let i = futureStep; i <= futureDays; i += futureStep) {
+                        const d = new Date(baseDate);
+                        d.setDate(baseDate.getDate() + i);
+                        const ds = getLocalDateStr(d);
+
+                        const sigmoidVal = L / (1 + Math.exp(-k * (i - t0)));
+                        const projectedTotal = Math.max(Math.round(safeY0), Math.min(L, Math.round(sigmoidVal)));
+                        const projectedMorning = Math.round(projectedTotal * morningShare);
+                        const projectedEvening = projectedTotal - projectedMorning;
+
                         filtered.push({
                             date: ds,
-                            morningSeconds: 0,
-                            eveningSeconds: 0,
-                            totalSeconds: 0,
-                            isForecast: false
+                            morningSeconds: projectedMorning,
+                            eveningSeconds: projectedEvening,
+                            totalSeconds: projectedTotal,
+                            isForecast: true
                         });
                     }
-                }
-
-                // 2. Baseline & Split aus den vollendeten aktiven Tagen (letzte 14-30 Tage) kalibrieren
-                const completedActive = sorted.filter(r => r.date <= yesterdayStr && (r.totalSeconds || 0) > 0);
-                const sampleActive = completedActive.slice(-30); // Bis zu 30 Tage Realdaten
-
-                let baselineSec = 0;
-                let morningShare = 0.5;
-                if (sampleActive.length > 0) {
-                    baselineSec = Math.round(sampleActive.reduce((sum, r) => sum + r.totalSeconds, 0) / sampleActive.length);
-                    const mSecTotal = sampleActive.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
-                    const tSecTotal = sampleActive.reduce((sum, r) => sum + (r.totalSeconds || 0), 0);
-                    if (tSecTotal > 0) morningShare = Math.min(0.8, Math.max(0.2, mSecTotal / tSecTotal));
-                } else {
-                    baselineSec = 180; // 3 Min Fallback
-                }
-
-                // 3. Startwert y0 für heute (Tag 0)
-                const todayStr = getLocalDateStr();
-                const todayEntry = sorted.find(r => r.date === todayStr);
-                const isTodayComplete = todayEntry && (todayEntry.morningSeconds > 0) && (todayEntry.eveningSeconds > 0);
-
-                let y0 = 0;
-                if (isTodayComplete) {
-                    y0 = todayEntry.totalSeconds;
-                } else {
-                    const ySec = (yesterdayEntry && yesterdayEntry.totalSeconds > 0) ? yesterdayEntry.totalSeconds : baselineSec;
-                    y0 = Math.max(todayEntry ? todayEntry.totalSeconds : 0, ySec + 15);
-                }
-                y0 = Math.max(180, y0); // Mindestens 3 Minuten Basis
-
-                // 4. Empirische Steigung s (Sekunden Zuwachs pro Tag) aus Regression berechnen
-                let empiricalSlope = 0;
-                if (sampleActive.length >= 2) {
-                    const n = sampleActive.length;
-                    let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-                    sampleActive.forEach((r, idx) => {
-                        sumX += idx;
-                        sumY += r.totalSeconds;
-                        sumXY += idx * r.totalSeconds;
-                        sumXX += idx * idx;
-                    });
-                    const denom = (n * sumXX - sumX * sumX);
-                    empiricalSlope = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
-                }
-
-                // Medizinisches physiologisches Fenster für die Anfangssteigung s:
-                // Bei kontinuierlicher Reha mindestens +15s/Tag, max +60s/Tag als Anfangsrate
-                const s = Math.min(60, Math.max(15, empiricalSlope > 0 ? empiricalSlope : 18));
-
-                // 5. Zielwert / Kapazitätsgrenze L (Standard: 120 Minuten = 7200s vollwertige Alltagsmobilität)
-                // Flexibel anpassbar, falls der Nutzer bereits über 80 Min liegt
-                const L = Math.max(120 * 60, Math.round(y0 * 1.6));
-
-                // 6. Parameter k und t0 der logistischen Funktion f(t) = L / (1 + exp(-k * (t - t0)))
-                // Aus f'(0) = k * y0 * (1 - y0 / L) = s  =>  k = s / (y0 * (1 - y0 / L))
-                const safeY0 = Math.min(y0, L - 60);
-                const k = Math.max(0.008, Math.min(0.08, s / (safeY0 * (1 - safeY0 / L))));
-                // Aus f(0) = y0  =>  t0 = ln((L - y0) / y0) / k
-                const t0 = Math.log((L - safeY0) / safeY0) / k;
-
-                // 7. Kommende 90 Tage nach dem Sigmoid-Modell berechnen (jeder 2. Tag ab heute)
-                for (let i = futureStep; i <= futureDays; i += futureStep) {
-                    const d = new Date();
-                    d.setDate(d.getDate() + i);
-                    const ds = getLocalDateStr(d);
-
-                    // Sigmoid-Formel
-                    const sigmoidVal = L / (1 + Math.exp(-k * (i - t0)));
-                    const projectedTotal = Math.max(Math.round(safeY0), Math.min(L, Math.round(sigmoidVal)));
-
-                    const projectedMorning = Math.round(projectedTotal * morningShare);
-                    const projectedEvening = projectedTotal - projectedMorning;
-
-                    filtered.push({
-                        date: ds,
-                        morningSeconds: projectedMorning,
-                        eveningSeconds: projectedEvening,
-                        totalSeconds: projectedTotal,
-                        isForecast: true
-                    });
                 }
             } else {
                 const daysCount = selectedRange;
@@ -1759,8 +1805,10 @@
             modal.classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
 
+            if (type === 'today') type = 'progress';
+            if (type === 'total') type = 'week';
             // Footer Tabs hervorheben
-            const tabs = ['today', 'avg', 'total', 'single'];
+            const tabs = ['progress', 'avg', 'week', 'single'];
             tabs.forEach(t => {
                 const tabBtn = document.getElementById(`tab-${t}`);
                 if (tabBtn) {
@@ -1822,106 +1870,91 @@
             const chartBadgeEl = document.getElementById('modal-chart-badge');
             const insightTextEl = document.getElementById('modal-insight-text');
 
-            if (type === 'today') {
-                titleEl.textContent = 'Heutige Tagesanalyse';
-                subtitleEl.textContent = `${formatDatePretty(todayStr)} im Detail`;
-                iconBadgeEl.innerHTML = '📅';
-                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg shadow-2xs';
-                chartTitleEl.textContent = '1. vs. 2. Gehen Aufteilung';
-                chartBadgeEl.textContent = 'Balance';
+            if (type === 'progress') {
+                titleEl.textContent = 'Gesamtfortschritt & Meilensteine';
+                subtitleEl.textContent = 'Langzeitentwicklung & Gesamterfolg';
+                iconBadgeEl.innerHTML = '🏆';
+                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg shadow-2xs';
+                chartTitleEl.textContent = 'Kumuliertes Reha-Wachstum';
+                chartBadgeEl.textContent = 'Wegstrecke';
 
-                const mSec = todayEntry ? todayEntry.morningSeconds : 0;
-                const eSec = todayEntry ? todayEntry.eveningSeconds : 0;
-                const tSec = todayEntry ? todayEntry.totalSeconds : 0;
-                const mPct = tSec > 0 ? Math.round((mSec / tSec) * 100) : 0;
-                const ePct = tSec > 0 ? Math.round((eSec / tSec) * 100) : 0;
-
-                const prevEntry = sortedRecords.find(r => r.date < todayStr);
-                const diffVortag = prevEntry && tSec > 0 ? tSec - prevEntry.totalSeconds : 0;
-                const diffVortagTxt = prevEntry ? formatTrendHTML(diffVortag, 'vs. Vortag') : '<span class="text-slate-400">Erster Eintrag</span>';
+                const totalHours = Math.floor(totalAllSec / 3600);
+                const totalMins = Math.floor((totalAllSec % 3600) / 60);
+                const km = (totalAllSec / 3600 * 3.6).toFixed(1);
+                const steps = Math.round(totalAllSec * 1.35).toLocaleString('de-DE');
+                const bestDay = sortedRecords.length > 0 ? sortedRecords.reduce((max, r) => (r.totalSeconds || 0) > (max.totalSeconds || 0) ? r : max, sortedRecords[0]) : null;
 
                 kpiGridEl.innerHTML = `
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Gesamtzeit Heute</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(tSec)}</div>
-                        <div class="text-[11px] mt-0.5">${diffVortagTxt}</div>
-                    </div>
-                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-amber-800">1. Gehen</div>
-                        <div class="text-lg font-bold text-amber-950 mt-0.5">${formatSecToMinSec(mSec)}</div>
-                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">${mPct}% Anteil</div>
-                    </div>
-                    <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-indigo-800">2. Gehen</div>
-                        <div class="text-lg font-bold text-indigo-950 mt-0.5">${formatSecToMinSec(eSec)}</div>
-                        <div class="text-[11px] font-medium text-indigo-700/80 mt-0.5">${ePct}% Anteil</div>
+                        <div class="text-[11px] font-medium text-slate-400">Gesamte Gehzeit</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${totalHours}h ${totalMins}m</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${records.length} Tage erfasst</div>
                     </div>
                     <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-teal-800">vs. 7-Tage-Schnitt</div>
-                        <div class="text-lg font-bold text-teal-950 mt-0.5">${avg7 > 0 ? (tSec >= avg7 ? '+' : '') + formatSecShort(tSec - avg7) : '—'}</div>
-                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">${avg7 > 0 ? (tSec >= avg7 ? 'Über dem Wochendurchschnitt 🎯' : 'Unter dem Wochendurchschnitt') : 'Wochendaten sammeln'}</div>
+                        <div class="text-[11px] font-semibold text-teal-800">Geschätzte Distanz</div>
+                        <div class="text-lg font-bold text-teal-950 mt-0.5">~${km} km</div>
+                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">bei ca. 3.6 km/h</div>
+                    </div>
+                    <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-emerald-800">Geschätzte Schritte</div>
+                        <div class="text-lg font-bold text-emerald-950 mt-0.5">~${steps}</div>
+                        <div class="text-[11px] font-medium text-emerald-700/80 mt-0.5">Schrittfrequenz</div>
+                    </div>
+                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-amber-800">Rekordtag</div>
+                        <div class="text-lg font-bold text-amber-950 mt-0.5">${bestDay ? formatSecToMinSec(bestDay.totalSeconds) : '0m'}</div>
+                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">${bestDay ? formatDatePretty(bestDay.date) : '—'}</div>
                     </div>
                 `;
 
-                if (tSec > 0) {
-                    specialChartInstance = new Chart(ctx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['1. Gehen', '2. Gehen'],
-                            datasets: [{
-                                data: [Number((mSec / 60).toFixed(2)), Number((eSec / 60).toFixed(2))],
-                                backgroundColor: ['rgba(251, 191, 36, 0.9)', 'rgba(99, 102, 241, 0.9)'],
-                                borderColor: ['#f59e0b', '#6366f1'],
-                                borderWidth: 2,
-                                hoverOffset: 4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: { font: { size: 11, weight: 'bold' }, padding: 12 }
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function (c) {
-                                            const secVal = Math.round(c.raw * 60);
-                                            return ` ${c.label}: ${formatSecToMinSec(secVal)} (${tSec > 0 ? Math.round((secVal / tSec) * 100) : 0}%)`;
-                                        }
+                const chronRecords = [...records].filter(r => (r.totalSeconds || 0) > 0).sort((a, b) => a.date.localeCompare(b.date));
+                let cumSec = 0;
+                const cumData = chronRecords.map(r => {
+                    cumSec += (r.totalSeconds || 0);
+                    return {
+                        date: r.date.split('-').slice(1).reverse().join('.'),
+                        cumMin: (cumSec / 60).toFixed(1)
+                    };
+                });
+
+                specialChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: cumData.map(c => c.date),
+                        datasets: [{
+                            label: 'Kumulierte Gehzeit (min)',
+                            data: cumData.map(c => c.cumMin),
+                            borderColor: '#0f766e',
+                            backgroundColor: 'rgba(15, 118, 110, 0.15)',
+                            fill: true,
+                            tension: 0.25,
+                            borderWidth: 2.5,
+                            pointRadius: cumData.length > 20 ? 1 : 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (c) {
+                                        const totM = Math.round(c.raw);
+                                        const h = Math.floor(totM / 60);
+                                        const m = totM % 60;
+                                        return ` Gesamt bis dahin: ${h}h ${m}m`;
                                     }
                                 }
-                            },
-                            cutout: '65%'
-                        }
-                    });
-                } else {
-                    const sample5 = sortedRecords.slice(0, 5).reverse();
-                    specialChartInstance = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: sample5.map(r => {
-                                const p = r.date.split('-');
-                                return `${p[2]}.${p[1]}.`;
-                            }),
-                            datasets: [
-                                { label: '1. Gehen', data: sample5.map(r => (r.morningSeconds / 60).toFixed(1)), backgroundColor: 'rgba(251, 191, 36, 0.85)' },
-                                { label: '2. Gehen', data: sample5.map(r => (r.eveningSeconds / 60).toFixed(1)), backgroundColor: 'rgba(99, 102, 241, 0.85)' }
-                            ]
+                            }
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: { legend: { position: 'bottom' } },
-                            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Minuten' } } }
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Gesamtminuten', font: { size: 10 } } }
                         }
-                    });
-                }
+                    }
+                });
 
-                insightTextEl.innerHTML = tSec > 0
-                    ? `Heute bist du insgesamt <strong>${formatSecToMinSec(tSec)}</strong> gelaufen. Dein Schwerpunkt lag zu <strong>${mPct}%</strong> auf der 1. Einheit und zu <strong>${ePct}%</strong> auf der 2. Einheit. ${tSec >= avg7 && avg7 > 0 ? 'Sehr stark – du liegst über deinem aktuellen Wochenschnitt! 🚀' : 'Super Einsatz für den heutigen Tag.'}`
-                    : 'Für heute ist noch keine Gehzeit eingetragen. Trage oben deine Einheiten ein, um die Live-Tagesbalance zu sehen!';
+                insightTextEl.innerHTML = `Hervorragende Bilanz: Du hast seit Beginn bereits an <strong>${records.length} Tagen</strong> insgesamt <strong>${totalHours} Stunden und ${totalMins} Minuten</strong> reine Gehzeit gesammelt. Das entspricht ca. <strong>${km} Kilometern</strong> zurückgelegter Distanz!`;
 
             } else if (type === 'avg') {
                 titleEl.textContent = '7-Tage-Schnitt & Trend';
@@ -1931,7 +1964,9 @@
                 chartTitleEl.textContent = '14-Tage-Entwicklungskurve';
                 chartBadgeEl.textContent = 'Schnitt vs. Tage';
 
-                const diffAvg = avg7 - prevAvg7;
+                const diffWeekTotal = last7Sec - prev7Sec;
+                const diffWeekTxt = prev7Sec > 0 ? formatTrendHTML(diffWeekTotal, 'vs. Vorwoche') : '<span class="text-slate-400">Keine Vorwoche</span>';
+
                 kpiGridEl.innerHTML = `
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
                         <div class="text-[11px] font-medium text-slate-400">7-Tage-Schnitt</div>
@@ -1939,9 +1974,9 @@
                         <div class="text-[11px] text-slate-500 mt-0.5">pro aktivem Tag</div>
                     </div>
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Vorwochen-Schnitt</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(prevAvg7)}</div>
-                        <div class="text-[11px] mt-0.5">${prevAvg7 > 0 ? formatTrendHTML(diffAvg, 'vs. Vorwoche') : '—'}</div>
+                        <div class="text-[11px] font-medium text-slate-400">Vorwoche (7T Gesamt)</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${prev7Sec > 0 ? formatSecToMinSec(prev7Sec) : '—'}</div>
+                        <div class="text-[11px] mt-0.5">${diffWeekTxt}</div>
                     </div>
                     <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
                         <div class="text-[11px] font-semibold text-teal-800">Aktive Tage (7T)</div>
@@ -1950,8 +1985,8 @@
                     </div>
                     <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/60 shadow-2xs">
                         <div class="text-[11px] font-semibold text-emerald-800">Wochentrend</div>
-                        <div class="text-lg font-bold ${diffAvg >= 0 ? 'text-emerald-900' : 'text-rose-900'} mt-0.5">${diffAvg >= 0 ? '+' : ''}${formatSecShort(diffAvg)}</div>
-                        <div class="text-[11px] font-medium text-emerald-700/80 mt-0.5">${diffAvg >= 0 ? 'Steigerung pro Tag' : 'Rückgang pro Tag'}</div>
+                        <div class="text-lg font-bold ${diffWeekTotal >= 0 ? 'text-emerald-900' : 'text-rose-900'} mt-0.5">${diffWeekTotal >= 0 ? '+' : ''}${formatSecShort(Math.abs(diffWeekTotal))}</div>
+                        <div class="text-[11px] font-medium text-emerald-700/80 mt-0.5">${diffWeekTotal >= 0 ? 'Steigerung pro Woche' : 'Rückgang pro Woche'}</div>
                     </div>
                 `;
 
@@ -2016,94 +2051,166 @@
                     }
                 });
 
-                insightTextEl.innerHTML = `In den letzten 7 Tagen bist du an <strong>${last7DaysCount} von 7 Tagen</strong> aktiv gewesen. Dein Durchschnittswert liegt bei <strong>${formatSecToMinSec(avg7)}</strong> pro Trainingstag. ${diffAvg > 0 ? 'Das ist eine Steigerung um <strong>+' + formatSecShort(diffAvg) + '</strong> im Vergleich zur Vorwoche! 🌟' : 'Jede Trainingseinheit unterstützt deinen Heilungsverlauf.'}`;
+                insightTextEl.innerHTML = `In den letzten 7 Tagen bist du an <strong>${last7DaysCount} von 7 Tagen</strong> aktiv gewesen. Dein Wochentotal liegt bei <strong>${formatSecToMinSec(last7Sec)}</strong> (Ø ${formatSecToMinSec(avg7)} pro aktivem Tag). ${diffWeekTotal > 0 ? 'Das ist eine Steigerung um <strong>+' + formatSecShort(diffWeekTotal) + ' pro Woche</strong> im Vergleich zur Vorwoche! 🌟' : 'Jede Trainingseinheit unterstützt deinen Heilungsverlauf.'}`;
 
-            } else if (type === 'total') {
-                titleEl.textContent = 'Gesamtzeit & Meilensteine';
-                subtitleEl.textContent = 'Gesamter Erfolg seit Beginn';
-                iconBadgeEl.innerHTML = '🏆';
-                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg shadow-2xs';
-                chartTitleEl.textContent = 'Kumuliertes Wachstum';
-                chartBadgeEl.textContent = 'Wegstrecke';
+            } else if (type === 'week' || type === 'total') {
+                const currentWeekDays = getCurrentWeekDays();
+                const prevWeekDays = getPreviousWeekDays();
 
-                const hours = Math.floor(totalAllSec / 3600);
-                const mins = Math.floor((totalAllSec % 3600) / 60);
-                const km = (totalAllSec / 3600 * 3.6).toFixed(1);
-                const steps = Math.round(totalAllSec * 1.35).toLocaleString('de-DE');
+                const monStr = currentWeekDays[0];
+                const sunStr = currentWeekDays[6];
+                const monPretty = monStr.split('-').slice(1).reverse().join('.');
+                const sunPretty = sunStr.split('-').slice(1).reverse().join('.');
 
-                const bestDay = sortedRecords.length > 0 ? sortedRecords.reduce((max, r) => r.totalSeconds > max.totalSeconds ? r : max, sortedRecords[0]) : null;
+                titleEl.textContent = 'Wochenanalyse';
+                subtitleEl.textContent = `Diese Woche (${monPretty} – ${sunPretty})`;
+                iconBadgeEl.innerHTML = '🗓️';
+                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center text-lg shadow-2xs';
+                chartTitleEl.textContent = 'Wochenverlauf nach Tagen';
+                chartBadgeEl.textContent = 'Mo – So';
+
+                let thisWeekSec = 0;
+                let thisWeekActiveDays = 0;
+                const weekDayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+                const morningMins = [];
+                const eveningMins = [];
+
+                currentWeekDays.forEach(ds => {
+                    const entry = records.find(r => r.date === ds);
+                    if (entry && entry.totalSeconds > 0) {
+                        thisWeekSec += entry.totalSeconds;
+                        thisWeekActiveDays++;
+                        morningMins.push(Number(((entry.morningSeconds || 0) / 60).toFixed(2)));
+                        eveningMins.push(Number(((entry.eveningSeconds || 0) / 60).toFixed(2)));
+                    } else {
+                        morningMins.push(0);
+                        eveningMins.push(0);
+                    }
+                });
+
+                let prevWeekSec = 0;
+                const prevTotalMins = [];
+                prevWeekDays.forEach(ds => {
+                    const entry = records.find(r => r.date === ds);
+                    if (entry && entry.totalSeconds > 0) {
+                        prevWeekSec += entry.totalSeconds;
+                        prevTotalMins.push(Number((entry.totalSeconds / 60).toFixed(2)));
+                    } else {
+                        prevTotalMins.push(0);
+                    }
+                });
+
+                const hours = Math.floor(thisWeekSec / 3600);
+                const mins = Math.floor((thisWeekSec % 3600) / 60);
+                const avgActiveDaySec = thisWeekActiveDays > 0 ? Math.round(thisWeekSec / thisWeekActiveDays) : 0;
+                const diffWeek = thisWeekSec - prevWeekSec;
+                const diffWeekTxt = prevWeekSec > 0 ? formatTrendHTML(diffWeek, 'vs. Vorwoche') : '<span class="text-slate-400">Keine Vorwoche</span>';
 
                 kpiGridEl.innerHTML = `
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Gesamte Gehzeit</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${hours}h ${mins}m</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">${records.length} Tage erfasst</div>
+                        <div class="text-[11px] font-medium text-slate-400">Gehzeit diese Woche</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${hours > 0 ? hours + 'h ' : ''}${mins}m</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${thisWeekActiveDays} von 7 Tagen aktiv</div>
                     </div>
                     <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-teal-800">Geschätzte Distanz</div>
-                        <div class="text-lg font-bold text-teal-950 mt-0.5">~${km} km</div>
-                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">bei ca. 3.6 km/h</div>
+                        <div class="text-[11px] font-semibold text-teal-800">Ø pro aktivem Tag</div>
+                        <div class="text-lg font-bold text-teal-950 mt-0.5">${formatSecToMinSec(avgActiveDaySec)}</div>
+                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">Tagesdurchschnitt</div>
                     </div>
-                    <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-emerald-800">Geschätzte Schritte</div>
-                        <div class="text-lg font-bold text-emerald-950 mt-0.5">~${steps}</div>
-                        <div class="text-[11px] font-medium text-emerald-700/80 mt-0.5">Schrittfrequenz</div>
+                    <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-indigo-800">Vergleich Vorwoche</div>
+                        <div class="text-lg font-bold text-indigo-950 mt-0.5">${prevWeekSec > 0 ? formatSecToMinSec(prevWeekSec) : '—'}</div>
+                        <div class="text-[11px] mt-0.5">${diffWeekTxt}</div>
                     </div>
                     <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-amber-800">Rekordtag</div>
-                        <div class="text-lg font-bold text-amber-950 mt-0.5">${bestDay ? formatSecToMinSec(bestDay.totalSeconds) : '0m'}</div>
-                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">${bestDay ? formatDatePretty(bestDay.date) : '—'}</div>
+                        <div class="text-[11px] font-semibold text-amber-800">Trainingsquote</div>
+                        <div class="text-lg font-bold text-amber-950 mt-0.5">${Math.round((thisWeekActiveDays / 7) * 100)}%</div>
+                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">${thisWeekActiveDays} / 7 Wochentage</div>
                     </div>
                 `;
 
-                const chronRecords = [...records].sort((a, b) => a.date.localeCompare(b.date));
-                let cumSec = 0;
-                const cumData = chronRecords.map(r => {
-                    cumSec += (r.totalSeconds || 0);
-                    return {
-                        date: r.date.split('-').slice(1).reverse().join('.'),
-                        cumMin: (cumSec / 60).toFixed(1)
-                    };
-                });
-
                 specialChartInstance = new Chart(ctx, {
-                    type: 'line',
+                    type: 'bar',
                     data: {
-                        labels: cumData.map(c => c.date),
-                        datasets: [{
-                            label: 'Kumulierte Gehzeit (min)',
-                            data: cumData.map(c => c.cumMin),
-                            borderColor: '#0f766e',
-                            backgroundColor: 'rgba(15, 118, 110, 0.15)',
-                            fill: true,
-                            tension: 0.25,
-                            borderWidth: 2.5,
-                            pointRadius: cumData.length > 20 ? 1 : 3
-                        }]
+                        labels: weekDayLabels,
+                        datasets: [
+                            {
+                                type: 'line',
+                                label: 'Vorwoche (min)',
+                                data: prevTotalMins,
+                                borderColor: '#94a3b8',
+                                borderDash: [4, 4],
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                fill: false,
+                                order: 1
+                            },
+                            {
+                                type: 'bar',
+                                label: '1. Gehen (min)',
+                                data: morningMins,
+                                backgroundColor: 'rgba(251, 191, 36, 0.85)',
+                                borderColor: '#f59e0b',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                order: 2,
+                                stack: 'currWeek'
+                            },
+                            {
+                                type: 'bar',
+                                label: '2. Gehen (min)',
+                                data: eveningMins,
+                                backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                                borderColor: '#6366f1',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                order: 3,
+                                stack: 'currWeek'
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
                         plugins: {
-                            legend: { display: false },
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 10 } }
+                            },
                             tooltip: {
                                 callbacks: {
                                     label: function (c) {
-                                        const totM = Math.round(c.raw);
-                                        const h = Math.floor(totM / 60);
-                                        const m = totM % 60;
-                                        return ` Gesamt bis dahin: ${h}h ${m}m`;
+                                        return ` ${c.dataset.label}: ${formatSecToMinSec(Math.round(c.raw * 60))}`;
+                                    },
+                                    footer: function (items) {
+                                        let currTotal = 0;
+                                        items.forEach(i => {
+                                            if (i.dataset.stack === 'currWeek') {
+                                                currTotal += (i.raw || 0);
+                                            }
+                                        });
+                                        if (currTotal > 0) {
+                                            return ` Diese Woche Gesamt: ${formatSecToMinSec(Math.round(currTotal * 60))}`;
+                                        }
+                                        return '';
                                     }
                                 }
                             }
                         },
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Gesamtminuten', font: { size: 10 } } }
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Minuten', font: { size: 10 } }
+                            }
                         }
                     }
                 });
 
-                insightTextEl.innerHTML = `Hervorragende Bilanz: Du hast bisher <strong>${hours} Stunden und ${mins} Minuten</strong> reine Gehzeit gesammelt. Das entspricht ca. <strong>${km} Kilometern</strong> zurückgelegter Distanz!`;
+                insightTextEl.innerHTML = `In der aktuellen Woche (Mo–So) hast du bisher an <strong>${thisWeekActiveDays} von 7 Tagen</strong> trainiert und <strong>${hours > 0 ? hours + 'h ' : ''}${mins} Minuten</strong> Gehzeit erreicht. ${diffWeek > 0 ? 'Das sind bereits <strong>+' + formatSecShort(diffWeek) + '</strong> mehr als in der gesamten Vorwoche! 🌟' : (thisWeekActiveDays > 0 ? 'Kontinuierliches Training ist der Schlüssel zu stabiler Mobilität.' : 'Noch keine Trainingseinheiten in dieser Woche erfasst.')}`;
 
             } else if (type === 'single') {
                 titleEl.textContent = 'Gehzeit am Stück';
@@ -2260,15 +2367,18 @@
                 iconOff?.classList.add('hidden');
                 if (btn) {
                     btn.className = 'w-9 h-9 rounded-full bg-emerald-50/90 hover:bg-emerald-100 text-emerald-800 flex items-center justify-center transition border border-emerald-200/70 shadow-2xs active:scale-90';
-                    btn.title = 'Signal-Ton an (30s: 1×, 1m: 2×)';
+                    btn.title = 'Audio an (30s: Piepton, 1m: Sprachansage)';
                 }
                 playPing(1); // Kurzer Bestätigungs-Ping
             } else {
+                if ('speechSynthesis' in window) {
+                    try { window.speechSynthesis.cancel(); } catch (e) { }
+                }
                 iconOn?.classList.add('hidden');
                 iconOff?.classList.remove('hidden');
                 if (btn) {
                     btn.className = 'w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 flex items-center justify-center transition border border-slate-200/60 shadow-2xs active:scale-90';
-                    btn.title = 'Signal-Ton stummgeschaltet';
+                    btn.title = 'Audio stummgeschaltet';
                 }
             }
         };
@@ -2291,7 +2401,6 @@
                     const gain = audioCtx.createGain();
 
                     osc.type = 'sine';
-                    // Bei Doppel-Ping: 1. Ton 987Hz (B5), 2. Ton 1174Hz (D6) für eine harmonische Melodie
                     const baseFreq = i === 0 ? 987.77 : 1174.66;
                     osc.frequency.setValueAtTime(baseFreq, pingTime);
                     osc.frequency.exponentialRampToValueAtTime(baseFreq * 2, pingTime + 0.07);
@@ -2308,6 +2417,37 @@
                 }
             } catch (e) {
                 console.warn('Audio Context Fehler:', e);
+            }
+        }
+
+        function speakTime(mins) {
+            if (!stopwatchSoundEnabled) return;
+            if (!('speechSynthesis' in window)) {
+                playPing(2);
+                return;
+            }
+            try {
+                window.speechSynthesis.cancel();
+                let text = '';
+                if (mins < 60) {
+                    text = mins === 1 ? '1 Minute' : `${mins} Minuten`;
+                } else {
+                    const h = Math.floor(mins / 60);
+                    const m = mins % 60;
+                    if (m === 0) {
+                        text = h === 1 ? '1 Stunde' : `${h} Stunden`;
+                    } else {
+                        text = `${h} ${h === 1 ? 'Stunde' : 'Stunden'} und ${m} ${m === 1 ? 'Minute' : 'Minuten'}`;
+                    }
+                }
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'de-DE';
+                utterance.rate = 0.95; // Leicht ruhiger und klar verständlich
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.warn('Sprachausgabe Fehler:', e);
+                playPing(2);
             }
         }
 
@@ -2363,13 +2503,18 @@
             stopwatchIsRunning = true;
             stopwatchStartTime = Date.now() - stopwatchElapsedMs;
 
-            // AudioContext im Rahmen der User-Interaktion initialisieren
+            // AudioContext & SpeechSynthesis im Rahmen der User-Interaktion initialisieren / aufwärmen
             try {
                 if (!audioCtx) {
                     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 }
                 if (audioCtx.state === 'suspended') {
                     audioCtx.resume();
+                }
+                if ('speechSynthesis' in window) {
+                    const warmUp = new SpeechSynthesisUtterance('');
+                    warmUp.volume = 0;
+                    window.speechSynthesis.speak(warmUp);
                 }
             } catch (e) { }
 
@@ -2397,6 +2542,10 @@
             clearInterval(stopwatchTimer);
             stopwatchTimer = null;
 
+            if ('speechSynthesis' in window) {
+                try { window.speechSynthesis.cancel(); } catch (e) { }
+            }
+
             document.getElementById('sw-icon-pause')?.classList.add('hidden');
             document.getElementById('sw-icon-play')?.classList.remove('hidden');
             document.getElementById('btn-sw-text').textContent = 'Weiter';
@@ -2412,6 +2561,9 @@
             pauseStopwatch();
             stopwatchElapsedMs = 0;
             lastPingInterval = 0;
+            if ('speechSynthesis' in window) {
+                try { window.speechSynthesis.cancel(); } catch (e) { }
+            }
             renderStopwatchDisplay();
 
             document.getElementById('btn-sw-text').textContent = 'Starten';
@@ -2432,14 +2584,14 @@
             const secs = totalSec % 60;
             const tenths = Math.floor((stopwatchElapsedMs % 1000) / 100);
 
-            // Signal-Ping: 1 Ping bei 30 Sekunden, 2 Pings bei jeder vollen Minute
+            // Signalton bei 30 Sekunden (bzw. halben Minuten), Sprachansage bei jeder vollen Minute
             const currentInterval = Math.floor(totalSec / 30);
             if (stopwatchIsRunning && currentInterval > 0 && currentInterval !== lastPingInterval) {
                 lastPingInterval = currentInterval;
                 if (totalSec % 60 === 0) {
-                    playPing(2); // 2 Pings bei voller Minute
+                    speakTime(mins); // Sprachausgabe bei jeder vollen Minute ("1 Minute", "2 Minuten"...)
                 } else if (totalSec % 60 === 30) {
-                    playPing(1); // 1 Ping bei 30 Sekunden
+                    playPing(1); // Piepton bei 30 Sekunden
                 }
             }
 
