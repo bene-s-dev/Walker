@@ -1345,39 +1345,47 @@
         function renderChart() {
             const ctx = document.getElementById('walkingChart').getContext('2d');
             const todayStr = getLocalDateStr();
-            // Aktuellen Tag nur einbeziehen, wenn beide Einheiten erfasst sind
-            const displayRecords = records.filter(r => {
-                if (r.date === todayStr) {
-                    return (r.morningSeconds || 0) > 0 && (r.eveningSeconds || 0) > 0;
-                }
-                return true;
-            });
-            const sorted = [...displayRecords].sort((a, b) => a.date.localeCompare(b.date));
+
+            // In der Prognose und Alle-Ansicht: Ausnahmslos ALLE echten gespeicherten Daten chronologisch einbinden (inkl. heutiger Einheiten)
+            const allRealRecords = records
+                .filter(r => (r.totalSeconds || 0) > 0 || (r.morningSeconds || 0) > 0 || (r.eveningSeconds || 0) > 0)
+                .map(r => ({
+                    ...r,
+                    totalSeconds: (r.totalSeconds || 0) > 0 ? r.totalSeconds : ((r.morningSeconds || 0) + (r.eveningSeconds || 0))
+                }))
+                .sort((a, b) => a.date.localeCompare(b.date));
+
+            // Für die festen Rückblicke (7/14/30 Tage):
+            const completedPastRecords = records
+                .filter(r => {
+                    if (r.date === todayStr) {
+                        return (r.morningSeconds || 0) > 0 && (r.eveningSeconds || 0) > 0;
+                    }
+                    return (r.totalSeconds || 0) > 0;
+                })
+                .sort((a, b) => a.date.localeCompare(b.date));
 
             let filtered = [];
             if (selectedRange === 'all') {
-                filtered = sorted.length > 0 ? sorted.map(r => ({ ...r, isForecast: false })) : [];
+                filtered = allRealRecords.length > 0 ? allRealRecords.map(r => ({ ...r, isForecast: false })) : [];
             } else if (selectedRange === 'prognose') {
-                // Prognose-Modell: Basiert auf Datenlage, Muscle-Memory-Effekt & Grundlagen-Verstärkung
-                const activeRecords = sorted.filter(r => (r.totalSeconds || 0) > 0);
-
-                if (activeRecords.length === 0) {
+                if (allRealRecords.length === 0) {
                     filtered = [];
                 } else {
-                    // 1. Reale historische Datensätze einfügen
-                    activeRecords.forEach(r => {
+                    // 1. Alle tatsächlich existierenden echten Datenpunkte einfügen
+                    allRealRecords.forEach(r => {
                         filtered.push({ ...r, isForecast: false });
                     });
 
                     // 2. Morning/Evening-Split aus den tatsächlichen Daten ermitteln
-                    const totalSecSum = activeRecords.reduce((sum, r) => sum + (r.totalSeconds || 0), 0);
-                    const morningSecSum = activeRecords.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
+                    const totalSecSum = allRealRecords.reduce((sum, r) => sum + (r.totalSeconds || 0), 0);
+                    const morningSecSum = allRealRecords.reduce((sum, r) => sum + (r.morningSeconds || 0), 0);
                     const morningShare = totalSecSum > 0 ? Math.min(0.85, Math.max(0.15, morningSecSum / totalSecSum)) : 0.5;
 
                     // 3. Startlevel y0: Reale Datenlage (Gewichtetes Niveau der letzten Tage)
-                    const activeCount = activeRecords.length;
-                    const lastActive = activeRecords[activeCount - 1];
-                    const recentSlice = activeRecords.slice(-Math.min(5, activeCount));
+                    const activeCount = allRealRecords.length;
+                    const lastActive = allRealRecords[activeCount - 1];
+                    const recentSlice = allRealRecords.slice(-Math.min(5, activeCount));
                     const recentAvg = Math.round(recentSlice.reduce((sum, r) => sum + r.totalSeconds, 0) / recentSlice.length);
                     let y0 = Math.max(30, Math.max(lastActive.totalSeconds, recentAvg));
 
@@ -1385,7 +1393,7 @@
                     let empiricalSlope = 0;
                     if (activeCount >= 2) {
                         let sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
-                        activeRecords.forEach((r, idx) => {
+                        allRealRecords.forEach((r, idx) => {
                             sumX += idx;
                             sumY += r.totalSeconds;
                             sumXY += idx * r.totalSeconds;
@@ -1403,13 +1411,10 @@
                         baseSlope = Math.max(20, Math.round(y0 * 0.05));
                     }
 
-                    // 5. Physiologische Kapazität: Der menschliche Körper ist evolutionär auf nahezu unbegrenzte Ultra-Gehausdauer ausgelegt
-                    // (Gehen liegt stoffwechselphysiologisch unter der 2,5× BMR Stoffwechselgrenze; Limit ist primär Schlaf/Ernährung, tagelanges Gehen ist möglich)
-                    const L = 24 * 3600; // 24h Ganztages-Gehausdauer
+                    // 5. Physiologische Kapazität: Unbegrenzte Ultra-Gehausdauer (24h)
+                    const L = 24 * 3600;
 
-                    // 6. Prognose-Simulation über 90 Tage:
-                    // - Vollständige Reaktivierung des Muscle-Memory-Effekts
-                    // - Grundlagen-Potenzierung: Mit wachsender Gehzeit wächst der täglich adaptierbare Zuwachs stetig an (keine künstliche Drosselung)
+                    // 6. Prognose-Simulation über 90 Tage ab dem letzten echten Datenpunkt
                     let currentTotalSec = y0;
                     const futureDays = 90;
                     const futureStep = 2;
@@ -1450,12 +1455,12 @@
                 }
             } else {
                 const daysCount = selectedRange;
-                // 7 / 14 / 30 Tage: Immer nur bis gestern (vollendete Tage)
+                // 7 / 14 / 30 Tage Rückblick
                 for (let i = daysCount; i >= 1; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     const ds = getLocalDateStr(d);
-                    const found = sorted.find(r => r.date === ds);
+                    const found = completedPastRecords.find(r => r.date === ds);
                     if (found) {
                         filtered.push({ ...found, isForecast: false });
                     } else {
