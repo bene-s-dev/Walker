@@ -261,55 +261,52 @@
 
         <!-- TAB 1: Dashboard View -->
         <div id="view-dashboard" class="space-y-5">
-            <!-- Stat Cards (Klickbar für Deep-Dive Insights) -->
+            <!-- Stat Cards: Fokus auf Steigerung, Trend & Rekorde -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div id="card-stat-today" onclick="openInsightModal('progress')"
+                <div id="card-stat-today" onclick="openInsightModal('today_diff')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
                     <div class="flex items-center justify-between">
-                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Heute</div>
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Heute vs. Vortag</div>
                         <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </div>
-                    <div id="stat-today" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                    <div class="text-[11px] text-teal-600 font-medium mt-0.5" id="stat-today-split">1. Gehen 0m · 2. Gehen 0m
-                    </div>
+                    <div id="stat-today" class="text-lg font-bold text-slate-800 mt-1">±0s</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5" id="stat-today-split">vs. Vortag</div>
                 </div>
-                <div id="card-stat-avg" onclick="openInsightModal('avg')"
+                <div id="card-stat-avg" onclick="openInsightModal('week_trend')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
                     <div class="flex items-center justify-between">
-                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">7-Tage
-                            Schnitt</div>
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">7-Tage Steigerung</div>
                         <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </div>
-                    <div id="stat-avg" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
+                    <div id="stat-avg" class="text-lg font-bold text-slate-800 mt-1">+0m 00s</div>
                     <div id="stat-avg-trend"
                         class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
-                        <span>pro Tag</span>
+                        <span>vs. Vorwoche</span>
                     </div>
                 </div>
-                <div id="card-stat-week" onclick="openInsightModal('week')"
+                <div id="card-stat-week" onclick="openInsightModal('month_trend')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
                     <div class="flex items-center justify-between">
-                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Diese Woche
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">30-Tage Trend
                         </div>
                         <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
                     </div>
-                    <div id="stat-week" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5" id="stat-week-sub">0 von 7 Tagen aktiv</div>
+                    <div id="stat-week" class="text-lg font-bold text-slate-800 mt-1">+0m 00s</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5" id="stat-week-sub">vs. Vor-30-Tage</div>
                 </div>
-                <div id="card-stat-single" onclick="openInsightModal('single')"
+                <div id="card-stat-single" onclick="openInsightModal('records_all')"
                     class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200/80 hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition cursor-pointer group relative">
                     <div class="flex items-center justify-between">
-                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Gehzeit am
-                            Stück</div>
+                        <div class="text-slate-500 text-xs font-medium group-hover:text-teal-700 transition">Rekord am Stück</div>
                         <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 transition" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -318,7 +315,7 @@
                     <div id="stat-single" class="text-lg font-bold text-slate-800 mt-1">0m 00s</div>
                     <div id="stat-single-trend"
                         class="text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400">
-                        <span>Einzelsession</span>
+                        <span>All-Time Rekord</span>
                     </div>
                 </div>
             </div>
@@ -770,14 +767,14 @@
             <!-- Modal Footer (Navigation Tabs / Filter) -->
             <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/80">
                 <div class="grid grid-cols-4 bg-slate-200/70 p-1 rounded-2xl gap-1 text-xs" id="modal-nav-tabs">
-                    <button onclick="openInsightModal('progress')" id="tab-progress"
-                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Fortschritt</button>
-                    <button onclick="openInsightModal('avg')" id="tab-avg"
+                    <button onclick="openInsightModal('today_diff')" id="tab-today_diff"
+                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Tages-Plus</button>
+                    <button onclick="openInsightModal('week_trend')" id="tab-week_trend"
                         class="py-1.5 px-1 text-center rounded-xl font-medium transition">7-Tage</button>
-                    <button onclick="openInsightModal('week')" id="tab-week"
-                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Woche</button>
-                    <button onclick="openInsightModal('single')" id="tab-single"
-                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Am Stück</button>
+                    <button onclick="openInsightModal('month_trend')" id="tab-month_trend"
+                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">30-Tage</button>
+                    <button onclick="openInsightModal('records_all')" id="tab-records_all"
+                        class="py-1.5 px-1 text-center rounded-xl font-medium transition">Rekorde</button>
                 </div>
             </div>
 
@@ -1081,142 +1078,131 @@
             }
         }
 
-        // --- Statistiken berechnen & anzeigen ---
+        // --- Statistiken berechnen & anzeigen (Fokus: Steigerung, Trend & Rekorde) ---
         function renderStats() {
             const todayStr = getLocalDateStr();
             const todayEntry = records.find(r => r.date === todayStr);
             const sortedRecords = [...records].sort((a, b) => b.date.localeCompare(a.date));
-            const prevEntry = sortedRecords.find(r => r.date < todayStr);
+            const prevEntry = sortedRecords.find(r => r.date < todayStr && (r.totalSeconds || 0) > 0);
 
-            // 1. Heute
-            if (todayEntry) {
-                document.getElementById('stat-today').textContent = formatSecToMinSec(todayEntry.totalSeconds);
+            // 1. Tages-Steigerung: Heute vs. Vortag
+            const todaySec = todayEntry ? (todayEntry.totalSeconds || 0) : 0;
+            const prevSec = prevEntry ? (prevEntry.totalSeconds || 0) : 0;
+            const diffToday = todaySec - prevSec;
 
-                if (prevEntry) {
-                    const diffToday = todayEntry.totalSeconds - prevEntry.totalSeconds;
-                    document.getElementById('stat-today-split').innerHTML = `
-                        <div>1. Gehen ${formatSecShort(todayEntry.morningSeconds)} · 2. Gehen ${formatSecShort(todayEntry.eveningSeconds)}</div>
-                        <div class="mt-0.5">${formatTrendHTML(diffToday, 'vs. Vortag')}</div>
-                    `;
-                } else {
-                    document.getElementById('stat-today-split').textContent = `1. Gehen ${formatSecShort(todayEntry.morningSeconds)} · 2. Gehen ${formatSecShort(todayEntry.eveningSeconds)}`;
-                }
+            const statTodayEl = document.getElementById('stat-today');
+            const statTodaySplitEl = document.getElementById('stat-today-split');
+
+            if (todaySec > 0) {
+                const sign = diffToday >= 0 ? '+' : '';
+                statTodayEl.className = `text-lg font-bold ${diffToday >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-1`;
+                statTodayEl.textContent = `${sign}${formatSecShort(Math.abs(diffToday))}`;
+
+                const pctStr = prevSec > 0 ? ` (${sign}${Math.round((diffToday / prevSec) * 100)}%)` : '';
+                statTodaySplitEl.innerHTML = `
+                    <div class="${diffToday >= 0 ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold'}">${sign}${formatSecShort(Math.abs(diffToday))} vs. Gestern${pctStr}</div>
+                    <div class="text-[10px] text-slate-400 mt-0.5">Heute: ${formatSecShort(todaySec)} · Gestern: ${formatSecShort(prevSec)}</div>
+                `;
             } else {
-                document.getElementById('stat-today').textContent = '0m 00s';
-                document.getElementById('stat-today-split').textContent = '1. Gehen 0m · 2. Gehen 0m';
+                statTodayEl.className = 'text-lg font-bold text-slate-400 mt-1';
+                statTodayEl.textContent = '±0s';
+                statTodaySplitEl.innerHTML = `
+                    <span class="text-slate-400">Heute noch offen</span>
+                    <span class="text-[10px] text-slate-400 block mt-0.5">Gestern: ${formatSecShort(prevSec)}</span>
+                `;
             }
 
-            // 2. 7-Tage Schnitt (Tagesgesamtzeit vollendete Tage bis gestern)
+            // 2. 7-Tage Steigerung: Letzte 7 Tage vs. Tag 8–14
             let last7Sec = 0;
-            let last7DaysCount = 0;
             for (let i = 1; i <= 7; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) {
-                    last7Sec += entry.totalSeconds;
-                    last7DaysCount++;
-                }
+                if (entry && entry.totalSeconds > 0) last7Sec += entry.totalSeconds;
             }
 
-            let avg7 = 0;
-            if (last7DaysCount > 0) {
-                avg7 = Math.round(last7Sec / last7DaysCount);
-            } else if (sortedRecords.length > 0) {
-                const sample = sortedRecords.filter(r => r.date < todayStr && r.totalSeconds > 0).slice(0, 7);
-                if (sample.length > 0) {
-                    avg7 = Math.round(sample.reduce((sum, r) => sum + r.totalSeconds, 0) / sample.length);
-                    last7DaysCount = sample.length;
-                }
-            }
-            document.getElementById('stat-avg').textContent = formatSecToMinSec(avg7);
-
-            // Vorherige 7 Tage (Tag 8 bis 14 zurück)
             let prev7Sec = 0;
-            let prev7DaysCount = 0;
             for (let i = 8; i <= 14; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
                 const ds = getLocalDateStr(d);
                 const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) {
-                    prev7Sec += entry.totalSeconds;
-                    prev7DaysCount++;
-                }
+                if (entry && entry.totalSeconds > 0) prev7Sec += entry.totalSeconds;
             }
 
-            let prevAvg7 = 0;
-            if (prev7DaysCount > 0) {
-                prevAvg7 = Math.round(prev7Sec / prev7DaysCount);
-            } else if (sortedRecords.length > 7) {
-                const samplePrev = sortedRecords.filter(r => r.date < todayStr && r.totalSeconds > 0).slice(7, 14);
-                if (samplePrev.length > 0) {
-                    prevAvg7 = Math.round(samplePrev.reduce((sum, r) => sum + r.totalSeconds, 0) / samplePrev.length);
-                    prev7DaysCount = samplePrev.length;
-                }
-            }
-
+            const diff7 = last7Sec - prev7Sec;
+            const statAvgEl = document.getElementById('stat-avg');
             const trendEl = document.getElementById('stat-avg-trend');
-            if (prev7Sec > 0 && last7Sec > 0) {
-                const diffWeekTotal = last7Sec - prev7Sec;
-                trendEl.innerHTML = formatTrendHTML(diffWeekTotal, 'pro Woche vs. Vorwoche');
-            } else if (avg7 > 0) {
-                trendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-teal-600';
-                trendEl.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-                    <span>Ø pro aktivem Tag</span>
-                `;
-            } else {
-                trendEl.className = 'text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400';
-                trendEl.innerHTML = `<span>pro Woche</span>`;
-            }
 
-            // 3. Diese Woche (Aktuelle Kalenderwoche Mo - So)
-            const currentWeekDays = getCurrentWeekDays();
-            const prevWeekDays = getPreviousWeekDays();
+            if (last7Sec > 0 || prev7Sec > 0) {
+                const sign7 = diff7 >= 0 ? '+' : '';
+                statAvgEl.className = `text-lg font-bold ${diff7 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-1`;
+                statAvgEl.textContent = `${sign7}${formatSecToMinSec(Math.abs(diff7))}`;
 
-            let thisWeekSec = 0;
-            let thisWeekActiveDays = 0;
-            currentWeekDays.forEach(ds => {
-                const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) {
-                    thisWeekSec += entry.totalSeconds;
-                    thisWeekActiveDays++;
-                }
-            });
-
-            let prevWeekSec = 0;
-            prevWeekDays.forEach(ds => {
-                const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) {
-                    prevWeekSec += entry.totalSeconds;
-                }
-            });
-
-            const statWeekEl = document.getElementById('stat-week');
-            if (statWeekEl) {
-                statWeekEl.textContent = formatSecToMinSec(thisWeekSec);
-            }
-
-            const statWeekSubEl = document.getElementById('stat-week-sub');
-            if (statWeekSubEl) {
-                if (prevWeekSec > 0 && thisWeekSec > 0) {
-                    const diffWeek = thisWeekSec - prevWeekSec;
-                    statWeekSubEl.innerHTML = formatTrendHTML(diffWeek, 'vs. Vorwoche');
-                } else if (thisWeekActiveDays > 0) {
-                    statWeekSubEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-teal-600';
-                    statWeekSubEl.innerHTML = `<span>${thisWeekActiveDays} von 7 Tagen aktiv</span>`;
+                if (prev7Sec > 0) {
+                    const pct7 = Math.round((diff7 / prev7Sec) * 100);
+                    trendEl.className = `text-[11px] font-semibold mt-0.5 flex items-center gap-1 ${diff7 >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+                    trendEl.innerHTML = `<span>${sign7}${pct7}% vs. Vorwoche</span>`;
                 } else {
-                    statWeekSubEl.className = 'text-[11px] font-medium mt-0.5 text-slate-400';
-                    statWeekSubEl.textContent = `0 von 7 Tagen aktiv`;
+                    trendEl.className = 'text-[11px] font-medium mt-0.5 text-teal-600';
+                    trendEl.textContent = `${formatSecToMinSec(last7Sec)} in 7 Tagen`;
                 }
+            } else {
+                statAvgEl.className = 'text-lg font-bold text-slate-800 mt-1';
+                statAvgEl.textContent = '+0m 00s';
+                trendEl.className = 'text-[11px] font-medium mt-0.5 text-slate-400';
+                trendEl.textContent = 'vs. Vorwoche';
             }
 
-            // 4. Gehzeit am Stück - All-Time Rekord
+            // 3. 30-Tage Steigerung: Letzte 30 Tage vs. vorherige 30 Tage
+            let last30Sec = 0;
+            for (let i = 1; i <= 30; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const ds = getLocalDateStr(d);
+                const entry = records.find(r => r.date === ds);
+                if (entry && entry.totalSeconds > 0) last30Sec += entry.totalSeconds;
+            }
+
+            let prev30Sec = 0;
+            for (let i = 31; i <= 60; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const ds = getLocalDateStr(d);
+                const entry = records.find(r => r.date === ds);
+                if (entry && entry.totalSeconds > 0) prev30Sec += entry.totalSeconds;
+            }
+
+            const diff30 = last30Sec - prev30Sec;
+            const statWeekEl = document.getElementById('stat-week');
+            const statWeekSubEl = document.getElementById('stat-week-sub');
+
+            if (last30Sec > 0 || prev30Sec > 0) {
+                const sign30 = diff30 >= 0 ? '+' : '';
+                const h30 = Math.floor(Math.abs(diff30) / 3600);
+                const m30 = Math.floor((Math.abs(diff30) % 3600) / 60);
+                statWeekEl.className = `text-lg font-bold ${diff30 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-1`;
+                statWeekEl.textContent = h30 > 0 ? `${sign30}${h30}h ${m30}m` : `${sign30}${formatSecToMinSec(Math.abs(diff30))}`;
+
+                if (prev30Sec > 0) {
+                    const pct30 = Math.round((diff30 / prev30Sec) * 100);
+                    statWeekSubEl.className = `text-[11px] font-semibold mt-0.5 ${diff30 >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+                    statWeekSubEl.textContent = `${sign30}${pct30}% vs. Vor-30-Tage`;
+                } else {
+                    statWeekSubEl.className = 'text-[11px] font-medium mt-0.5 text-indigo-600';
+                    statWeekSubEl.textContent = 'Aufbauzeitraum';
+                }
+            } else {
+                statWeekEl.className = 'text-lg font-bold text-slate-800 mt-1';
+                statWeekEl.textContent = '+0m 00s';
+                statWeekSubEl.className = 'text-[11px] font-medium mt-0.5 text-slate-400';
+                statWeekSubEl.textContent = 'vs. Vor-30-Tage';
+            }
+
+            // 4. Rekorde: All-Time Rekord am Stück & Zuwachs seit Beginn
             let allTimeMaxSingle = 0;
             let recordDate = null;
-
             records.forEach(r => {
                 const mSec = r.morningSeconds || 0;
                 const eSec = r.eveningSeconds || 0;
@@ -1230,22 +1216,26 @@
                 }
             });
 
-            const singleValueEl = document.getElementById('stat-single');
+            const chronRecords = [...records].filter(r => (r.totalSeconds || 0) > 0).sort((a, b) => a.date.localeCompare(b.date));
+            const firstRecord = chronRecords[0];
+            const firstMaxSingle = firstRecord ? Math.max(firstRecord.morningSeconds || 0, firstRecord.eveningSeconds || 0) : 0;
+            const singleGainSinceStart = allTimeMaxSingle - firstMaxSingle;
+
+            const statSingleEl = document.getElementById('stat-single');
             const singleTrendEl = document.getElementById('stat-single-trend');
 
-            singleValueEl.textContent = formatSecToMinSec(allTimeMaxSingle);
+            statSingleEl.textContent = formatSecToMinSec(allTimeMaxSingle);
 
             if (allTimeMaxSingle > 0) {
-                const isToday = recordDate === todayStr;
                 singleTrendEl.className = 'text-[11px] font-semibold mt-0.5 flex items-center gap-1 text-amber-600';
                 singleTrendEl.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 flex-shrink-0 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
-                    <span>${isToday ? 'Heute aufgestellt!' : formatDatePretty(recordDate)}</span>
+                    <span>+${formatSecShort(Math.max(0, singleGainSinceStart))} seit Start</span>
                 `;
             } else {
-                singleTrendEl.className = 'text-[11px] font-medium mt-0.5 flex items-center gap-1 text-slate-400';
+                singleTrendEl.className = 'text-[11px] font-medium mt-0.5 text-slate-400';
                 singleTrendEl.innerHTML = `<span>noch kein Rekord</span>`;
             }
         }
@@ -1787,7 +1777,7 @@
         function closeInsightModal() {
             const modal = document.getElementById('insight-modal');
             if (modal) modal.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
+document.body.classList.remove('overflow-hidden');
             if (specialChartInstance) {
                 specialChartInstance.destroy();
                 specialChartInstance = null;
@@ -1801,14 +1791,18 @@
             const modal = document.getElementById('insight-modal');
             if (!modal) return;
 
+            // Aliases für 100% robuste Navigation
+            if (type === 'today' || type === 'progress' || type === 'today_diff') type = 'today_diff';
+            if (type === 'avg' || type === 'week_trend') type = 'week_trend';
+            if (type === 'week' || type === 'month_trend' || type === 'total') type = 'month_trend';
+            if (type === 'single' || type === 'records_all') type = 'records_all';
+
             activeInsightMode = type;
             modal.classList.remove('hidden');
             document.body.classList.add('overflow-hidden');
 
-            if (type === 'today') type = 'progress';
-            if (type === 'total') type = 'week';
             // Footer Tabs hervorheben
-            const tabs = ['progress', 'avg', 'week', 'single'];
+            const tabs = ['today_diff', 'week_trend', 'month_trend', 'records_all'];
             tabs.forEach(t => {
                 const tabBtn = document.getElementById(`tab-${t}`);
                 if (tabBtn) {
@@ -1823,35 +1817,6 @@
             const sortedRecords = [...records].sort((a, b) => b.date.localeCompare(a.date));
             const todayStr = getLocalDateStr();
             const todayEntry = records.find(r => r.date === todayStr);
-
-            // 7-Tage & Wochenschnitt Berechnungen (vollendete Tage bis gestern)
-            let last7Sec = 0, last7DaysCount = 0;
-            for (let i = 1; i <= 7; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const ds = getLocalDateStr(d);
-                const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) {
-                    last7Sec += entry.totalSeconds;
-                    last7DaysCount++;
-                }
-            }
-            const completedPastRecords = sortedRecords.filter(r => r.date < todayStr && r.totalSeconds > 0);
-            const avg7 = last7DaysCount > 0 ? Math.round(last7Sec / last7DaysCount) : (completedPastRecords.length > 0 ? Math.round(completedPastRecords.slice(0, 7).reduce((s, r) => s + r.totalSeconds, 0) / Math.min(7, completedPastRecords.length)) : 0);
-
-            let prev7Sec = 0, prev7DaysCount = 0;
-            for (let i = 8; i <= 14; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const ds = getLocalDateStr(d);
-                const entry = records.find(r => r.date === ds);
-                if (entry && entry.totalSeconds > 0) {
-                    prev7Sec += entry.totalSeconds;
-                    prev7DaysCount++;
-                }
-            }
-            const prevAvg7 = prev7DaysCount > 0 ? Math.round(prev7Sec / prev7DaysCount) : (completedPastRecords.length > 7 ? Math.round(completedPastRecords.slice(7, 14).reduce((s, r) => s + r.totalSeconds, 0) / Math.min(7, completedPastRecords.slice(7, 14).length)) : 0);
-            const totalAllSec = records.reduce((acc, r) => acc + (r.totalSeconds || 0), 0);
 
             // Altes Chart sauber entfernen
             if (specialChartInstance) {
@@ -1870,67 +1835,301 @@
             const chartBadgeEl = document.getElementById('modal-chart-badge');
             const insightTextEl = document.getElementById('modal-insight-text');
 
-            if (type === 'progress') {
-                titleEl.textContent = 'Gesamtfortschritt & Meilensteine';
-                subtitleEl.textContent = 'Langzeitentwicklung & Gesamterfolg';
-                iconBadgeEl.innerHTML = '🏆';
+            if (type === 'today_diff') {
+                titleEl.textContent = 'Tages-Steigerung & Vergleich';
+                subtitleEl.textContent = 'Heute vs. Vortag & letzte Tage';
+                iconBadgeEl.innerHTML = '⚡';
                 iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg shadow-2xs';
-                chartTitleEl.textContent = 'Kumuliertes Reha-Wachstum';
-                chartBadgeEl.textContent = 'Wegstrecke';
+                chartTitleEl.textContent = 'Tagesvergleich (1. vs. 2. Gehen)';
+                chartBadgeEl.textContent = 'Vorher / Nachher';
 
-                const totalHours = Math.floor(totalAllSec / 3600);
-                const totalMins = Math.floor((totalAllSec % 3600) / 60);
-                const km = (totalAllSec / 3600 * 3.6).toFixed(1);
-                const steps = Math.round(totalAllSec * 1.35).toLocaleString('de-DE');
-                const bestDay = sortedRecords.length > 0 ? sortedRecords.reduce((max, r) => (r.totalSeconds || 0) > (max.totalSeconds || 0) ? r : max, sortedRecords[0]) : null;
+                const todaySec = todayEntry ? (todayEntry.totalSeconds || 0) : 0;
+                const todayM = todayEntry ? (todayEntry.morningSeconds || 0) : 0;
+                const todayE = todayEntry ? (todayEntry.eveningSeconds || 0) : 0;
+
+                const prevEntry = sortedRecords.find(r => r.date < todayStr && (r.totalSeconds || 0) > 0);
+                const prevSec = prevEntry ? (prevEntry.totalSeconds || 0) : 0;
+                const prevM = prevEntry ? (prevEntry.morningSeconds || 0) : 0;
+                const prevE = prevEntry ? (prevEntry.eveningSeconds || 0) : 0;
+
+                const diffToday = todaySec - prevSec;
+                const diffM = todayM - prevM;
+                const diffE = todayE - prevE;
+                const sign = diffToday >= 0 ? '+' : '';
+                const pctToday = prevSec > 0 ? `${sign}${Math.round((diffToday / prevSec) * 100)}%` : '—';
 
                 kpiGridEl.innerHTML = `
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Gesamte Gehzeit</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${totalHours}h ${totalMins}m</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">${records.length} Tage erfasst</div>
+                        <div class="text-[11px] font-medium text-slate-400">Steigerung zum Vortag</div>
+                        <div class="text-lg font-bold ${diffToday >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${sign}${formatSecShort(Math.abs(diffToday))}</div>
+                        <div class="text-[11px] font-semibold ${diffToday >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${pctToday} Zuwachs</div>
+                    </div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Heute Gesamt</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(todaySec)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">1.: ${formatSecShort(todayM)} · 2.: ${formatSecShort(todayE)}</div>
+                    </div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Gestern Gesamt</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(prevSec)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">1.: ${formatSecShort(prevM)} · 2.: ${formatSecShort(prevE)}</div>
                     </div>
                     <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-teal-800">Geschätzte Distanz</div>
-                        <div class="text-lg font-bold text-teal-950 mt-0.5">~${km} km</div>
-                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">bei ca. 3.6 km/h</div>
-                    </div>
-                    <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-emerald-800">Geschätzte Schritte</div>
-                        <div class="text-lg font-bold text-emerald-950 mt-0.5">~${steps}</div>
-                        <div class="text-[11px] font-medium text-emerald-700/80 mt-0.5">Schrittfrequenz</div>
-                    </div>
-                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-amber-800">Rekordtag</div>
-                        <div class="text-lg font-bold text-amber-950 mt-0.5">${bestDay ? formatSecToMinSec(bestDay.totalSeconds) : '0m'}</div>
-                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">${bestDay ? formatDatePretty(bestDay.date) : '—'}</div>
+                        <div class="text-[11px] font-semibold text-teal-800">Einheiten-Delta</div>
+                        <div class="text-xs font-bold text-teal-950 mt-1">1. Gehen: ${diffM >= 0 ? '+' : ''}${formatSecShort(diffM)}</div>
+                        <div class="text-xs font-bold text-teal-950 mt-0.5">2. Gehen: ${diffE >= 0 ? '+' : ''}${formatSecShort(diffE)}</div>
                     </div>
                 `;
 
-                const chronRecords = [...records].filter(r => (r.totalSeconds || 0) > 0).sort((a, b) => a.date.localeCompare(b.date));
-                let cumSec = 0;
-                const cumData = chronRecords.map(r => {
-                    cumSec += (r.totalSeconds || 0);
-                    return {
-                        date: r.date.split('-').slice(1).reverse().join('.'),
-                        cumMin: (cumSec / 60).toFixed(1)
-                    };
+                const sampleDays = sortedRecords.slice(0, 5).reverse();
+                if (sampleDays.length === 0) sampleDays.push({ date: todayStr, morningSeconds: 0, eveningSeconds: 0, totalSeconds: 0 });
+
+                specialChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: sampleDays.map(r => r.date === todayStr ? 'Heute' : formatDatePretty(r.date).split(',')[0]),
+                        datasets: [
+                            {
+                                label: '1. Gehen (min)',
+                                data: sampleDays.map(r => Number(((r.morningSeconds || 0) / 60).toFixed(2))),
+                                backgroundColor: 'rgba(251, 191, 36, 0.85)',
+                                borderColor: '#f59e0b',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                stack: 'day'
+                            },
+                            {
+                                label: '2. Gehen (min)',
+                                data: sampleDays.map(r => Number(((r.eveningSeconds || 0) / 60).toFixed(2))),
+                                backgroundColor: 'rgba(99, 102, 241, 0.85)',
+                                borderColor: '#6366f1',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                stack: 'day'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { size: 10 } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (c) {
+                                        return ` ${c.dataset.label}: ${formatSecToMinSec(Math.round(c.raw * 60))}`;
+                                    },
+                                    footer: function (items) {
+                                        let tot = 0;
+                                        items.forEach(i => tot += (i.raw || 0));
+                                        return ` Gesamt: ${formatSecToMinSec(Math.round(tot * 60))}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { stacked: true },
+                            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Minuten', font: { size: 10 } } }
+                        }
+                    }
                 });
+
+                insightTextEl.innerHTML = todaySec > 0
+                    ? `Heute bist du insgesamt <strong>${formatSecToMinSec(todaySec)}</strong> gelaufen. Im direkten Vergleich zu gestern (${formatSecToMinSec(prevSec)}) ist das ein Zuwachs von <strong>${sign}${formatSecShort(Math.abs(diffToday))} (${pctToday})</strong>!`
+                    : `Heute wurde noch kein Spaziergang gestoppt. Gestern bist du <strong>${formatSecToMinSec(prevSec)}</strong> gelaufen. Starte deine Einheit, um das heutige Plus aufzubauen!`;
+
+            } else if (type === 'week_trend') {
+                titleEl.textContent = '7-Tage Steigerungsanalyse';
+                subtitleEl.textContent = 'Letzte 7 Tage vs. vorherige 7 Tage';
+                iconBadgeEl.innerHTML = '🚀';
+                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center text-lg shadow-2xs';
+                chartTitleEl.textContent = '7-Tage Tagesvergleich';
+                chartBadgeEl.textContent = 'Aktuell vs. Vorperiode';
+
+                let last7Sec = 0;
+                const last7DaysArr = [];
+                for (let i = 1; i <= 7; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const ds = getLocalDateStr(d);
+                    const entry = records.find(r => r.date === ds);
+                    const sec = entry ? (entry.totalSeconds || 0) : 0;
+                    last7Sec += sec;
+                    last7DaysArr.unshift({ date: ds, sec: sec });
+                }
+
+                let prev7Sec = 0;
+                const prev7DaysArr = [];
+                for (let i = 8; i <= 14; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const ds = getLocalDateStr(d);
+                    const entry = records.find(r => r.date === ds);
+                    const sec = entry ? (entry.totalSeconds || 0) : 0;
+                    prev7Sec += sec;
+                    prev7DaysArr.unshift({ date: ds, sec: sec });
+                }
+
+                const diff7 = last7Sec - prev7Sec;
+                const sign7 = diff7 >= 0 ? '+' : '';
+                const pct7 = prev7Sec > 0 ? `${sign7}${Math.round((diff7 / prev7Sec) * 100)}%` : '—';
+                const hours7 = Math.floor(last7Sec / 3600);
+                const mins7 = Math.floor((last7Sec % 3600) / 60);
+                const prevHours7 = Math.floor(prev7Sec / 3600);
+                const prevMins7 = Math.floor((prev7Sec % 3600) / 60);
+
+                kpiGridEl.innerHTML = `
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">7-Tage Zuwachs</div>
+                        <div class="text-lg font-bold ${diff7 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${sign7}${formatSecToMinSec(Math.abs(diff7))}</div>
+                        <div class="text-[11px] font-semibold ${diff7 >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${pct7} vs. Vorperiode</div>
+                    </div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Aktuelle 7 Tage</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${hours7 > 0 ? hours7 + 'h ' : ''}${mins7}m</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Letzte 7 vollendete Tage</div>
+                    </div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Vorherige 7 Tage</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${prevHours7 > 0 ? prevHours7 + 'h ' : ''}${prevMins7}m</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Tag 8 bis 14 zurück</div>
+                    </div>
+                    <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-teal-800">Tages-Steigerung Ø</div>
+                        <div class="text-lg font-bold text-teal-950 mt-0.5">${sign7}${formatSecShort(Math.round(Math.abs(diff7) / 7))}</div>
+                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">pro Tag mehr</div>
+                    </div>
+                `;
+
+                specialChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: last7DaysArr.map((d, idx) => `Tag ${idx + 1}`),
+                        datasets: [
+                            {
+                                label: 'Aktuelle 7 Tage (min)',
+                                data: last7DaysArr.map(d => Number((d.sec / 60).toFixed(2))),
+                                backgroundColor: 'rgba(15, 118, 110, 0.85)',
+                                borderColor: '#0f766e',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                                order: 2
+                            },
+                            {
+                                type: 'line',
+                                label: 'Vorherige 7 Tage (min)',
+                                data: prev7DaysArr.map(d => Number((d.sec / 60).toFixed(2))),
+                                borderColor: '#94a3b8',
+                                borderDash: [4, 4],
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                fill: false,
+                                order: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { size: 10 } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (c) {
+                                        return ` ${c.dataset.label}: ${formatSecToMinSec(Math.round(c.raw * 60))}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Minuten', font: { size: 10 } } }
+                        }
+                    }
+                });
+
+                insightTextEl.innerHTML = `In den letzten 7 Tagen hast du insgesamt <strong>${hours7 > 0 ? hours7 + 'h ' : ''}${mins7}m</strong> Gehzeit absolviert. Das bedeutet ein Netto-Plus von <strong>${sign7}${formatSecToMinSec(Math.abs(diff7))} (${pct7})</strong> gegenüber der vorherigen 7-Tage-Periode!`;
+
+            } else if (type === 'month_trend') {
+                titleEl.textContent = '30-Tage Trend & Monatszuwachs';
+                subtitleEl.textContent = 'Letzte 30 Tage vs. vorherige 30 Tage';
+                iconBadgeEl.innerHTML = '📈';
+                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center text-lg shadow-2xs';
+                chartTitleEl.textContent = '30-Tage Steigerungsverlauf';
+                chartBadgeEl.textContent = 'Monats-Entwicklung';
+
+                let last30Sec = 0;
+                const last30Arr = [];
+                for (let i = 1; i <= 30; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const ds = getLocalDateStr(d);
+                    const entry = records.find(r => r.date === ds);
+                    const sec = entry ? (entry.totalSeconds || 0) : 0;
+                    last30Sec += sec;
+                    last30Arr.unshift({ date: ds, sec: sec });
+                }
+
+                let prev30Sec = 0;
+                for (let i = 31; i <= 60; i++) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const ds = getLocalDateStr(d);
+                    const entry = records.find(r => r.date === ds);
+                    if (entry && entry.totalSeconds > 0) prev30Sec += entry.totalSeconds;
+                }
+
+                const diff30 = last30Sec - prev30Sec;
+                const sign30 = diff30 >= 0 ? '+' : '';
+                const pct30 = prev30Sec > 0 ? `${sign30}${Math.round((diff30 / prev30Sec) * 100)}%` : '—';
+                const h30 = Math.floor(last30Sec / 3600);
+                const m30 = Math.floor((last30Sec % 3600) / 60);
+                const prevH30 = Math.floor(prev30Sec / 3600);
+                const prevM30 = Math.floor((prev30Sec % 3600) / 60);
+
+                kpiGridEl.innerHTML = `
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">30-Tage Steigerung</div>
+                        <div class="text-lg font-bold ${diff30 >= 0 ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${sign30}${formatSecToMinSec(Math.abs(diff30))}</div>
+                        <div class="text-[11px] font-semibold ${diff30 >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-0.5">${pct30} vs. Vor-30-Tage</div>
+                    </div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Letzte 30 Tage</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${h30}h ${m30}m</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Gesamte Monatszeit</div>
+                    </div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Vorherige 30 Tage</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${prevH30}h ${prevM30}m</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Tag 31 bis 60 zurück</div>
+                    </div>
+                    <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-indigo-800">Wachstumsfaktor</div>
+                        <div class="text-lg font-bold text-indigo-950 mt-0.5">${prev30Sec > 0 ? (last30Sec / prev30Sec).toFixed(2) + '×' : '1.0×'}</div>
+                        <div class="text-[11px] font-medium text-indigo-700/80 mt-0.5">Leistungsfaktor</div>
+                    </div>
+                `;
 
                 specialChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: cumData.map(c => c.date),
-                        datasets: [{
-                            label: 'Kumulierte Gehzeit (min)',
-                            data: cumData.map(c => c.cumMin),
-                            borderColor: '#0f766e',
-                            backgroundColor: 'rgba(15, 118, 110, 0.15)',
-                            fill: true,
-                            tension: 0.25,
-                            borderWidth: 2.5,
-                            pointRadius: cumData.length > 20 ? 1 : 3
-                        }]
+                        labels: last30Arr.map(d => {
+                            const p = d.date.split('-');
+                            return `${p[2]}.${p[1]}.`;
+                        }),
+                        datasets: [
+                            {
+                                label: 'Tageszeit (min)',
+                                data: last30Arr.map(d => Number((d.sec / 60).toFixed(2))),
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                                fill: true,
+                                tension: 0.25,
+                                borderWidth: 2.5,
+                                pointRadius: 2
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
@@ -1940,94 +2139,107 @@
                             tooltip: {
                                 callbacks: {
                                     label: function (c) {
-                                        const totM = Math.round(c.raw);
-                                        const h = Math.floor(totM / 60);
-                                        const m = totM % 60;
-                                        return ` Gesamt bis dahin: ${h}h ${m}m`;
+                                        return ` ${formatSecToMinSec(Math.round(c.raw * 60))}`;
                                     }
                                 }
                             }
                         },
                         scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Gesamtminuten', font: { size: 10 } } }
+                            y: { beginAtZero: true, title: { display: true, text: 'Minuten', font: { size: 10 } } }
                         }
                     }
                 });
 
-                insightTextEl.innerHTML = `Hervorragende Bilanz: Du hast seit Beginn bereits an <strong>${records.length} Tagen</strong> insgesamt <strong>${totalHours} Stunden und ${totalMins} Minuten</strong> reine Gehzeit gesammelt. Das entspricht ca. <strong>${km} Kilometern</strong> zurückgelegter Distanz!`;
+                insightTextEl.innerHTML = `In den vergangenen 30 Tagen bist du insgesamt <strong>${h30} Stunden und ${m30} Minuten</strong> gelaufen. Im Vergleich zu den 30 Tagen davor hast du dich um <strong>${sign30}${formatSecToMinSec(Math.abs(diff30))} (${pct30})</strong> gesteigert!`;
 
-            } else if (type === 'avg') {
-                titleEl.textContent = '7-Tage-Schnitt & Trend';
-                subtitleEl.textContent = 'Entwicklung & Beständigkeit';
-                iconBadgeEl.innerHTML = '📈';
-                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-lg shadow-2xs';
-                chartTitleEl.textContent = '14-Tage-Entwicklungskurve';
-                chartBadgeEl.textContent = 'Schnitt vs. Tage';
+            } else if (type === 'records_all') {
+                titleEl.textContent = 'Rekorde & Bestmarken';
+                subtitleEl.textContent = 'Persönliche Höchstwerte & Rekordhistorie';
+                iconBadgeEl.innerHTML = '🏆';
+                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-lg shadow-2xs';
+                chartTitleEl.textContent = 'Rekord-Entwicklung';
+                chartBadgeEl.textContent = 'Meilensteine';
 
-                const diffWeekTotal = last7Sec - prev7Sec;
-                const diffWeekTxt = prev7Sec > 0 ? formatTrendHTML(diffWeekTotal, 'vs. Vorwoche') : '<span class="text-slate-400">Keine Vorwoche</span>';
+                const allSessions = [];
+                let maxMorning = 0;
+                let maxEvening = 0;
+                let bestDay = null;
+
+                records.forEach(r => {
+                    const m = r.morningSeconds || 0;
+                    const e = r.eveningSeconds || 0;
+                    const t = r.totalSeconds || 0;
+                    if (m > maxMorning) maxMorning = m;
+                    if (e > maxEvening) maxEvening = e;
+                    if (m > 0) allSessions.push({ date: r.date, type: '1. Gehen', sec: m });
+                    if (e > 0) allSessions.push({ date: r.date, type: '2. Gehen', sec: e });
+                    if (!bestDay || t > bestDay.totalSeconds) bestDay = r;
+                });
+
+                const allTimeMaxSingle = allSessions.length > 0 ? Math.max(...allSessions.map(s => s.sec)) : 0;
+                const singleRecordObj = allSessions.find(s => s.sec === allTimeMaxSingle);
 
                 kpiGridEl.innerHTML = `
-                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">7-Tage-Schnitt</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(avg7)}</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">pro aktivem Tag</div>
+                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
+                        <div class="text-[11px] font-semibold text-amber-800">Rekord am Stück</div>
+                        <div class="text-lg font-bold text-amber-950 mt-0.5">${formatSecToMinSec(allTimeMaxSingle)}</div>
+                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">${singleRecordObj ? formatDatePretty(singleRecordObj.date) : '—'}</div>
                     </div>
                     <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Vorwoche (7T Gesamt)</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${prev7Sec > 0 ? formatSecToMinSec(prev7Sec) : '—'}</div>
-                        <div class="text-[11px] mt-0.5">${diffWeekTxt}</div>
+                        <div class="text-[11px] font-medium text-slate-400">Rekord-Tag (Gesamt)</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${bestDay ? formatSecToMinSec(bestDay.totalSeconds) : '0m'}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">${bestDay ? formatDatePretty(bestDay.date) : '—'}</div>
                     </div>
-                    <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-teal-800">Aktive Tage (7T)</div>
-                        <div class="text-lg font-bold text-teal-950 mt-0.5">${last7DaysCount} / 7 Tage</div>
-                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">${Math.round((last7DaysCount / 7) * 100)}% Trainingsfrequenz</div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Rekord 1. Gehen</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(maxMorning)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Vormittag</div>
                     </div>
-                    <div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-emerald-800">Wochentrend</div>
-                        <div class="text-lg font-bold ${diffWeekTotal >= 0 ? 'text-emerald-900' : 'text-rose-900'} mt-0.5">${diffWeekTotal >= 0 ? '+' : ''}${formatSecShort(Math.abs(diffWeekTotal))}</div>
-                        <div class="text-[11px] font-medium text-emerald-700/80 mt-0.5">${diffWeekTotal >= 0 ? 'Steigerung pro Woche' : 'Rückgang pro Woche'}</div>
+                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="text-[11px] font-medium text-slate-400">Rekord 2. Gehen</div>
+                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(maxEvening)}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Nachmittag</div>
                     </div>
                 `;
 
-                const days14 = [];
-                for (let i = 14; i >= 1; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    const ds = getLocalDateStr(d);
-                    const found = records.find(r => r.date === ds);
-                    days14.push({
-                        date: ds,
-                        totalSec: found ? found.totalSeconds : 0
+                // Rekord-Evolutionsdaten berechnen (jeder neue Höchststand)
+                const chronRecords = [...records].filter(r => (r.totalSeconds || 0) > 0).sort((a, b) => a.date.localeCompare(b.date));
+                let runningRecord = 0;
+                const milestoneData = [];
+                chronRecords.forEach(r => {
+                    const dayMax = Math.max(r.morningSeconds || 0, r.eveningSeconds || 0);
+                    if (dayMax > runningRecord) {
+                        runningRecord = dayMax;
+                    }
+                    milestoneData.push({
+                        date: r.date.split('-').slice(1).reverse().join('.'),
+                        recordMin: (runningRecord / 60).toFixed(2),
+                        actualMin: (dayMax / 60).toFixed(2)
                     });
-                }
+                });
 
                 specialChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: days14.map(d => {
-                            const p = d.date.split('-');
-                            return `${p[2]}.${p[1]}.`;
-                        }),
+                        labels: milestoneData.map(m => m.date),
                         datasets: [
                             {
-                                label: 'Tageszeit (min)',
-                                data: days14.map(d => (d.totalSec / 60).toFixed(2)),
-                                borderColor: '#0f766e',
-                                backgroundColor: 'rgba(15, 118, 110, 0.12)',
+                                label: 'Rekordmarke am Stück (min)',
+                                data: milestoneData.map(m => m.recordMin),
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(251, 191, 36, 0.15)',
                                 fill: true,
-                                tension: 0.3,
+                                stepped: true,
                                 borderWidth: 2.5,
                                 pointRadius: 3,
-                                pointBackgroundColor: '#0f766e'
+                                pointBackgroundColor: '#f59e0b'
                             },
                             {
-                                label: '7-Tage-Schnitt Ziel',
-                                data: days14.map(() => (avg7 / 60).toFixed(2)),
-                                borderColor: '#f59e0b',
-                                borderDash: [5, 5],
-                                borderWidth: 2,
-                                pointRadius: 0,
+                                label: 'Einzelsession (min)',
+                                data: milestoneData.map(m => m.actualMin),
+                                borderColor: 'rgba(15, 118, 110, 0.4)',
+                                borderWidth: 1,
+                                pointRadius: 2,
                                 fill: false
                             }
                         ]
@@ -2051,261 +2263,7 @@
                     }
                 });
 
-                insightTextEl.innerHTML = `In den letzten 7 Tagen bist du an <strong>${last7DaysCount} von 7 Tagen</strong> aktiv gewesen. Dein Wochentotal liegt bei <strong>${formatSecToMinSec(last7Sec)}</strong> (Ø ${formatSecToMinSec(avg7)} pro aktivem Tag). ${diffWeekTotal > 0 ? 'Das ist eine Steigerung um <strong>+' + formatSecShort(diffWeekTotal) + ' pro Woche</strong> im Vergleich zur Vorwoche! 🌟' : 'Jede Trainingseinheit unterstützt deinen Heilungsverlauf.'}`;
-
-            } else if (type === 'week' || type === 'total') {
-                const currentWeekDays = getCurrentWeekDays();
-                const prevWeekDays = getPreviousWeekDays();
-
-                const monStr = currentWeekDays[0];
-                const sunStr = currentWeekDays[6];
-                const monPretty = monStr.split('-').slice(1).reverse().join('.');
-                const sunPretty = sunStr.split('-').slice(1).reverse().join('.');
-
-                titleEl.textContent = 'Wochenanalyse';
-                subtitleEl.textContent = `Diese Woche (${monPretty} – ${sunPretty})`;
-                iconBadgeEl.innerHTML = '🗓️';
-                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center text-lg shadow-2xs';
-                chartTitleEl.textContent = 'Wochenverlauf nach Tagen';
-                chartBadgeEl.textContent = 'Mo – So';
-
-                let thisWeekSec = 0;
-                let thisWeekActiveDays = 0;
-                const weekDayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-                const morningMins = [];
-                const eveningMins = [];
-
-                currentWeekDays.forEach(ds => {
-                    const entry = records.find(r => r.date === ds);
-                    if (entry && entry.totalSeconds > 0) {
-                        thisWeekSec += entry.totalSeconds;
-                        thisWeekActiveDays++;
-                        morningMins.push(Number(((entry.morningSeconds || 0) / 60).toFixed(2)));
-                        eveningMins.push(Number(((entry.eveningSeconds || 0) / 60).toFixed(2)));
-                    } else {
-                        morningMins.push(0);
-                        eveningMins.push(0);
-                    }
-                });
-
-                let prevWeekSec = 0;
-                const prevTotalMins = [];
-                prevWeekDays.forEach(ds => {
-                    const entry = records.find(r => r.date === ds);
-                    if (entry && entry.totalSeconds > 0) {
-                        prevWeekSec += entry.totalSeconds;
-                        prevTotalMins.push(Number((entry.totalSeconds / 60).toFixed(2)));
-                    } else {
-                        prevTotalMins.push(0);
-                    }
-                });
-
-                const hours = Math.floor(thisWeekSec / 3600);
-                const mins = Math.floor((thisWeekSec % 3600) / 60);
-                const avgActiveDaySec = thisWeekActiveDays > 0 ? Math.round(thisWeekSec / thisWeekActiveDays) : 0;
-                const diffWeek = thisWeekSec - prevWeekSec;
-                const diffWeekTxt = prevWeekSec > 0 ? formatTrendHTML(diffWeek, 'vs. Vorwoche') : '<span class="text-slate-400">Keine Vorwoche</span>';
-
-                kpiGridEl.innerHTML = `
-                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Gehzeit diese Woche</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${hours > 0 ? hours + 'h ' : ''}${mins}m</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">${thisWeekActiveDays} von 7 Tagen aktiv</div>
-                    </div>
-                    <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-teal-800">Ø pro aktivem Tag</div>
-                        <div class="text-lg font-bold text-teal-950 mt-0.5">${formatSecToMinSec(avgActiveDaySec)}</div>
-                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">Tagesdurchschnitt</div>
-                    </div>
-                    <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-indigo-800">Vergleich Vorwoche</div>
-                        <div class="text-lg font-bold text-indigo-950 mt-0.5">${prevWeekSec > 0 ? formatSecToMinSec(prevWeekSec) : '—'}</div>
-                        <div class="text-[11px] mt-0.5">${diffWeekTxt}</div>
-                    </div>
-                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-amber-800">Trainingsquote</div>
-                        <div class="text-lg font-bold text-amber-950 mt-0.5">${Math.round((thisWeekActiveDays / 7) * 100)}%</div>
-                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">${thisWeekActiveDays} / 7 Wochentage</div>
-                    </div>
-                `;
-
-                specialChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: weekDayLabels,
-                        datasets: [
-                            {
-                                type: 'line',
-                                label: 'Vorwoche (min)',
-                                data: prevTotalMins,
-                                borderColor: '#94a3b8',
-                                borderDash: [4, 4],
-                                borderWidth: 2,
-                                pointRadius: 3,
-                                fill: false,
-                                order: 1
-                            },
-                            {
-                                type: 'bar',
-                                label: '1. Gehen (min)',
-                                data: morningMins,
-                                backgroundColor: 'rgba(251, 191, 36, 0.85)',
-                                borderColor: '#f59e0b',
-                                borderWidth: 1,
-                                borderRadius: 4,
-                                order: 2,
-                                stack: 'currWeek'
-                            },
-                            {
-                                type: 'bar',
-                                label: '2. Gehen (min)',
-                                data: eveningMins,
-                                backgroundColor: 'rgba(99, 102, 241, 0.85)',
-                                borderColor: '#6366f1',
-                                borderWidth: 1,
-                                borderRadius: 4,
-                                order: 3,
-                                stack: 'currWeek'
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: {
-                            mode: 'index',
-                            intersect: false
-                        },
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: { font: { size: 10 } }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (c) {
-                                        return ` ${c.dataset.label}: ${formatSecToMinSec(Math.round(c.raw * 60))}`;
-                                    },
-                                    footer: function (items) {
-                                        let currTotal = 0;
-                                        items.forEach(i => {
-                                            if (i.dataset.stack === 'currWeek') {
-                                                currTotal += (i.raw || 0);
-                                            }
-                                        });
-                                        if (currTotal > 0) {
-                                            return ` Diese Woche Gesamt: ${formatSecToMinSec(Math.round(currTotal * 60))}`;
-                                        }
-                                        return '';
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: { display: true, text: 'Minuten', font: { size: 10 } }
-                            }
-                        }
-                    }
-                });
-
-                insightTextEl.innerHTML = `In der aktuellen Woche (Mo–So) hast du bisher an <strong>${thisWeekActiveDays} von 7 Tagen</strong> trainiert und <strong>${hours > 0 ? hours + 'h ' : ''}${mins} Minuten</strong> Gehzeit erreicht. ${diffWeek > 0 ? 'Das sind bereits <strong>+' + formatSecShort(diffWeek) + '</strong> mehr als in der gesamten Vorwoche! 🌟' : (thisWeekActiveDays > 0 ? 'Kontinuierliches Training ist der Schlüssel zu stabiler Mobilität.' : 'Noch keine Trainingseinheiten in dieser Woche erfasst.')}`;
-
-            } else if (type === 'single') {
-                titleEl.textContent = 'Gehzeit am Stück';
-                subtitleEl.textContent = 'Ausdauer der Einzelsessions';
-                iconBadgeEl.innerHTML = '⏱️';
-                iconBadgeEl.className = 'w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center text-lg shadow-2xs';
-                chartTitleEl.textContent = 'Letzte Einzelsitzungen';
-                chartBadgeEl.textContent = '1. vs. 2. Gehen';
-
-                const allSessions = [];
-                records.forEach(r => {
-                    if (r.morningSeconds > 0) allSessions.push({ date: r.date, type: '1. Gehen', sec: r.morningSeconds });
-                    if (r.eveningSeconds > 0) allSessions.push({ date: r.date, type: '2. Gehen', sec: r.eveningSeconds });
-                });
-
-                const allTimeMaxSingle = allSessions.length > 0 ? Math.max(...allSessions.map(s => s.sec)) : 0;
-                const todayMaxSingle = todayEntry ? Math.max(todayEntry.morningSeconds || 0, todayEntry.eveningSeconds || 0) : 0;
-
-                const last7Singles = [];
-                for (let i = 0; i < 7; i++) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    const ds = getLocalDateStr(d);
-                    const entry = records.find(r => r.date === ds);
-                    if (entry) {
-                        if (entry.morningSeconds > 0) last7Singles.push(entry.morningSeconds);
-                        if (entry.eveningSeconds > 0) last7Singles.push(entry.eveningSeconds);
-                    }
-                }
-                const avgSingle7 = last7Singles.length > 0 ? Math.round(last7Singles.reduce((a, b) => a + b, 0) / last7Singles.length) : 0;
-
-                kpiGridEl.innerHTML = `
-                    <div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-amber-800">All-Time Rekord</div>
-                        <div class="text-lg font-bold text-amber-950 mt-0.5">${formatSecToMinSec(allTimeMaxSingle)}</div>
-                        <div class="text-[11px] font-medium text-amber-700/80 mt-0.5">längste Einzelsession</div>
-                    </div>
-                    <div class="p-3 bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
-                        <div class="text-[11px] font-medium text-slate-400">Heute am Stück</div>
-                        <div class="text-lg font-bold text-slate-800 mt-0.5">${formatSecToMinSec(todayMaxSingle)}</div>
-                        <div class="text-[11px] text-slate-500 mt-0.5">${todayMaxSingle > 0 ? 'heutiges Maximum' : 'noch keine Einheit'}</div>
-                    </div>
-                    <div class="p-3 bg-teal-50/70 rounded-2xl border border-teal-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-teal-800">7-Tage Ø am Stück</div>
-                        <div class="text-lg font-bold text-teal-950 mt-0.5">${formatSecToMinSec(avgSingle7)}</div>
-                        <div class="text-[11px] font-medium text-teal-700/80 mt-0.5">Schnitt pro Einheit</div>
-                    </div>
-                    <div class="p-3 bg-indigo-50/70 rounded-2xl border border-indigo-200/60 shadow-2xs">
-                        <div class="text-[11px] font-semibold text-indigo-800">Gesamte Sessions</div>
-                        <div class="text-lg font-bold text-indigo-950 mt-0.5">${allSessions.length}</div>
-                        <div class="text-[11px] font-medium text-indigo-700/80 mt-0.5">Einheiten absolviert</div>
-                    </div>
-                `;
-
-                const recentSessions = [...allSessions].sort((a, b) => a.date.localeCompare(b.date)).slice(-12);
-
-                specialChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: recentSessions.map(s => {
-                            const p = s.date.split('-');
-                            return `${s.type.slice(0, 2)} (${p[2]}.${p[1]}.)`;
-                        }),
-                        datasets: [
-                            {
-                                label: 'Dauer am Stück (min)',
-                                data: recentSessions.map(s => (s.sec / 60).toFixed(2)),
-                                backgroundColor: recentSessions.map(s => s.type.includes('1.') ? 'rgba(251, 191, 36, 0.85)' : 'rgba(99, 102, 241, 0.85)'),
-                                borderColor: recentSessions.map(s => s.type.includes('1.') ? '#f59e0b' : '#6366f1'),
-                                borderWidth: 1.5,
-                                borderRadius: 6
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function (c) {
-                                        const s = recentSessions[c.dataIndex];
-                                        return ` ${s.type}: ${formatSecToMinSec(s.sec)}`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: { beginAtZero: true, title: { display: true, text: 'Minuten', font: { size: 10 } } }
-                        }
-                    }
-                });
-
-                insightTextEl.innerHTML = `Deine bisher längste am Stück gelaufene Einheit liegt bei <strong>${formatSecToMinSec(allTimeMaxSingle)}</strong>. Dein aktueller 7-Tage-Schnitt beträgt <strong>${formatSecToMinSec(avgSingle7)}</strong> pro Einzelsitzung ohne Unterbrechung. 💪`;
+                insightTextEl.innerHTML = `Dein persönlicher Rekord für eine Einzelsession liegt bei <strong>${formatSecToMinSec(allTimeMaxSingle)}</strong> (${singleRecordObj ? formatDatePretty(singleRecordObj.date) : '—'}). Dein stärkster Gesamttag war der ${bestDay ? formatDatePretty(bestDay.date) : '—'} mit <strong>${bestDay ? formatSecToMinSec(bestDay.totalSeconds) : '0m'}</strong>!`;
             }
         };
 
