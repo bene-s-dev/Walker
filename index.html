@@ -1346,10 +1346,10 @@
             const ctx = document.getElementById('walkingChart').getContext('2d');
             const todayStr = getLocalDateStr();
 
-            // Vollendete Datensätze (heute erst wenn beide Einheiten erfasst sind)
+            // Datensätze für Chart (heute auch anzeigen, wenn mindestens eine Einheit erfasst ist)
             const displayRecords = records.filter(r => {
                 if (r.date === todayStr) {
-                    return (r.morningSeconds || 0) > 0 && (r.eveningSeconds || 0) > 0;
+                    return (r.morningSeconds || 0) > 0 || (r.eveningSeconds || 0) > 0;
                 }
                 return true;
             });
@@ -1446,8 +1446,8 @@
                 }
             } else {
                 const daysCount = selectedRange;
-                // 7 / 14 / 30 Tage Rückblick: Vollendete Tage bis gestern
-                for (let i = daysCount; i >= 1; i--) {
+                // 7 / 14 / 30 Tage Rückblick inklusive heute
+                for (let i = daysCount - 1; i >= 0; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     const ds = getLocalDateStr(d);
@@ -1853,9 +1853,10 @@ document.body.classList.remove('overflow-hidden');
             const todayStr = getLocalDateStr();
             const todayEntry = records.find(r => r.date === todayStr);
             const isTodayComplete = Boolean(todayEntry && (todayEntry.morningSeconds || 0) > 0 && (todayEntry.eveningSeconds || 0) > 0);
+            const hasTodayUnit = Boolean(todayEntry && ((todayEntry.morningSeconds || 0) > 0 || (todayEntry.eveningSeconds || 0) > 0));
 
-            // Aktuellen Tag für Auswertungen/Rekorde erst einbeziehen, wenn 2 Einheiten gespeichert wurden
-            const displayRecords = records.filter(r => r.date !== todayStr || isTodayComplete);
+            // Aktuellen Tag für Auswertungen/Charts einbeziehen, wenn mindestens 1 Einheit erfasst ist
+            const displayRecords = records.filter(r => r.date !== todayStr || hasTodayUnit);
             const sortedRecords = [...displayRecords].sort((a, b) => b.date.localeCompare(a.date));
 
             // Altes Chart sauber entfernen
