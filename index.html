@@ -1481,11 +1481,12 @@
             const eveningMinutes = filtered.map(r => Number((r.eveningSeconds / 60).toFixed(2)));
             const totalMinutes = filtered.map(r => Number((r.totalSeconds / 60).toFixed(2)));
 
-            // Trendlinie: Sanfte Glättung (gewichtete Regression & EMA) für historische Tage, Sigmoid für Prognose
+            // Trendlinie: Sanfte Glättung (gewichtete Regression & EMA) für historische Geheinheiten, Sigmoid für Prognose
             const pastPoints = [];
             filtered.forEach((r, idx) => {
                 if (!r.isForecast) {
-                    const val = r.totalSeconds / 60;
+                    const sessionCount = ((r.morningSeconds > 0 ? 1 : 0) + (r.eveningSeconds > 0 ? 1 : 0));
+                    const val = sessionCount > 0 ? (r.totalSeconds / sessionCount / 60) : 0;
                     // Aktive Tage mit vollem Gewicht (1.0), Ruhetage sanft gedämpft (0.25)
                     pastPoints.push({ x: idx, y: val, w: val > 0 ? 1.0 : 0.25 });
                 }
@@ -1534,8 +1535,9 @@
                     if (idx <= lastPastIdx) {
                         trendMinutes.push(Number(Math.max(0, smoothedPast[idx]).toFixed(2)));
                     } else if (r.isForecast) {
-                        // Bei Prognose folgt der Trend exakt der Sigmoid-Kurve
-                        trendMinutes.push(Number((r.totalSeconds / 60).toFixed(2)));
+                        // Bei Prognose folgt der Trend dem Durchschnitt der beiden projizierten Einheiten
+                        const forecastAvg = ((r.morningSeconds + r.eveningSeconds) / 2) / 60;
+                        trendMinutes.push(Number(forecastAvg.toFixed(2)));
                     } else {
                         const stepsAhead = idx - lastPastIdx;
                         const futureVal = Math.max(0, lastSmoothedVal + (regSlope * stepsAhead));
@@ -1574,8 +1576,7 @@
                             borderColor: '#f59e0b',
                             borderWidth: filtered.length > 40 ? 0.5 : 1,
                             borderRadius: filtered.length > 40 ? 2 : 4,
-                            order: 2,
-                            stack: 'sessions'
+                            order: 2
                         },
                         {
                             type: 'bar',
@@ -1585,8 +1586,7 @@
                             borderColor: '#6366f1',
                             borderWidth: filtered.length > 40 ? 0.5 : 1,
                             borderRadius: filtered.length > 40 ? 2 : 4,
-                            order: 3,
-                            stack: 'sessions'
+                            order: 3
                         }
                     ]
                 },
@@ -1641,7 +1641,7 @@
                     },
                     scales: {
                         x: {
-                            stacked: true,
+                            stacked: false,
                             grid: { display: false },
                             ticks: {
                                 font: { size: 10 },
@@ -1652,7 +1652,7 @@
                             }
                         },
                         y: {
-                            stacked: true,
+                            stacked: false,
                             beginAtZero: true,
                             title: {
                                 display: false
