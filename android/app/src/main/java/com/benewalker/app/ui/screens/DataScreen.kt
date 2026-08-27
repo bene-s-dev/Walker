@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.benewalker.app.data.WalkRecord
 import com.benewalker.app.ui.WalkUiState
+import com.benewalker.app.ui.WalkViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
