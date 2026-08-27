@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.benewalker.app.ui.HcStatus
 import com.benewalker.app.ui.WalkViewModel
 import kotlinx.coroutines.launch
 
@@ -28,22 +29,34 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsState()
     var showResetDialog by remember { mutableStateOf(false) }
 
-    // File Picker for JSON Import
+    // Health Connect Permission Launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = viewModel.healthConnectManager.createPermissionContract()
+    ) { grantedPermissions ->
+        viewModel.checkHealthConnectStatus()
+        if (viewModel.healthConnectManager.walkingPermissions.all { it in grantedPermissions }) {
+            viewModel.syncWithHealthConnect()
+            Toast.makeText(context, "Health Connect Berechtigung erteilt!", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // File Picker for JSON Import (supports all files, no greying out)
     val importFileLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
             scope.launch {
                 try {
                     val content = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-                    if (content != null) {
-                        val success = viewModel.importJson(content)
-                        if (success) {
-                            Toast.makeText(context, "✓ Backup erfolgreich importiert!", Toast.LENGTH_SHORT).show()
+                    if (!content.isNullOrBlank()) {
+                        val count = viewModel.importJson(content)
+                        if (count > 0) {
+                            Toast.makeText(context, "✓ $count Gehzeiten-Einträge erfolgreich importiert!", Toast.LENGTH_LONG).show()
                         } else {
-                            Toast.makeText(context, "Ungültiges Backup-Format", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Keine gültigen Datensätze im Backup gefunden", Toast.LENGTH_LONG).show()
                         }
                     }
                 } catch (e: Exception) {
@@ -60,9 +73,73 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // Garmin & Health Connect Section
+        // 1. Erscheinungsbild & Color Scheme
         item {
-            Text("Garmin & Health Connect", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("Erscheinungsbild & Farben", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        }
+
+        item {
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // Theme Mode Selector (System, Hell, Dunkel)
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Design-Modus", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                            SegmentedButton(
+                                selected = uiState.themeMode == "system",
+                                onClick = { viewModel.setThemeMode("system") },
+                                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
+                            ) {
+                                Text("System", fontSize = 12.sp)
+                            }
+                            SegmentedButton(
+                                selected = uiState.themeMode == "light",
+                                onClick = { viewModel.setThemeMode("light") },
+                                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
+                            ) {
+                                Text("Hell", fontSize = 12.sp)
+                            }
+                            SegmentedButton(
+                                selected = uiState.themeMode == "dark",
+                                onClick = { viewModel.setThemeMode("dark") },
+                                shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
+                            ) {
+                                Text("Dunkel", fontSize = 12.sp)
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
+                    // Dynamic Color (Material You) Switch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Material You (Dynamic Color)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            Text(
+                                "Farben dynamisch an dein Android-Hintergrundbild anpassen",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                        Switch(
+                            checked = uiState.useDynamicColor,
+                            onCheckedChange = { viewModel.setDynamicColor(it) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // 2. Garmin & Health Connect Sync
+        item {
+            Text("Garmin & Health Connect Sync", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
 
         item {
@@ -71,18 +148,46 @@ fun SettingsScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Icon(Icons.Filled.DirectionsWalk, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Column {
-                            Text("Automatische Geherfassung", fontWeight = FontWeight.Bold)
-                            Text("Liest Garmin-Aktivitäten vom Typ \"Gehen\"", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Icon(Icons.Filled.DirectionsWalk, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Column {
+                                Text("Automatische Geherfassung", fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = when (uiState.hcStatus) {
+                                        HcStatus.SYNCING -> "Synchronisiert gerade..."
+                                        HcStatus.PERMISSION_NEEDED -> "Berechtigung erforderlich"
+                                        HcStatus.UNAVAILABLE -> "Health Connect nicht verfügbar"
+                                        HcStatus.ERROR -> uiState.syncErrorMessage ?: "Sync-Fehler"
+                                        else -> "Aktiv • Sync beim App-Start"
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (uiState.hcStatus == HcStatus.PERMISSION_NEEDED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
+                                )
+                            }
+                        }
+
+                        if (uiState.hcStatus == HcStatus.PERMISSION_NEEDED) {
+                            Button(
+                                onClick = {
+                                    permissionLauncher.launch(viewModel.healthConnectManager.walkingPermissions)
+                                },
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text("Erlauben", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
 
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
                     Text(
-                        "Anleitung:\n1. Öffne die Garmin Connect App auf deinem Handy.\n2. Gehe auf Einstellungen → Verknüpfte Apps → Health Connect aktivieren.\n3. Sobald deine Garmin-Uhr synchronisiert, liest BeneWalker die Zeiten sekundengenau ein.",
+                        "Anleitung:\n1. Öffne die Garmin Connect App auf deinem Smartphone.\n2. Gehe auf Einstellungen → Verknüpfte Apps → Health Connect aktivieren.\n3. Sobald deine Garmin-Uhr synchronisiert, liest BeneWalker die Gehzeiten beim Öffnen der App automatisch ein.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
@@ -91,17 +196,24 @@ fun SettingsScreen(
                     FilledTonalButton(
                         onClick = { viewModel.syncWithHealthConnect(days = 30) },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = uiState.hcStatus != HcStatus.SYNCING
                     ) {
-                        Icon(Icons.Filled.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Letzte 30 Tage jetzt synchronisieren")
+                        if (uiState.hcStatus == HcStatus.SYNCING) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Synchronisiere...")
+                        } else {
+                            Icon(Icons.Filled.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Letzte 30 Tage jetzt synchronisieren")
+                        }
                     }
                 }
             }
         }
 
-        // Backup & Daten
+        // 3. Backup & Datenverwaltung
         item {
             Text("Backup & Datenverwaltung", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
@@ -135,10 +247,10 @@ fun SettingsScreen(
                     // Import
                     ListItem(
                         headlineContent = { Text("Daten importieren", fontWeight = FontWeight.SemiBold) },
-                        supportingContent = { Text("Aus einer JSON-Datei wiederherstellen") },
+                        supportingContent = { Text("Aus einer JSON-Datei wiederherstellen (Web-App & APK Backups)") },
                         leadingContent = { Icon(Icons.Outlined.FileUpload, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
                         modifier = Modifier.clickable {
-                            importFileLauncher.launch("application/json")
+                            importFileLauncher.launch(arrayOf("*/*"))
                         }
                     )
 

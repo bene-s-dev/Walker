@@ -52,15 +52,25 @@ data class WalkUiState(
     // Stopwatch
     val stopwatchRunning: Boolean = false,
     val stopwatchElapsedSec: Int = 0,
-    val stopwatchTarget: String = "morning" // "morning" or "evening"
+    val stopwatchTarget: String = "morning", // "morning" or "evening"
+
+    // Theme & Appearance
+    val themeMode: String = "system", // "system", "light", "dark"
+    val useDynamicColor: Boolean = true
 )
 
 class WalkViewModel(application: Application) : AndroidViewModel(application) {
+    private val prefs = application.getSharedPreferences("benewalker_prefs", android.content.Context.MODE_PRIVATE)
     private val database = WalkDatabase.getInstance(application)
     private val walkDao = database.walkDao()
     val healthConnectManager = HealthConnectManager(application, walkDao)
 
-    private val _uiState = MutableStateFlow(WalkUiState())
+    private val _uiState = MutableStateFlow(
+        WalkUiState(
+            themeMode = prefs.getString("theme_mode", "system") ?: "system",
+            useDynamicColor = prefs.getBoolean("use_dynamic_color", true)
+        )
+    )
     val uiState: StateFlow<WalkUiState> = _uiState.asStateFlow()
 
     private var stopwatchJob: Job? = null
@@ -81,6 +91,16 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 syncWithHealthConnect(days = 14)
             }
         }
+    }
+
+    fun setThemeMode(mode: String) {
+        prefs.edit().putString("theme_mode", mode).apply()
+        _uiState.update { it.copy(themeMode = mode) }
+    }
+
+    fun setDynamicColor(enabled: Boolean) {
+        prefs.edit().putBoolean("use_dynamic_color", enabled).apply()
+        _uiState.update { it.copy(useDynamicColor = enabled) }
     }
 
     private fun updateMetrics(records: List<WalkRecord>) {
@@ -339,19 +359,143 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val jsonConfig = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+        prettyPrint = true
+    }
+
     // JSON Export / Import
     suspend fun exportJson(): String = withContext(Dispatchers.IO) {
         val all = walkDao.getAllRecords()
-        Json { prettyPrint = true }.encodeToString(all)
+        jsonConfig.encodeToString(all)
     }
 
-    suspend fun importJson(jsonString: String): Boolean = withContext(Dispatchers.IO) {
+    private fun parseBackupJson(rawJson: String): List<WalkRecord> {
+        val clean = rawJson.trim().removePrefix("\uFEFF")
+        val result = mutableListOf<WalkRecord>()
+
+        fun parseSeconds(obj: org.json.JSONObject, vararg keys: String): Int {
+            for (k in keys) {
+                if (obj.has(k) && !obj.isNull(k)) {
+                    val v = obj.get(k)
+                    val s = when (v) {
+                        is Number -> v.toInt()
+                        is String -> v.toDoubleOrNull()?.toInt() ?: 0
+                        else -> 0
+                    }
+                    if (s > 0) return s
+                }
+            }
+            return 0
+        }
+
+        fun parseDate(obj: org.json.JSONObject): String? {
+            val d = obj.optString("date", "").ifBlank {
+                obj.optString("id", "").ifBlank {
+                    obj.optString("day", "")
+                }
+            }
+            if (d.isBlank()) return null
+            if (d.contains(".") && d.split(".").size == 3) {
+                val p = d.split(".")
+                return String.format("%04d-%02d-%02d", p[2].toIntOrNull() ?: 2026, p[1].toIntOrNull() ?: 1, p[0].toIntOrNull() ?: 1)
+            }
+            return d
+        }
+
         try {
-            val list = Json.decodeFromString<List<WalkRecord>>(jsonString)
-            walkDao.insertAll(list)
-            true
+            if (clean.startsWith("[")) {
+                val array = org.json.JSONArray(clean)
+                val tempGrouped = mutableMapOf<String, MutableList<Int>>()
+
+                for (i in 0 until array.length()) {
+                    val item = array.optJSONObject(i) ?: continue
+                    val date = parseDate(item) ?: continue
+
+                    val mSec = parseSeconds(item, "morningSeconds", "morning", "mSec")
+                    val eSec = parseSeconds(item, "eveningSeconds", "evening", "eSec")
+                    val dur = parseSeconds(item, "duration", "durationSeconds", "seconds")
+
+                    if (mSec > 0 || eSec > 0 || item.has("morningSeconds") || item.has("eveningSeconds")) {
+                        val tot = if (item.has("totalSeconds")) parseSeconds(item, "totalSeconds") else (mSec + eSec)
+                        result.add(
+                            WalkRecord(
+                                date = date,
+                                morningSeconds = mSec,
+                                eveningSeconds = eSec,
+                                totalSeconds = if (tot > 0) tot else (mSec + eSec),
+                                source = item.optString("source", "backup")
+                            )
+                        )
+                    } else if (dur > 0) {
+                        tempGrouped.getOrPut(date) { mutableListOf() }.add(dur)
+                    }
+                }
+
+                tempGrouped.forEach { (date, durs) ->
+                    val morning = durs.getOrNull(0) ?: 0
+                    val evening = durs.drop(1).sum()
+                    result.add(
+                        WalkRecord(
+                            date = date,
+                            morningSeconds = morning,
+                            eveningSeconds = evening,
+                            totalSeconds = morning + evening,
+                            source = "backup_migrated"
+                        )
+                    )
+                }
+            } else if (clean.startsWith("{")) {
+                val obj = org.json.JSONObject(clean)
+                val possibleKeys = listOf("records", "beneWalker_records_v1", "data", "sessions", "items", "entries")
+                var foundArray: org.json.JSONArray? = null
+                for (k in possibleKeys) {
+                    if (obj.has(k) && obj.optJSONArray(k) != null) {
+                        foundArray = obj.getJSONArray(k)
+                        break
+                    }
+                }
+                if (foundArray != null) {
+                    return parseBackupJson(foundArray.toString())
+                }
+
+                val keys = obj.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    val child = obj.optJSONObject(key)
+                    if (child != null) {
+                        val date = if (key.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) key else (parseDate(child) ?: key)
+                        val mSec = parseSeconds(child, "morningSeconds", "morning", "mSec")
+                        val eSec = parseSeconds(child, "eveningSeconds", "evening", "eSec")
+                        val tot = if (child.has("totalSeconds")) parseSeconds(child, "totalSeconds") else (mSec + eSec)
+                        result.add(
+                            WalkRecord(
+                                date = date,
+                                morningSeconds = mSec,
+                                eveningSeconds = eSec,
+                                totalSeconds = if (tot > 0) tot else (mSec + eSec),
+                                source = child.optString("source", "backup")
+                            )
+                        )
+                    }
+                }
+            }
         } catch (e: Exception) {
-            false
+            e.printStackTrace()
+        }
+
+        return result
+    }
+
+    suspend fun importJson(jsonString: String): Int = withContext(Dispatchers.IO) {
+        val list = parseBackupJson(jsonString)
+        if (list.isNotEmpty()) {
+            walkDao.insertAll(list)
+            list.size
+        } else {
+            0
         }
     }
 }

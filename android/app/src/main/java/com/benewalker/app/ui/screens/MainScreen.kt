@@ -93,19 +93,16 @@ fun MainScreen(
             composable<Screen.Dashboard> {
                 DashboardScreen(
                     viewModel = viewModel,
-                    onNavigateToStopwatch = {
-                        navController.navigate(Screen.Stopwatch)
-                    },
-                    onNavigateToAnalytics = {
-                        navController.navigate(Screen.Analytics)
+                    onNavigateToData = {
+                        navController.navigate(Screen.Data)
                     }
                 )
             }
             composable<Screen.Stopwatch> {
                 StopwatchScreen(viewModel = viewModel)
             }
-            composable<Screen.Analytics> {
-                AnalyticsScreen(viewModel = viewModel)
+            composable<Screen.Data> {
+                DataScreen(viewModel = viewModel)
             }
             composable<Screen.Settings> {
                 SettingsScreen(viewModel = viewModel)

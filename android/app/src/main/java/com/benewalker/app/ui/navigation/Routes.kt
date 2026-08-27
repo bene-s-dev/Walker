@@ -2,11 +2,11 @@ package com.benewalker.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsWalk
-import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.DirectionsWalk
-import androidx.compose.material.icons.outlined.Insights
+import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -19,7 +19,7 @@ sealed interface Screen {
 
     @Serializable
     data object Dashboard : Screen {
-        override val title = "Tracker"
+        override val title = "Übersicht"
         override val selectedIcon = Icons.Filled.DirectionsWalk
         override val unselectedIcon = Icons.Outlined.DirectionsWalk
     }
@@ -32,10 +32,10 @@ sealed interface Screen {
     }
 
     @Serializable
-    data object Analytics : Screen {
-        override val title = "Statistik"
-        override val selectedIcon = Icons.Filled.Insights
-        override val unselectedIcon = Icons.Outlined.Insights
+    data object Data : Screen {
+        override val title = "Daten"
+        override val selectedIcon = Icons.Filled.EditNote
+        override val unselectedIcon = Icons.Outlined.EditNote
     }
 
     @Serializable
@@ -49,6 +49,6 @@ sealed interface Screen {
 val bottomNavScreens = listOf(
     Screen.Dashboard,
     Screen.Stopwatch,
-    Screen.Analytics,
+    Screen.Data,
     Screen.Settings
 )
