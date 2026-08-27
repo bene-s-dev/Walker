@@ -6,10 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.benewalker.app.data.WalkDatabase
 import com.benewalker.app.data.WalkRecord
 import com.benewalker.app.health.HealthConnectManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
