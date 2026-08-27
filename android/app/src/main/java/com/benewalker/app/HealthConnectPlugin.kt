@@ -89,7 +89,7 @@ class HealthConnectPlugin : Plugin() {
     }
 
     @PluginMethod
-    fun checkPermissions(call: PluginCall) {
+    override fun checkPermissions(call: PluginCall) {
         val client = getClient()
         if (client == null) {
             val ret = JSObject()
@@ -118,7 +118,7 @@ class HealthConnectPlugin : Plugin() {
     }
 
     @PluginMethod
-    fun requestPermissions(call: PluginCall) {
+    override fun requestPermissions(call: PluginCall) {
         val client = getClient()
         if (client == null) {
             call.reject("Health Connect is not available on this device")
