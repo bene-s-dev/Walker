@@ -1,16 +1,30 @@
 package com.benewalker.app.ui.screens
 
 import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.benewalker.app.ui.WalkViewModel
 import com.benewalker.app.ui.navigation.Screen
 import com.benewalker.app.ui.navigation.bottomNavScreens
+
+fun getScreenIndex(route: String?): Int {
+    if (route == null) return 0
+    return when {
+        route.contains("Dashboard") -> 0
+        route.contains("Stopwatch") -> 1
+        route.contains("Data") -> 2
+        route.contains("Settings") -> 3
+        else -> 0
+    }
+}
 
 @Composable
 fun MainScreen(
@@ -19,11 +33,6 @@ fun MainScreen(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-
-    // Determine current screen
-    val currentScreen = bottomNavScreens.find { screen ->
-        currentDestination?.route?.contains(screen::class.simpleName ?: "") == true
-    } ?: Screen.Dashboard
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -48,18 +57,19 @@ fun MainScreen(
                 contentColor = MaterialTheme.colorScheme.onSurface
             ) {
                 bottomNavScreens.forEach { screen ->
-                    val isSelected = currentScreen == screen
+                    val isSelected = currentDestination?.hierarchy?.any {
+                        it.route?.contains(screen::class.simpleName ?: "") == true
+                    } == true
+
                     NavigationBarItem(
                         selected = isSelected,
                         onClick = {
-                            if (!isSelected) {
-                                navController.navigate(screen) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
+                            navController.navigate(screen) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
                                 }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         },
                         icon = {
@@ -85,16 +95,42 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            enterTransition = { fadeIn() + slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start) },
-            exitTransition = { fadeOut() + slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start) },
-            popEnterTransition = { fadeIn() + slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End) },
-            popExitTransition = { fadeOut() + slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End) }
+            enterTransition = {
+                val initialIdx = getScreenIndex(initialState.destination.route)
+                val targetIdx = getScreenIndex(targetState.destination.route)
+                val direction = if (targetIdx >= initialIdx) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                slideIntoContainer(direction, animationSpec = tween(280, easing = FastOutSlowInEasing)) + fadeIn(tween(280))
+            },
+            exitTransition = {
+                val initialIdx = getScreenIndex(initialState.destination.route)
+                val targetIdx = getScreenIndex(targetState.destination.route)
+                val direction = if (targetIdx >= initialIdx) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                slideOutOfContainer(direction, animationSpec = tween(280, easing = FastOutSlowInEasing)) + fadeOut(tween(280))
+            },
+            popEnterTransition = {
+                val initialIdx = getScreenIndex(initialState.destination.route)
+                val targetIdx = getScreenIndex(targetState.destination.route)
+                val direction = if (targetIdx >= initialIdx) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                slideIntoContainer(direction, animationSpec = tween(280, easing = FastOutSlowInEasing)) + fadeIn(tween(280))
+            },
+            popExitTransition = {
+                val initialIdx = getScreenIndex(initialState.destination.route)
+                val targetIdx = getScreenIndex(targetState.destination.route)
+                val direction = if (targetIdx >= initialIdx) AnimatedContentTransitionScope.SlideDirection.Start else AnimatedContentTransitionScope.SlideDirection.End
+                slideOutOfContainer(direction, animationSpec = tween(280, easing = FastOutSlowInEasing)) + fadeOut(tween(280))
+            }
         ) {
             composable<Screen.Dashboard> {
                 DashboardScreen(
                     viewModel = viewModel,
                     onNavigateToData = {
-                        navController.navigate(Screen.Data)
+                        navController.navigate(Screen.Data) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 )
             }

@@ -18,8 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.benewalker.app.ui.WalkViewModel
-import com.benewalker.app.ui.theme.AmberMorning
-import com.benewalker.app.ui.theme.IndigoEvening
 
 @Composable
 fun StopwatchScreen(
@@ -51,12 +49,13 @@ fun StopwatchScreen(
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         // Top: Target Selector
-        Card(
+        ElevatedCard(
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Row(
-                modifier = Modifier.padding(6.dp),
+                modifier = Modifier.padding(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
@@ -70,8 +69,8 @@ fun StopwatchScreen(
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = AmberMorning.copy(alpha = 0.2f),
-                        selectedLabelColor = AmberMorning
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 )
 
@@ -86,8 +85,8 @@ fun StopwatchScreen(
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = IndigoEvening.copy(alpha = 0.2f),
-                        selectedLabelColor = IndigoEvening
+                        selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                 )
             }

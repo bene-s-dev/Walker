@@ -1,5 +1,6 @@
 package com.benewalker.app.ui.screens
 
+import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -19,9 +20,29 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.health.connect.client.HealthConnectClient
 import com.benewalker.app.ui.HcStatus
 import com.benewalker.app.ui.WalkViewModel
 import kotlinx.coroutines.launch
+
+fun openHealthConnectSettings(context: Context) {
+    try {
+        val intent = Intent(HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS)
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        try {
+            val intent = Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS")
+            context.startActivity(intent)
+        } catch (e2: Exception) {
+            try {
+                val intent = Intent("android.health.connect.action.HEALTH_HOME_SETTINGS")
+                context.startActivity(intent)
+            } catch (e3: Exception) {
+                Toast.makeText(context, "Health Connect Systemeinstellungen nicht verfügbar", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+}
 
 @Composable
 fun SettingsScreen(
@@ -43,7 +64,7 @@ fun SettingsScreen(
         }
     }
 
-    // File Picker for JSON Import (supports all files, no greying out)
+    // File Picker for JSON Import
     val importFileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -73,20 +94,30 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Erscheinungsbild & Color Scheme
+        // 1. KATEGORIE: ERSCHEINUNGSBILD
         item {
-            Text("Erscheinungsbild & Farben", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                text = "ERSCHEINUNGSBILD",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp)
+            )
         }
 
         item {
-            Card(
+            ElevatedCard(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     // Theme Mode Selector (System, Hell, Dunkel)
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Design-Modus", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Outlined.DarkMode, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Text("Design-Modus", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        }
                         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                             SegmentedButton(
                                 selected = uiState.themeMode == "system",
@@ -112,7 +143,7 @@ fun SettingsScreen(
                         }
                     }
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
                     // Dynamic Color (Material You) Switch
                     Row(
@@ -120,13 +151,16 @@ fun SettingsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Material You (Dynamic Color)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                            Text(
-                                "Farben dynamisch an dein Android-Hintergrundbild anpassen",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline
-                            )
+                        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Icon(Icons.Outlined.Palette, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Column {
+                                Text("Dynamic Color (Material You)", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                Text(
+                                    "Farben an dein Smartphone-Wallpaper anpassen",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
                         }
                         Switch(
                             checked = uiState.useDynamicColor,
@@ -137,24 +171,31 @@ fun SettingsScreen(
             }
         }
 
-        // 2. Garmin & Health Connect Sync
+        // 2. KATEGORIE: GARMIN & HEALTH CONNECT
         item {
-            Text("Garmin & Health Connect Sync", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                text = "GARMIN & HEALTH CONNECT",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+            )
         }
 
         item {
-            Card(
+            ElevatedCard(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Icon(Icons.Filled.DirectionsWalk, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Icon(Icons.Filled.DirectionsWalk, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
                             Column {
                                 Text("Automatische Geherfassung", fontWeight = FontWeight.Bold)
                                 Text(
@@ -184,15 +225,20 @@ fun SettingsScreen(
                         }
                     }
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
-                    Text(
-                        "Anleitung:\n1. Öffne die Garmin Connect App auf deinem Smartphone.\n2. Gehe auf Einstellungen → Verknüpfte Apps → Health Connect aktivieren.\n3. Sobald deine Garmin-Uhr synchronisiert, liest BeneWalker die Gehzeiten beim Öffnen der App automatisch ein.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
-                    )
+                    // Button: Health Connect Systemeinstellungen öffnen
+                    OutlinedButton(
+                        onClick = { openHealthConnectSettings(context) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Outlined.Settings, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Health Connect Einstellungen öffnen")
+                    }
 
+                    // Button: Letzte 30 Tage jetzt synchronisieren
                     FilledTonalButton(
                         onClick = { viewModel.syncWithHealthConnect(days = 30) },
                         modifier = Modifier.fillMaxWidth(),
@@ -204,31 +250,46 @@ fun SettingsScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Synchronisiere...")
                         } else {
-                            Icon(Icons.Filled.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(Icons.Filled.Sync, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text("Letzte 30 Tage jetzt synchronisieren")
                         }
                     }
+
+                    Text(
+                        "Anleitung:\n1. Öffne die Garmin Connect App auf deinem Smartphone.\n2. Gehe auf Einstellungen → Verknüpfte Apps → Health Connect aktivieren.\n3. Sobald deine Garmin-Uhr synchronisiert, liest BeneWalker die Gehzeiten beim Öffnen der App automatisch ein.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
                 }
             }
         }
 
-        // 3. Backup & Datenverwaltung
+        // 3. KATEGORIE: BACKUP & DATENVERWALTUNG
         item {
-            Text("Backup & Datenverwaltung", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                text = "BACKUP & DATEN",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+            )
         }
 
         item {
-            Card(
+            ElevatedCard(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
-                Column(modifier = Modifier.padding(8.dp)) {
+                Column(modifier = Modifier.padding(6.dp)) {
                     // Export
                     ListItem(
                         headlineContent = { Text("Daten exportieren", fontWeight = FontWeight.SemiBold) },
                         supportingContent = { Text("JSON-Backup teilen oder speichern") },
                         leadingContent = { Icon(Icons.Outlined.FileDownload, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                        trailingContent = { Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.outline) },
                         modifier = Modifier.clickable {
                             scope.launch {
                                 val json = viewModel.exportJson()
@@ -242,25 +303,27 @@ fun SettingsScreen(
                         }
                     )
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
                     // Import
                     ListItem(
                         headlineContent = { Text("Daten importieren", fontWeight = FontWeight.SemiBold) },
-                        supportingContent = { Text("Aus einer JSON-Datei wiederherstellen (Web-App & APK Backups)") },
+                        supportingContent = { Text("Aus JSON-Datei wiederherstellen (Web-App & APK Backups)") },
                         leadingContent = { Icon(Icons.Outlined.FileUpload, contentDescription = null, tint = MaterialTheme.colorScheme.secondary) },
+                        trailingContent = { Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.outline) },
                         modifier = Modifier.clickable {
                             importFileLauncher.launch(arrayOf("*/*"))
                         }
                     )
 
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
                     // Reset
                     ListItem(
                         headlineContent = { Text("Alle Daten zurücksetzen", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error) },
-                        supportingContent = { Text("Löscht alle gespeicherten Gehzeiten") },
+                        supportingContent = { Text("Löscht alle gespeicherten Gehzeiten unwiderruflich") },
                         leadingContent = { Icon(Icons.Outlined.DeleteForever, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        trailingContent = { Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                         modifier = Modifier.clickable {
                             showResetDialog = true
                         }
@@ -269,15 +332,16 @@ fun SettingsScreen(
             }
         }
 
-        // App Info
+        // 4. KATEGORIE: APP INFO
         item {
-            Card(
+            ElevatedCard(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("BeneWalker • Native Edition", fontWeight = FontWeight.Bold)
-                    Text("Modern Android Development (Jetpack Compose & Material 3 / Material You)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                    Text("Modern Android Development (Jetpack Compose & Material Design 3)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                 }
             }
         }

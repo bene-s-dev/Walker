@@ -12,11 +12,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -25,8 +29,6 @@ import androidx.compose.ui.unit.sp
 import com.benewalker.app.data.WalkRecord
 import com.benewalker.app.ui.WalkUiState
 import com.benewalker.app.ui.WalkViewModel
-import com.benewalker.app.ui.theme.AmberMorning
-import com.benewalker.app.ui.theme.IndigoEvening
 
 @Composable
 fun DashboardScreen(
@@ -57,7 +59,7 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Die 4 Stat-Karten oben
+        // 1. Die 4 Stat-Karten oben (stärker abgehoben mit M3 Elevation)
         item {
             StatCardsGrid(
                 state = uiState,
@@ -65,7 +67,7 @@ fun DashboardScreen(
             )
         }
 
-        // 2. HAUPTDIAGRAMM mit intelligenter Tagesbeschriftung unten
+        // 2. HAUPTDIAGRAMM mit geglätteter Trendlinie und intelligenter Datumsbeschriftung
         item {
             DashboardChartSection(
                 records = displayedChartRecords,
@@ -91,18 +93,22 @@ fun DashboardChartSection(
     selectedRecord: WalkRecord?,
     onBarClick: (WalkRecord?) -> Unit
 ) {
-    Card(
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val trendColor = MaterialTheme.colorScheme.secondary
+
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Header & Range Selector
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -115,8 +121,8 @@ fun DashboardChartSection(
                         Icon(
                             imageVector = Icons.Filled.Insights,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            tint = primaryColor,
+                            modifier = Modifier.size(22.dp)
                         )
                         Text(
                             text = "Gehzeiten-Statistik",
@@ -126,13 +132,13 @@ fun DashboardChartSection(
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                        shape = RoundedCornerShape(10.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
                     ) {
                         Text(
                             text = "Ø ${formatSecDetailed(avgSeconds)}",
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                            fontSize = 11.sp,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
@@ -150,16 +156,16 @@ fun DashboardChartSection(
                             modifier = Modifier
                                 .weight(1f)
                                 .clickable { onRangeChange(key) },
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         ) {
                             Box(
                                 contentAlignment = Alignment.Center,
-                                modifier = Modifier.padding(vertical = 6.dp)
+                                modifier = Modifier.padding(vertical = 8.dp)
                             ) {
                                 Text(
                                     text = label,
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -172,37 +178,39 @@ fun DashboardChartSection(
             // Legend
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                LegendItem(color = AmberMorning, label = "1. Gehen")
-                LegendItem(color = IndigoEvening, label = "2. Gehen")
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                LegendItem(color = primaryColor, label = "1. Gehen")
+                LegendItem(color = tertiaryColor, label = "2. Gehen")
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(
                         modifier = Modifier
-                            .width(12.dp)
-                            .height(2.dp)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                            .width(16.dp)
+                            .height(3.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(trendColor)
                     )
-                    Text("Ø Schnitt", fontSize = 11.sp, color = MaterialTheme.colorScheme.outline)
+                    Text("Trend (geglättet)", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
             // Selected Bar Tooltip
             if (selectedRecord != null) {
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text(selectedRecord.date, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            Text(selectedRecord.date, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                             Text(
                                 "1. Gehen: ${formatSecToMinSec(selectedRecord.morningSeconds)} | 2. Gehen: ${formatSecToMinSec(selectedRecord.eveningSeconds)}",
                                 fontSize = 11.sp,
@@ -212,14 +220,14 @@ fun DashboardChartSection(
                         Text(
                             formatSecDetailed(selectedRecord.totalSeconds),
                             fontWeight = FontWeight.Black,
-                            fontSize = 14.sp,
-                            color = MaterialTheme.colorScheme.primary
+                            fontSize = 15.sp,
+                            color = primaryColor
                         )
                     }
                 }
             }
 
-            // Canvas Chart with Date Labels
+            // Canvas Chart with Smooth Trend Line and Date Labels
             if (records.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -232,7 +240,9 @@ fun DashboardChartSection(
             } else {
                 DashboardInteractiveBarChart(
                     records = records,
-                    avgSeconds = avgSeconds,
+                    primaryColor = primaryColor,
+                    tertiaryColor = tertiaryColor,
+                    trendColor = trendColor,
                     selectedRecord = selectedRecord,
                     onBarClick = onBarClick,
                     modifier = Modifier
@@ -247,13 +257,14 @@ fun DashboardChartSection(
 @Composable
 fun DashboardInteractiveBarChart(
     records: List<WalkRecord>,
-    avgSeconds: Int,
+    primaryColor: Color,
+    tertiaryColor: Color,
+    trendColor: Color,
     selectedRecord: WalkRecord?,
     onBarClick: (WalkRecord?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val maxSec = (records.maxOfOrNull { it.totalSeconds } ?: 1).coerceAtLeast(60).toFloat()
-    val primaryColor = MaterialTheme.colorScheme.primary
     val labelTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
 
     // Calculate smart label interval so dates don't overlap
@@ -265,30 +276,32 @@ fun DashboardInteractiveBarChart(
         else -> 7
     }
 
+    // Compute moving average for smoothed trend curve
+    val smoothedValues = remember(records) {
+        val window = 3
+        records.indices.map { i ->
+            val start = (i - window / 2).coerceAtLeast(0)
+            val end = (i + window / 2).coerceAtMost(records.size - 1)
+            val slice = records.subList(start, end + 1)
+            slice.map { it.totalSeconds }.average().toFloat()
+        }
+    }
+
     Canvas(
         modifier = modifier
-            .padding(top = 8.dp, bottom = 4.dp)
+            .padding(top = 10.dp, bottom = 4.dp)
     ) {
         val width = size.width
-        val chartBottom = size.height - 24.dp.toPx() // Reserve 24dp for X-axis date labels
+        val chartBottom = size.height - 24.dp.toPx() // Space for date labels
         val barSpacing = width / (totalBars * 1.4f + 0.4f)
         val barWidth = barSpacing * 0.85f
 
-        // Draw Average Dashed Line
-        if (avgSeconds > 0) {
-            val avgY = chartBottom - (avgSeconds / maxSec) * chartBottom
-            drawLine(
-                color = primaryColor.copy(alpha = 0.5f),
-                start = Offset(0f, avgY),
-                end = Offset(width, avgY),
-                strokeWidth = 2.dp.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
-            )
-        }
+        val points = mutableListOf<Offset>()
 
-        // Draw Bars & Date Labels
+        // 1. Draw Bars & collect points for trend curve
         records.forEachIndexed { index, record ->
             val x = (index * 1.4f + 0.4f) * barSpacing
+            val centerX = x + barWidth / 2
 
             val morningRatio = record.morningSeconds / maxSec
             val eveningRatio = record.eveningSeconds / maxSec
@@ -296,6 +309,11 @@ fun DashboardInteractiveBarChart(
             val morningHeight = morningRatio * chartBottom
             val eveningHeight = eveningRatio * chartBottom
             val isSelected = selectedRecord?.date == record.date
+
+            // Smoothed Y point
+            val smoothVal = smoothedValues.getOrElse(index) { record.totalSeconds.toFloat() }
+            val smoothY = chartBottom - (smoothVal / maxSec) * chartBottom
+            points.add(Offset(centerX, smoothY.coerceIn(4.dp.toPx(), chartBottom)))
 
             // Background highlight if selected
             if (isSelected) {
@@ -307,27 +325,27 @@ fun DashboardInteractiveBarChart(
                 )
             }
 
-            // Morning Bar (Bottom)
+            // Morning Bar (Bottom - Primary)
             if (morningHeight > 0) {
                 drawRoundRect(
-                    color = AmberMorning,
+                    color = primaryColor,
                     topLeft = Offset(x, chartBottom - morningHeight),
                     size = Size(barWidth, morningHeight),
                     cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
                 )
             }
 
-            // Evening Bar (Stacked on top)
+            // Evening Bar (Stacked on top - Tertiary)
             if (eveningHeight > 0) {
                 drawRoundRect(
-                    color = IndigoEvening,
+                    color = tertiaryColor,
                     topLeft = Offset(x, chartBottom - morningHeight - eveningHeight),
                     size = Size(barWidth, eveningHeight),
                     cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
                 )
             }
 
-            // Date Label on X-axis (Smart interval: not all days to avoid clutter)
+            // Date Label on X-axis (Smart interval)
             val shouldShowLabel = (index % labelInterval == 0) || (index == totalBars - 1)
             if (shouldShowLabel) {
                 val dateParts = record.date.split("-")
@@ -345,8 +363,40 @@ fun DashboardInteractiveBarChart(
                         textAlign = android.graphics.Paint.Align.CENTER
                         isAntiAlias = true
                     }
-                    drawText(shortDate, x + barWidth / 2, size.height - 4.dp.toPx(), paint)
+                    drawText(shortDate, centerX, size.height - 4.dp.toPx(), paint)
                 }
+            }
+        }
+
+        // 2. Draw Smoothed Trend Curve (Bezier Path)
+        if (points.size >= 2) {
+            val path = Path().apply {
+                moveTo(points.first().x, points.first().y)
+                for (i in 0 until points.size - 1) {
+                    val p0 = points[i]
+                    val p1 = points[i + 1]
+                    val midX = (p0.x + p1.x) / 2f
+                    cubicTo(midX, p0.y, midX, p1.y, p1.x, p1.y)
+                }
+            }
+
+            drawPath(
+                path = path,
+                color = trendColor,
+                style = Stroke(
+                    width = 3.dp.toPx(),
+                    cap = StrokeCap.Round,
+                    join = StrokeJoin.Round
+                )
+            )
+
+            // Draw small indicator dots on points
+            points.forEach { pt ->
+                drawCircle(
+                    color = trendColor,
+                    radius = 3.5.dp.toPx(),
+                    center = pt
+                )
             }
         }
     }
