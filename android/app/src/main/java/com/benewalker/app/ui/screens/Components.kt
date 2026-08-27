@@ -74,19 +74,18 @@ fun StatCardsGrid(
         ) {
             // 1. Heute
             val todayTotal = state.todayRecord?.totalSeconds ?: 0
-            val diffYesterday = state.todayVsYesterdayDiffSec
-            val todayChangeText = when {
-                diffYesterday > 0 -> "+${formatSecToMinSec(diffYesterday)}"
-                diffYesterday < 0 -> "-${formatSecToMinSec(-diffYesterday)}"
-                else -> "±0 min"
+            val morningDone = (state.todayRecord?.morningSeconds ?: 0) > 0
+            val eveningDone = (state.todayRecord?.eveningSeconds ?: 0) > 0
+            val sessionStatus = when {
+                morningDone && eveningDone -> "2 von 2 Einheiten"
+                morningDone || eveningDone -> "1 von 2 Einheiten"
+                else -> "Gesamtzeit"
             }
             MetricCard(
                 modifier = Modifier.weight(1f),
                 title = "Heute",
                 value = formatSecDetailed(todayTotal),
-                changeText = todayChangeText,
-                isPositive = if (diffYesterday > 0) true else if (diffYesterday < 0) false else null,
-                subtitle = "vs. Gestern",
+                subtitle = sessionStatus,
                 icon = Icons.Outlined.Today,
                 onClick = onAnalyticsClick
             )
@@ -520,29 +519,17 @@ fun AndroidM3SessionInput(
 fun GarminBadge() {
     Surface(
         shape = RoundedCornerShape(4.dp),
-        color = Color(0xFF007CC3).copy(alpha = 0.15f)
+        color = Color(0xFF1B2329)
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(3.dp)
+        Box(
+            modifier = Modifier.padding(horizontal = 4.5.dp, vertical = 2.dp),
+            contentAlignment = Alignment.Center
         ) {
-            // Garmin Delta Triangle
-            Canvas(modifier = Modifier.size(6.5.dp)) {
-                val path = androidx.compose.ui.graphics.Path().apply {
-                    moveTo(size.width / 2f, 0f)
-                    lineTo(size.width, size.height)
-                    lineTo(0f, size.height)
-                    close()
-                }
-                drawPath(path, color = Color(0xFF007CC3))
-            }
-            Text(
-                text = "Garmin",
-                fontSize = 9.5.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF007CC3),
-                maxLines = 1
+            Icon(
+                painter = androidx.compose.ui.res.painterResource(id = com.benewalker.app.R.drawable.ic_garmin),
+                contentDescription = "Garmin",
+                tint = Color.Unspecified,
+                modifier = Modifier.height(9.dp)
             )
         }
     }

@@ -1,5 +1,6 @@
 package com.benewalker.app.ui.screens
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -50,72 +51,138 @@ fun StopwatchScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Top: Target Selector & Speaker Toggle (Lautsprechersymbol)
-        Row(
+        // Top: Target Selector, Speaker Toggle & Audio Optionen
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Card(
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                 ) {
-                    FilterChip(
-                        selected = uiState.stopwatchTarget == "morning",
-                        onClick = { viewModel.setStopwatchTarget("morning") },
-                        label = { Text("1. Gehen", fontWeight = FontWeight.Bold) },
-                        leadingIcon = {
-                            if (uiState.stopwatchTarget == "morning") {
-                                Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    Row(
+                        modifier = Modifier.padding(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected = uiState.stopwatchTarget == "morning",
+                            onClick = { viewModel.setStopwatchTarget("morning") },
+                            label = { Text("1. Gehen", fontWeight = FontWeight.Bold) },
+                            leadingIcon = {
+                                if (uiState.stopwatchTarget == "morning") {
+                                    Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
                         )
-                    )
 
-                    FilterChip(
-                        selected = uiState.stopwatchTarget == "evening",
-                        onClick = { viewModel.setStopwatchTarget("evening") },
-                        label = { Text("2. Gehen", fontWeight = FontWeight.Bold) },
-                        leadingIcon = {
-                            if (uiState.stopwatchTarget == "evening") {
-                                Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                            }
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        FilterChip(
+                            selected = uiState.stopwatchTarget == "evening",
+                            onClick = { viewModel.setStopwatchTarget("evening") },
+                            label = { Text("2. Gehen", fontWeight = FontWeight.Bold) },
+                            leadingIcon = {
+                                if (uiState.stopwatchTarget == "evening") {
+                                    Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                                }
+                            },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
                         )
+                    }
+                }
+
+                // Lautsprecher Icon-Button (Aktiv vs. Durchgestrichen)
+                FilledTonalIconToggleButton(
+                    checked = uiState.stopwatchSoundEnabled,
+                    onCheckedChange = { viewModel.setStopwatchSoundEnabled(it) },
+                    shape = CircleShape,
+                    modifier = Modifier.size(44.dp),
+                    colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        checkedContentColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.outline
+                    )
+                ) {
+                    Icon(
+                        imageVector = if (uiState.stopwatchSoundEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                        contentDescription = if (uiState.stopwatchSoundEnabled) "Ton an" else "Stummgeschaltet",
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
 
-            // Lautsprecher Icon-Button (Aktiv vs. Durchgestrichen)
-            FilledTonalIconToggleButton(
-                checked = uiState.stopwatchSoundEnabled,
-                onCheckedChange = { viewModel.setStopwatchSoundEnabled(it) },
-                shape = CircleShape,
-                modifier = Modifier.size(44.dp),
-                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    checkedContentColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.outline
-                )
+            // Audio-Optionen Leiste (Intervall: 1 Min vs 5 Min & 30s Piep Toggle)
+            AnimatedVisibility(
+                visible = uiState.stopwatchSoundEnabled,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
             ) {
-                Icon(
-                    imageVector = if (uiState.stopwatchSoundEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                    contentDescription = if (uiState.stopwatchSoundEnabled) "Ton an" else "Stummgeschaltet",
-                    modifier = Modifier.size(22.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Ansage-Intervall Chip (1 Min / 5 Min)
+                    FilterChip(
+                        selected = true,
+                        onClick = {
+                            val next = if (uiState.stopwatchVoiceIntervalMin == 1) 5 else 1
+                            viewModel.setStopwatchVoiceInterval(next)
+                        },
+                        label = {
+                            Text(
+                                text = "Ansage: alle ${uiState.stopwatchVoiceIntervalMin} Min.",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.RecordVoiceOver,
+                                contentDescription = null,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+
+                    // 30s Piep Toggle Chip
+                    FilterChip(
+                        selected = uiState.stopwatchBeep30s,
+                        onClick = { viewModel.setStopwatchBeep30s(!uiState.stopwatchBeep30s) },
+                        label = {
+                            Text(
+                                text = if (uiState.stopwatchBeep30s) "30s Piep an" else "30s Piep aus",
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (uiState.stopwatchBeep30s) Icons.Filled.NotificationsActive else Icons.Filled.NotificationsOff,
+                                contentDescription = null,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        },
+                        shape = RoundedCornerShape(10.dp)
+                    )
+                }
             }
         }
 
@@ -165,68 +232,49 @@ fun StopwatchScreen(
             }
         }
 
-        // Bottom: Controls
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
+        // Bottom: Controls (3 runde Buttons: Reset, Play/Pause, Speichern)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+            // Reset Button
+            OutlinedIconButton(
+                onClick = { viewModel.resetStopwatch() },
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                enabled = uiState.stopwatchElapsedSec > 0
             ) {
-                // Reset Button
-                OutlinedIconButton(
-                    onClick = { viewModel.resetStopwatch() },
-                    modifier = Modifier.size(56.dp),
-                    shape = CircleShape,
-                    enabled = uiState.stopwatchElapsedSec > 0
-                ) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Zurücksetzen")
-                }
-
-                // Play / Pause FAB
-                FilledIconButton(
-                    onClick = { viewModel.toggleStopwatch() },
-                    modifier = Modifier.size(80.dp),
-                    shape = CircleShape,
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = if (uiState.stopwatchRunning) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = if (uiState.stopwatchRunning) "Pause" else "Start",
-                        modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-
-                // Save Button
-                FilledTonalIconButton(
-                    onClick = { viewModel.saveStopwatchToToday() },
-                    modifier = Modifier.size(56.dp),
-                    shape = CircleShape,
-                    enabled = uiState.stopwatchElapsedSec > 0
-                ) {
-                    Icon(Icons.Outlined.Save, contentDescription = "Speichern")
-                }
+                Icon(Icons.Filled.Refresh, contentDescription = "Zurücksetzen")
             }
 
-            if (uiState.stopwatchElapsedSec > 0 && !uiState.stopwatchRunning) {
-                Button(
-                    onClick = { viewModel.saveStopwatchToToday() },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(Icons.Filled.Check, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        "Für ${if (uiState.stopwatchTarget == "morning") "1. Gehen" else "2. Gehen"} heute speichern",
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+            // Play / Pause FAB
+            FilledIconButton(
+                onClick = { viewModel.toggleStopwatch() },
+                modifier = Modifier.size(80.dp),
+                shape = CircleShape,
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    imageVector = if (uiState.stopwatchRunning) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    contentDescription = if (uiState.stopwatchRunning) "Pause" else "Start",
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+
+            // Save Button (Runder Button rechts)
+            FilledTonalIconButton(
+                onClick = { viewModel.saveStopwatchToToday() },
+                modifier = Modifier.size(56.dp),
+                shape = CircleShape,
+                enabled = uiState.stopwatchElapsedSec > 0
+            ) {
+                Icon(Icons.Outlined.Save, contentDescription = "Speichern")
             }
         }
     }
