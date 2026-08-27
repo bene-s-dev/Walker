@@ -176,7 +176,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun syncWithHealthConnect(days: Int = 14) {
+    fun syncWithHealthConnect(days: Int = 14, onComplete: ((updatedCount: Int) -> Unit)? = null) {
         viewModelScope.launch {
             _uiState.update { it.copy(hcStatus = HcStatus.SYNCING) }
             val result = healthConnectManager.syncWalkingSessions(days)
@@ -187,6 +187,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                         syncErrorMessage = result.errorMessage
                     )
                 }
+                onComplete?.invoke(0)
             } else {
                 _uiState.update {
                     it.copy(
@@ -196,6 +197,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                         syncErrorMessage = null
                     )
                 }
+                onComplete?.invoke(result.updatedCount)
             }
         }
     }

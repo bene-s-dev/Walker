@@ -11,6 +11,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,6 +40,7 @@ fun MainScreen(
     viewModel: WalkViewModel
 ) {
     val navController = rememberNavController()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     var showMenu by remember { mutableStateOf(false) }
@@ -46,58 +48,91 @@ fun MainScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 6.dp, top = 6.dp, bottom = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = "BeneWalker",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
-                },
-                actions = {
-                    IconButton(onClick = { showMenu = true }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Menü"
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = showMenu,
-                        onDismissRequest = { showMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Einstellungen") },
-                            onClick = {
-                                showMenu = false
-                                navController.navigate(Screen.Settings) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+
+                    Box {
+                        IconButton(
+                            onClick = { showMenu = true },
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Menü",
+                                modifier = Modifier.size(20.dp),
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Einstellungen") },
+                                onClick = {
+                                    showMenu = false
+                                    navController.navigate(Screen.Settings) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Settings, contentDescription = null)
                                 }
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Outlined.Settings, contentDescription = null)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Garmin Sync") },
-                            onClick = {
-                                showMenu = false
-                                viewModel.syncWithHealthConnect()
-                            },
-                            leadingIcon = {
-                                Icon(Icons.Outlined.Sync, contentDescription = null)
-                            }
-                        )
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Garmin Sync") },
+                                onClick = {
+                                    showMenu = false
+                                    val state = viewModel.uiState.value
+                                    if (state.hcStatus == com.benewalker.app.ui.HcStatus.UNAVAILABLE) {
+                                        android.widget.Toast.makeText(context, "Health Connect ist auf diesem Gerät nicht verfügbar", android.widget.Toast.LENGTH_SHORT).show()
+                                    } else if (state.hcStatus == com.benewalker.app.ui.HcStatus.PERMISSION_NEEDED) {
+                                        android.widget.Toast.makeText(context, "Health Connect Berechtigungen fehlen – bitte in Einstellungen aktivieren", android.widget.Toast.LENGTH_LONG).show()
+                                        navController.navigate(Screen.Settings) {
+                                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    } else {
+                                        android.widget.Toast.makeText(context, "Garmin Sync gestartet...", android.widget.Toast.LENGTH_SHORT).show()
+                                        viewModel.syncWithHealthConnect(days = 30) { count ->
+                                            if (count > 0) {
+                                                android.widget.Toast.makeText(context, "✓ $count Gehzeiten von Garmin aktualisiert", android.widget.Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                android.widget.Toast.makeText(context, "Alles aktuell (keine neuen Garmin-Gehzeiten)", android.widget.Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Sync, contentDescription = null)
+                                }
+                            )
+                        }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground
-                )
-            )
+                }
+            }
         },
         bottomBar = {
             NavigationBar(

@@ -2,13 +2,11 @@ package com.benewalker.app.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -16,11 +14,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -41,18 +39,6 @@ fun DashboardScreen(
     var chartRange by remember { mutableStateOf("all") } // Standardmäßig auf "Alle"
     var selectedBarRecord by remember { mutableStateOf<WalkRecord?>(null) }
 
-    val listState = rememberLazyListState()
-    val haptic = LocalHapticFeedback.current
-
-    // Leichtes haptisches Feedback beim Scrollen über Listenelemente
-    var lastScrolledIndex by remember { mutableIntStateOf(0) }
-    LaunchedEffect(listState.firstVisibleItemIndex) {
-        if (listState.firstVisibleItemIndex != lastScrolledIndex && listState.isScrollInProgress) {
-            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-            lastScrolledIndex = listState.firstVisibleItemIndex
-        }
-    }
-
     val displayedChartRecords = remember(uiState.records, chartRange) {
         when (chartRange) {
             "7" -> uiState.records.take(7).reversed()
@@ -63,14 +49,13 @@ fun DashboardScreen(
     }
 
     LazyColumn(
-        state = listState,
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)
     ) {
-        // 1. Die 4 Stat-Karten oben (farblich abgehoben ohne harte Border)
+        // 1. Die 4 Stat-Karten oben (farblich abgehoben)
         item {
             StatCardsGrid(
                 state = uiState,
@@ -78,7 +63,7 @@ fun DashboardScreen(
             )
         }
 
-        // 2. HAUPTDIAGRAMM (Ohne Trendlinie, ohne Durchschnittszeit, mit interaktivem Tippen)
+        // 2. HAUPTDIAGRAMM mit Y-Achsen Minuten-Angaben, ohne Überlappungen
         item {
             DashboardChartSection(
                 records = displayedChartRecords,
@@ -117,7 +102,7 @@ fun DashboardChartSection(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Header: Nur noch der Titel (Durchschnittszeit entfernt)
+            // Header: Titel
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -170,7 +155,7 @@ fun DashboardChartSection(
                 }
             }
 
-            // Legend: 1. Gehen und 2. Gehen (Trendlinie entfernt)
+            // Legend: 1. Gehen und 2. Gehen
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -243,7 +228,7 @@ fun DashboardChartSection(
                 }
             }
 
-            // Canvas Chart mit direktem Tipp-Support auf die Balken
+            // Canvas Chart mit Y-Achsen Minutenangaben und überlappungsfreier Datumsachse
             if (records.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -278,11 +263,23 @@ fun DashboardInteractiveBarChart(
     onBarClick: (WalkRecord?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val maxSec = (records.maxOfOrNull { it.totalSeconds } ?: 1).coerceAtLeast(60).toFloat()
+    val maxRawSec = (records.maxOfOrNull { it.totalSeconds } ?: 1).coerceAtLeast(60)
+    // Round maxSec up to clean minute steps for the Y-axis (e.g. 10m, 15m, 20m, 30m)
+    val maxMinutes = ((maxRawSec + 59) / 60)
+    val stepMinutes = when {
+        maxMinutes <= 10 -> 2
+        maxMinutes <= 20 -> 5
+        maxMinutes <= 40 -> 10
+        maxMinutes <= 75 -> 15
+        else -> 20
+    }
+    val yMaxMinutes = (((maxMinutes + stepMinutes - 1) / stepMinutes) * stepMinutes).coerceAtLeast(stepMinutes)
+    val maxSec = (yMaxMinutes * 60).toFloat()
+
     val labelTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
     val haptic = LocalHapticFeedback.current
 
-    // Calculate smart label interval so dates don't overlap
     val totalBars = records.size
     val labelInterval = when {
         totalBars <= 7 -> 1
@@ -291,34 +288,97 @@ fun DashboardInteractiveBarChart(
         else -> 7
     }
 
+    // Exakte Berechnung der Datumsbeschriftungen (Verhindert Überlappungen am rechten Rand)
+    val indicesToLabel = remember(records, totalBars, labelInterval) {
+        val list = mutableSetOf<Int>()
+        var lastAdded = -99
+        for (i in 0 until totalBars) {
+            if (i % labelInterval == 0) {
+                list.add(i)
+                lastAdded = i
+            }
+        }
+        if (totalBars > 0) {
+            val lastIdx = totalBars - 1
+            // Nur hinzufügen wenn mindestens (labelInterval/2 + 1) Balken Abstand zum letzten Label
+            if (lastIdx - lastAdded >= (labelInterval / 2 + 1)) {
+                list.add(lastIdx)
+            }
+        }
+        list
+    }
+
+    var lastScrubbedIndex by remember { mutableIntStateOf(-1) }
+
     Canvas(
         modifier = modifier
-            .padding(top = 10.dp, bottom = 4.dp)
+            .padding(top = 8.dp, bottom = 4.dp)
             .pointerInput(records) {
-                detectTapGestures { offset ->
-                    val width = size.width
-                    val barSpacing = width / (totalBars * 1.4f + 0.4f)
-                    val barWidth = barSpacing * 0.85f
-
-                    // Hit test to find tapped bar
-                    records.forEachIndexed { index, record ->
-                        val barX = (index * 1.4f + 0.4f) * barSpacing
-                        if (offset.x >= barX - 8.dp.toPx() && offset.x <= barX + barWidth + 8.dp.toPx()) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onBarClick(record)
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull() ?: continue
+                        if (change.pressed) {
+                            change.consume()
+                            val leftPadding = 32.dp.toPx()
+                            val chartWidth = size.width - leftPadding
+                            if (totalBars > 0 && chartWidth > 0) {
+                                val barSpacing = chartWidth / (totalBars * 1.4f + 0.4f)
+                                val relativeX = change.position.x - leftPadding
+                                val barIndex = ((relativeX / barSpacing - 0.4f) / 1.4f).toInt().coerceIn(0, totalBars - 1)
+                                if (barIndex != lastScrubbedIndex && barIndex in records.indices) {
+                                    lastScrubbedIndex = barIndex
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    onBarClick(records[barIndex])
+                                }
+                            }
                         }
                     }
                 }
             }
     ) {
         val width = size.width
-        val chartBottom = size.height - 24.dp.toPx() // Space for date labels
-        val barSpacing = width / (totalBars * 1.4f + 0.4f)
+        val leftPadding = 32.dp.toPx() // Left space for minute labels
+        val chartBottom = size.height - 22.dp.toPx() // Bottom space for date labels
+        val chartWidth = width - leftPadding
+        val barSpacing = chartWidth / (totalBars * 1.4f + 0.4f)
         val barWidth = barSpacing * 0.85f
 
-        // Draw Bars
+        // 1. Draw Y-Axis Minute Grid Lines & Labels
+        val numGridSteps = yMaxMinutes / stepMinutes
+        for (step in 1..numGridSteps) {
+            val minVal = step * stepMinutes
+            val yPos = chartBottom - (minVal * 60f / maxSec) * chartBottom
+
+            // Dotted horizontal grid line
+            drawLine(
+                color = gridColor,
+                start = Offset(leftPadding, yPos),
+                end = Offset(width, yPos),
+                strokeWidth = 1.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f))
+            )
+
+            // Y-Axis minute label on left
+            drawContext.canvas.nativeCanvas.apply {
+                val paint = android.graphics.Paint().apply {
+                    color = android.graphics.Color.argb(
+                        (labelTextColor.alpha * 180).toInt(),
+                        (labelTextColor.red * 255).toInt(),
+                        (labelTextColor.green * 255).toInt(),
+                        (labelTextColor.blue * 255).toInt()
+                    )
+                    textSize = 8.5.sp.toPx()
+                    textAlign = android.graphics.Paint.Align.RIGHT
+                    isAntiAlias = true
+                }
+                drawText("${minVal}m", leftPadding - 4.dp.toPx(), yPos + 3.dp.toPx(), paint)
+            }
+        }
+
+        // 2. Draw Bars & Date Labels
         records.forEachIndexed { index, record ->
-            val x = (index * 1.4f + 0.4f) * barSpacing
+            val x = leftPadding + (index * 1.4f + 0.4f) * barSpacing
             val centerX = x + barWidth / 2
 
             val morningRatio = record.morningSeconds / maxSec
@@ -328,7 +388,7 @@ fun DashboardInteractiveBarChart(
             val eveningHeight = eveningRatio * chartBottom
             val isSelected = selectedRecord?.date == record.date
 
-            // Background highlight if selected
+            // Selection Background Highlight
             if (isSelected) {
                 drawRoundRect(
                     color = primaryColor.copy(alpha = 0.25f),
@@ -358,9 +418,8 @@ fun DashboardInteractiveBarChart(
                 )
             }
 
-            // Date Label on X-axis (Smart interval)
-            val shouldShowLabel = (index % labelInterval == 0) || (index == totalBars - 1)
-            if (shouldShowLabel) {
+            // Date Label on X-axis (Überlappungsfrei)
+            if (indicesToLabel.contains(index)) {
                 val dateParts = record.date.split("-")
                 val shortDate = if (dateParts.size == 3) "${dateParts[2]}.${dateParts[1]}." else record.date
 
@@ -372,12 +431,12 @@ fun DashboardInteractiveBarChart(
                             (labelTextColor.green * 255).toInt(),
                             (labelTextColor.blue * 255).toInt()
                         )
-                        textSize = 9.5.sp.toPx()
+                        textSize = 9.sp.toPx()
                         textAlign = android.graphics.Paint.Align.CENTER
                         isAntiAlias = true
                         isFakeBoldText = isSelected
                     }
-                    drawText(shortDate, centerX, size.height - 4.dp.toPx(), paint)
+                    drawText(shortDate, centerX, size.height - 3.dp.toPx(), paint)
                 }
             }
         }

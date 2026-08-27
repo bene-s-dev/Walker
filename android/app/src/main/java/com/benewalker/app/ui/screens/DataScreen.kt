@@ -34,20 +34,7 @@ fun DataScreen(
     var recordToDelete by remember { mutableStateOf<String?>(null) }
     var recordToEdit by remember { mutableStateOf<WalkRecord?>(null) }
 
-    val listState = rememberLazyListState()
-    val haptic = LocalHapticFeedback.current
-
-    // Leichtes haptisches Feedback beim Scrollen
-    var lastScrolledIndex by remember { mutableIntStateOf(0) }
-    LaunchedEffect(listState.firstVisibleItemIndex) {
-        if (listState.firstVisibleItemIndex != lastScrolledIndex && listState.isScrollInProgress) {
-            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-            lastScrolledIndex = listState.firstVisibleItemIndex
-        }
-    }
-
     LazyColumn(
-        state = listState,
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),

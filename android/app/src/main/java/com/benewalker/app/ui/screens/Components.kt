@@ -1,6 +1,7 @@
 package com.benewalker.app.ui.screens
 
 import android.app.DatePickerDialog
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.Path
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -449,6 +451,38 @@ fun AndroidM3SessionInput(
 }
 
 @Composable
+fun GarminBadge() {
+    Surface(
+        shape = RoundedCornerShape(5.dp),
+        color = Color(0xFF007CC3).copy(alpha = 0.15f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // Garmin Delta Triangle
+            Canvas(modifier = Modifier.size(7.dp)) {
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(size.width / 2f, 0f)
+                    lineTo(size.width, size.height)
+                    lineTo(0f, size.height)
+                    close()
+                }
+                drawPath(path, color = Color(0xFF007CC3))
+            }
+            Text(
+                text = "Garmin",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF007CC3),
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
 fun HistoryItemCard(
     record: WalkRecord,
     onEdit: () -> Unit,
@@ -467,16 +501,24 @@ fun HistoryItemCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left: Date & Split times
+            // Left: Date, Garmin badge & Split times
             Column(
                 modifier = Modifier.weight(1f).padding(end = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    text = record.date,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = record.date,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (record.source == "garmin_health_connect") {
+                        GarminBadge()
+                    }
+                }
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
