@@ -125,17 +125,22 @@ class HealthConnectManager(
                 val totalSec = morningSec + eveningSec
                 val existing = walkDao.getRecordByDate(dateStr)
 
-                if (existing == null || existing.morningSeconds != morningSec || existing.eveningSeconds != eveningSec) {
-                    val recordToSave = WalkRecord(
-                        date = dateStr,
-                        morningSeconds = morningSec,
-                        eveningSeconds = eveningSec,
-                        totalSeconds = totalSec,
-                        updatedAt = System.currentTimeMillis(),
-                        source = "garmin_health_connect"
-                    )
-                    walkDao.insertOrUpdate(recordToSave)
-                    updatedCount++
+                // Eigene Einträge (manuell, Stoppuhr, Backup) haben Vorrang vor Garmin Sync
+                val isManualEntry = existing != null && existing.source != "garmin_health_connect" && existing.totalSeconds > 0
+
+                if (!isManualEntry) {
+                    if (existing == null || existing.morningSeconds != morningSec || existing.eveningSeconds != eveningSec) {
+                        val recordToSave = WalkRecord(
+                            date = dateStr,
+                            morningSeconds = morningSec,
+                            eveningSeconds = eveningSec,
+                            totalSeconds = totalSec,
+                            updatedAt = System.currentTimeMillis(),
+                            source = "garmin_health_connect"
+                        )
+                        walkDao.insertOrUpdate(recordToSave)
+                        updatedCount++
+                    }
                 }
             }
 
