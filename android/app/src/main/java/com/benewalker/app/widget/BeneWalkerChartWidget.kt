@@ -44,9 +44,8 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
             val records = walkDao.getAllRecords()
             val todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
             val todayRecord = records.find { it.date == todayStr }
-            val last7 = records.take(7).reversed()
-
-            val chartBitmap = renderChartBitmap(context, last7)
+            val allRecords = records.reversed()
+            val chartBitmap = renderChartBitmap(context, allRecords)
 
             withContext(Dispatchers.Main) {
                 for (appWidgetId in appWidgetIds) {
@@ -62,10 +61,10 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
                     views.setImageViewBitmap(R.id.widget_chart_image, chartBitmap)
 
                     // 3. Footer Summary
-                    val avg7 = if (records.isNotEmpty()) records.take(7).map { it.totalSeconds }.average().toInt() else 0
-                    val avg7Min = avg7 / 60
+                    val avg30 = if (records.isNotEmpty()) records.take(30).map { it.totalSeconds }.average().toInt() else 0
+                    val avg30Min = avg30 / 60
                     val totalDays = records.size
-                    views.setTextViewText(R.id.widget_footer_text, "Ø 7 Tage: ${avg7Min} min/Tag • Gesamt: $totalDays Tage erfasst")
+                    views.setTextViewText(R.id.widget_footer_text, "Gesamtverlauf: $totalDays Tage erfasst • Ø 30 Tage: ${avg30Min} min")
 
                     // 4. Click anywhere -> Open App
                     val intent = Intent(context, MainActivity::class.java).apply {
@@ -110,15 +109,43 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
         val totalBars = records.size
         val maxRawSec = (records.maxOfOrNull { it.totalSeconds } ?: 1).coerceAtLeast(60)
         val maxMinutes = ((maxRawSec + 59) / 60)
-        val stepMinutes = if (maxMinutes <= 20) 5 else 10
+        val stepMinutes = when {
+            maxMinutes <= 15 -> 5
+            maxMinutes <= 30 -> 10
+            maxMinutes <= 60 -> 15
+            else -> 20
+        }
         val yMaxMinutes = (((maxMinutes + stepMinutes - 1) / stepMinutes) * stepMinutes).coerceAtLeast(stepMinutes)
         val maxSec = (yMaxMinutes * 60).toFloat()
 
-        val leftPadding = 60f
-        val chartBottom = height - 44f
-        val chartWidth = width - leftPadding - 20f
-        val barSpacing = chartWidth / (totalBars * 1.4f + 0.4f)
-        val barWidth = barSpacing * 0.82f
+        val leftPadding = 55f
+        val chartBottom = height - 40f
+        val chartWidth = width - leftPadding - 15f
+        val barSpacing = chartWidth / (totalBars * 1.35f + 0.35f)
+        val barWidth = barSpacing * 0.85f
+
+        val labelInterval = when {
+            totalBars <= 7 -> 1
+            totalBars <= 14 -> 2
+            totalBars <= 28 -> 4
+            totalBars <= 45 -> 7
+            else -> 10
+        }
+
+        val indicesToLabel = mutableSetOf<Int>()
+        var lastAdded = -99
+        for (i in 0 until totalBars) {
+            if (i % labelInterval == 0) {
+                indicesToLabel.add(i)
+                lastAdded = i
+            }
+        }
+        if (totalBars > 0) {
+            val lastIdx = totalBars - 1
+            if (lastIdx - lastAdded >= (labelInterval / 2 + 1)) {
+                indicesToLabel.add(lastIdx)
+            }
+        }
 
         // Draw Y-Axis Dotted Grid Lines & Minute Labels
         val gridPaint = Paint().apply {
@@ -130,7 +157,7 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
         }
         val textPaint = Paint().apply {
             color = labelColor
-            textSize = 20f
+            textSize = 18f
             isAntiAlias = true
         }
 
@@ -141,7 +168,7 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
             canvas.drawLine(leftPadding, yPos, width - 10f, yPos, gridPaint)
 
             textPaint.textAlign = Paint.Align.RIGHT
-            canvas.drawText("${minVal}m", leftPadding - 10f, yPos + 7f, textPaint)
+            canvas.drawText("${minVal}m", leftPadding - 8f, yPos + 6f, textPaint)
         }
 
         // Draw Bars & Dates
@@ -157,7 +184,7 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
         }
 
         records.forEachIndexed { index, record ->
-            val x = leftPadding + (index * 1.4f + 0.4f) * barSpacing
+            val x = leftPadding + (index * 1.35f + 0.35f) * barSpacing
             val centerX = x + barWidth / 2f
 
             val morningRatio = record.morningSeconds / maxSec
@@ -169,7 +196,7 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
             // 1. Morning Bar (Primary)
             if (morningHeight > 0) {
                 val rect = RectF(x, chartBottom - morningHeight, x + barWidth, chartBottom)
-                canvas.drawRoundRect(rect, 10f, 10f, primaryPaint)
+                canvas.drawRoundRect(rect, 8f, 8f, primaryPaint)
             }
 
             // 2. Evening Bar (Tertiary - stacked)
@@ -177,14 +204,16 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
                 val top = chartBottom - morningHeight - eveningHeight
                 val bottom = chartBottom - morningHeight
                 val rect = RectF(x, top, x + barWidth, bottom)
-                canvas.drawRoundRect(rect, 10f, 10f, tertiaryPaint)
+                canvas.drawRoundRect(rect, 8f, 8f, tertiaryPaint)
             }
 
-            // 3. Date label on X-axis
-            val parts = record.date.split("-")
-            val shortDate = if (parts.size == 3) "${parts[2]}.${parts[1]}." else record.date
-            textPaint.textAlign = Paint.Align.CENTER
-            canvas.drawText(shortDate, centerX, height - 12f, textPaint)
+            // 3. Date label on X-axis (Smart non-overlapping)
+            if (indicesToLabel.contains(index)) {
+                val parts = record.date.split("-")
+                val shortDate = if (parts.size == 3) "${parts[2]}.${parts[1]}." else record.date
+                textPaint.textAlign = Paint.Align.CENTER
+                canvas.drawText(shortDate, centerX, height - 12f, textPaint)
+            }
         }
 
         return bitmap
