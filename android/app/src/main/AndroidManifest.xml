@@ -27,20 +27,13 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/>
         </provider>
 
-        <service
-            android:name=".service.StopwatchService"
-            android:foregroundServiceType="health"
-            android:exported="false" />
+        <service android:name=".service.StopwatchService" android:foregroundServiceType="health" android:exported="false"/>
 
-        <receiver
-            android:name=".widget.BeneWalkerChartWidget"
-            android:exported="true">
+        <receiver android:name=".widget.BeneWalkerChartWidget" android:exported="true">
             <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
             </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/benewalker_chart_widget_info" />
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/benewalker_chart_widget_info"/>
         </receiver>
     </application>
 
