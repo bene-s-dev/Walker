@@ -36,8 +36,11 @@ data class WalkUiState(
     val todayRecord: WalkRecord? = null,
     val todayVsYesterdayDiffSec: Int = 0,
     val avg7DaysSec: Int = 0,
+    val diff7DaysSec: Int = 0,
     val avg30DaysSec: Int = 0,
+    val diff30DaysSec: Int = 0,
     val allTimeSingleRecordSec: Int = 0,
+    val todayMaxSingleSec: Int = 0,
     val totalRecordedDays: Int = 0,
     
     // Health Connect
@@ -139,16 +142,23 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         val yesterdayTotal = yesterdayRec?.totalSeconds ?: 0
         val diff = todayTotal - yesterdayTotal
 
-        // 7-day average (last 7 recorded days or days with entries)
+        // 7-day average & comparison to previous 7 days (days 8-14)
         val last7 = records.take(7)
         val avg7 = if (last7.isNotEmpty()) last7.map { it.totalSeconds }.average().toInt() else 0
+        val prev7 = records.drop(7).take(7)
+        val prevAvg7 = if (prev7.isNotEmpty()) prev7.map { it.totalSeconds }.average().toInt() else avg7
+        val diff7 = if (prev7.isNotEmpty()) avg7 - prevAvg7 else 0
 
-        // 30-day average
+        // 30-day average & comparison to previous 30 days (days 31-60)
         val last30 = records.take(30)
         val avg30 = if (last30.isNotEmpty()) last30.map { it.totalSeconds }.average().toInt() else 0
+        val prev30 = records.drop(30).take(30)
+        val prevAvg30 = if (prev30.isNotEmpty()) prev30.map { it.totalSeconds }.average().toInt() else avg30
+        val diff30 = if (prev30.isNotEmpty()) avg30 - prevAvg30 else 0
 
-        // Single best session (max morning or evening seconds)
+        // Single best session (all-time & today)
         val maxSingle = records.flatMap { listOf(it.morningSeconds, it.eveningSeconds) }.maxOrNull() ?: 0
+        val todayMax = listOfNotNull(todayRec?.morningSeconds, todayRec?.eveningSeconds).maxOrNull() ?: 0
 
         _uiState.update { current ->
             current.copy(
@@ -156,8 +166,11 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 todayRecord = todayRec,
                 todayVsYesterdayDiffSec = diff,
                 avg7DaysSec = avg7,
+                diff7DaysSec = diff7,
                 avg30DaysSec = avg30,
+                diff30DaysSec = diff30,
                 allTimeSingleRecordSec = maxSingle,
+                todayMaxSingleSec = todayMax,
                 totalRecordedDays = records.size
             )
         }

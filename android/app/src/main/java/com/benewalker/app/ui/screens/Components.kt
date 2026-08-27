@@ -72,23 +72,39 @@ fun StatCardsGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Heute vs. Vortag
+            // 1. Heute
+            val todayTotal = state.todayRecord?.totalSeconds ?: 0
+            val diffYesterday = state.todayVsYesterdayDiffSec
+            val todayChangeText = when {
+                diffYesterday > 0 -> "+${formatSecToMinSec(diffYesterday)}"
+                diffYesterday < 0 -> "-${formatSecToMinSec(-diffYesterday)}"
+                else -> "±0 min"
+            }
             MetricCard(
                 modifier = Modifier.weight(1f),
-                title = "Heute vs. Vortag",
-                value = if (state.todayVsYesterdayDiffSec >= 0) "+${formatSecDetailed(state.todayVsYesterdayDiffSec)}" else "-${formatSecDetailed(-state.todayVsYesterdayDiffSec)}",
-                subtitle = "Tagesdifferenz",
-                isPositive = state.todayVsYesterdayDiffSec >= 0,
-                icon = Icons.Outlined.CompareArrows,
+                title = "Heute",
+                value = formatSecDetailed(todayTotal),
+                changeText = todayChangeText,
+                isPositive = if (diffYesterday > 0) true else if (diffYesterday < 0) false else null,
+                subtitle = "vs. Gestern",
+                icon = Icons.Outlined.Today,
                 onClick = onAnalyticsClick
             )
 
-            // 7-Tage Schnitt
+            // 2. 7-Tage Schnitt
+            val diff7 = state.diff7DaysSec
+            val diff7Text = when {
+                diff7 > 0 -> "+${formatSecToMinSec(diff7)}"
+                diff7 < 0 -> "-${formatSecToMinSec(-diff7)}"
+                else -> "±0 min"
+            }
             MetricCard(
                 modifier = Modifier.weight(1f),
                 title = "7-Tage Schnitt",
                 value = formatSecDetailed(state.avg7DaysSec),
-                subtitle = "Ø pro Tag",
+                changeText = diff7Text,
+                isPositive = if (diff7 > 0) true else if (diff7 < 0) false else null,
+                subtitle = "vs. Vorwoche",
                 icon = Icons.Outlined.Timeline,
                 onClick = onAnalyticsClick
             )
@@ -98,22 +114,38 @@ fun StatCardsGrid(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 30-Tage Schnitt
+            // 3. 30-Tage Schnitt
+            val diff30 = state.diff30DaysSec
+            val diff30Text = when {
+                diff30 > 0 -> "+${formatSecToMinSec(diff30)}"
+                diff30 < 0 -> "-${formatSecToMinSec(-diff30)}"
+                else -> "±0 min"
+            }
             MetricCard(
                 modifier = Modifier.weight(1f),
                 title = "30-Tage Schnitt",
                 value = formatSecDetailed(state.avg30DaysSec),
-                subtitle = "Ø pro Tag",
+                changeText = diff30Text,
+                isPositive = if (diff30 > 0) true else if (diff30 < 0) false else null,
+                subtitle = "vs. Vormonat",
                 icon = Icons.Outlined.DateRange,
                 onClick = onAnalyticsClick
             )
 
-            // Rekord am Stück
+            // 4. Rekord am Stück
+            val recordDiff = state.todayMaxSingleSec - state.allTimeSingleRecordSec
+            val recordChangeText = when {
+                state.todayMaxSingleSec >= state.allTimeSingleRecordSec && state.todayMaxSingleSec > 0 -> "★ Rekord!"
+                state.todayMaxSingleSec > 0 -> "-${formatSecToMinSec(-recordDiff)}"
+                else -> "±0 min"
+            }
             MetricCard(
                 modifier = Modifier.weight(1f),
                 title = "Rekord am Stück",
                 value = formatSecDetailed(state.allTimeSingleRecordSec),
-                subtitle = "All-Time Rekord",
+                changeText = recordChangeText,
+                isPositive = if (recordDiff >= 0 && state.todayMaxSingleSec > 0) true else null,
+                subtitle = "heute",
                 icon = Icons.Outlined.EmojiEvents,
                 onClick = onAnalyticsClick
             )
@@ -126,6 +158,7 @@ fun MetricCard(
     modifier: Modifier = Modifier,
     title: String,
     value: String,
+    changeText: String? = null,
     subtitle: String,
     icon: ImageVector,
     isPositive: Boolean? = null,
@@ -139,7 +172,7 @@ fun MetricCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         )
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(13.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -159,21 +192,54 @@ fun MetricCard(
                     tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                 )
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (isPositive == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1
             )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-                maxLines = 1
-            )
+            Spacer(modifier = Modifier.height(3.dp))
+            
+            if (changeText != null) {
+                val badgeColor = when (isPositive) {
+                    true -> MaterialTheme.colorScheme.primary
+                    false -> MaterialTheme.colorScheme.error
+                    null -> MaterialTheme.colorScheme.outline
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(5.dp),
+                        color = badgeColor.copy(alpha = 0.14f)
+                    ) {
+                        Text(
+                            text = changeText,
+                            modifier = Modifier.padding(horizontal = 4.5.dp, vertical = 1.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = badgeColor,
+                            maxLines = 1
+                        )
+                    }
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                        maxLines = 1
+                    )
+                }
+            } else {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline,
+                    maxLines = 1
+                )
+            }
         }
     }
 }
