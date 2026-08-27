@@ -4,4 +4,5 @@
     <string name="title_activity_main">BeneWalker</string>
     <string name="package_name">com.benewalker.app</string>
     <string name="custom_url_scheme">com.benewalker.app</string>
-    <string name="background_notification_title">Measuring your health and fitness data.</string>    <string name="background_notification_description">The app is running in the background.</string>    <string name="privacy_policy_url"/></resources>
+    <string name="background_notification_title">Measuring your health and fitness data.</string>    <string name="background_notification_description">The app is running in the background.</string>    <string name="privacy_policy_url">https://benewalker.app/privacy</string>
+</resources>

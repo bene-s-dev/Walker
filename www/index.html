@@ -261,6 +261,35 @@
 
         <!-- TAB 1: Dashboard View -->
         <div id="view-dashboard" class="space-y-5">
+            <!-- Garmin & Health Connect Auto-Sync Banner -->
+            <div id="healthconnect-banner" class="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-teal-500/20 relative overflow-hidden transition-all duration-300">
+                <div class="flex items-center justify-between gap-3 relative z-10">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center text-teal-300 flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm text-white tracking-tight">Garmin Auto-Sync</span>
+                                <span id="hc-status-pill" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-400/30">Health Connect</span>
+                            </div>
+                            <p id="hc-status-text" class="text-xs text-slate-300 truncate mt-0.5">Aktivität "Gehen" wird synchronisiert</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button type="button" id="btn-hc-action"
+                            class="px-3 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 active:scale-95 text-slate-950 text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                            <svg id="hc-action-icon" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span id="hc-action-label">Sync</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Stat Cards: Fokus auf Steigerung, Trend & Rekorde (Tag für Tag) -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div id="card-stat-today" onclick="openInsightModal('today_diff')"
@@ -2830,6 +2859,258 @@ document.body.classList.remove('overflow-hidden');
             updateProfileUI();
             deferredInstallPrompt = null;
         });
+
+        // ==========================================
+        // Garmin & Health Connect Integration Engine
+        // ==========================================
+        const HealthConnectSync = {
+            isNative: function () {
+                return !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+            },
+            getPlugin: function () {
+                return window.Capacitor?.Plugins?.HealthConnect || null;
+            },
+            isAvailable: async function () {
+                const plugin = this.getPlugin();
+                if (!plugin) return false;
+                try {
+                    const res = await plugin.checkAvailability();
+                    return !!(res && res.available);
+                } catch (e) {
+                    console.warn('Health Connect Verfügbarkeitsprüfung:', e);
+                    return false;
+                }
+            },
+            checkPermissions: async function () {
+                const plugin = this.getPlugin();
+                if (!plugin) return false;
+                try {
+                    const res = await plugin.checkPermissions();
+                    return !!(res && res.granted);
+                } catch (e) {
+                    return false;
+                }
+            },
+            requestPermissions: async function () {
+                const plugin = this.getPlugin();
+                if (!plugin) return false;
+                try {
+                    const res = await plugin.requestPermissions();
+                    return !!(res && res.granted);
+                } catch (e) {
+                    console.error('Berechtigungsanfrage fehlgeschlagen:', e);
+                    return false;
+                }
+            },
+            syncWalkingSessions: async function (options = { days: 14 }) {
+                const plugin = this.getPlugin();
+                if (!plugin) throw new Error('Health Connect Plugin ist in dieser Umgebung nicht aktiv.');
+
+                const hasPerm = await this.checkPermissions();
+                if (!hasPerm) {
+                    const granted = await this.requestPermissions();
+                    if (!granted) {
+                        throw new Error('Berechtigung zum Lesen von Trainingsdaten wurde nicht erteilt.');
+                    }
+                }
+
+                // Abfrage von Geheinheiten
+                const res = await plugin.getWalkingSessions({ days: options.days || 14 });
+                const sessions = (res && Array.isArray(res.sessions)) ? res.sessions : [];
+
+                if (sessions.length === 0) {
+                    return { updatedCount: 0, totalSessions: 0 };
+                }
+
+                // Sessions nach lokalem Datum gruppieren
+                const grouped = {};
+                sessions.forEach(s => {
+                    if (!s.date) return;
+                    if (!grouped[s.date]) grouped[s.date] = [];
+                    grouped[s.date].push(s);
+                });
+
+                let updatedCount = 0;
+
+                Object.keys(grouped).forEach(dateStr => {
+                    const daySessions = grouped[dateStr].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+                    let morningSec = 0;
+                    let eveningSec = 0;
+
+                    if (daySessions.length === 1) {
+                        // 1. Geheinheit des Tages
+                        morningSec = Math.round(daySessions[0].durationSeconds || 0);
+                    } else if (daySessions.length >= 2) {
+                        // 1. Geheinheit -> Feld 1
+                        morningSec = Math.round(daySessions[0].durationSeconds || 0);
+                        // 2. und weitere Einheiten -> Feld 2
+                        let remaining = 0;
+                        for (let i = 1; i < daySessions.length; i++) {
+                            remaining += Math.round(daySessions[i].durationSeconds || 0);
+                        }
+                        eveningSec = remaining;
+                    }
+
+                    const totalSec = morningSec + eveningSec;
+                    const existingIdx = records.findIndex(r => r.date === dateStr);
+
+                    if (existingIdx >= 0) {
+                        const curr = records[existingIdx];
+                        if (curr.morningSeconds !== morningSec || curr.eveningSeconds !== eveningSec) {
+                            records[existingIdx].morningSeconds = morningSec;
+                            records[existingIdx].eveningSeconds = eveningSec;
+                            records[existingIdx].totalSeconds = totalSec;
+                            records[existingIdx].updatedAt = new Date().toISOString();
+                            records[existingIdx].source = 'garmin_health_connect';
+                            updatedCount++;
+                        }
+                    } else {
+                        records.push({
+                            id: dateStr,
+                            date: dateStr,
+                            morningSeconds: morningSec,
+                            eveningSeconds: eveningSec,
+                            totalSeconds: totalSec,
+                            updatedAt: new Date().toISOString(),
+                            source: 'garmin_health_connect'
+                        });
+                        updatedCount++;
+                    }
+                });
+
+                if (updatedCount > 0) {
+                    records.sort((a, b) => b.date.localeCompare(a.date));
+                    saveRecords();
+                    renderAll();
+                }
+
+                // Falls das aktuelle Datum im Formular geladen ist, aktualisieren
+                if (dateInput && dateInput.value && grouped[dateInput.value]) {
+                    loadDateIntoForm(dateInput.value);
+                }
+
+                return { updatedCount, totalSessions: sessions.length };
+            },
+            updateUI: async function () {
+                const banner = document.getElementById('healthconnect-banner');
+                const statusPill = document.getElementById('hc-status-pill');
+                const statusText = document.getElementById('hc-status-text');
+                const actionBtn = document.getElementById('btn-hc-action');
+                const actionLabel = document.getElementById('hc-action-label');
+                const actionIcon = document.getElementById('hc-action-icon');
+
+                if (!banner || !statusPill || !statusText || !actionBtn) return;
+
+                if (!this.isNative()) {
+                    // Browser / PWA Modus
+                    statusPill.textContent = 'Web-Modus';
+                    statusPill.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
+                    statusText.textContent = 'Manuelle Erfassung (Garmin Auto-Sync via APK verfügbar)';
+                    if (actionLabel) actionLabel.textContent = 'Info';
+                    actionBtn.onclick = () => {
+                        alert("Garmin Auto-Sync:\n\nIn deiner eigenen Android APK synchronisiert BeneWalker deine Garmin-Geheinheiten vollautomatisch und sekundengenau über Google Health Connect.\n\nEs werden ausschließlich Einheiten vom Typ 'Gehen' berücksichtigt.");
+                    };
+                    return;
+                }
+
+                // Native Android APK Modus
+                const available = await this.isAvailable();
+                if (!available) {
+                    statusPill.textContent = 'Setup nötig';
+                    statusPill.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-200 border border-amber-700/50';
+                    statusText.textContent = 'Google Health Connect App ist auf dem Smartphone nötig';
+                    if (actionLabel) actionLabel.textContent = 'Öffnen';
+                    actionBtn.onclick = () => {
+                        this.getPlugin()?.openHealthConnectSettings();
+                    };
+                    return;
+                }
+
+                const hasPerm = await this.checkPermissions();
+                if (!hasPerm) {
+                    statusPill.textContent = 'Berechtigung nötig';
+                    statusPill.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-200 border border-amber-700/50';
+                    statusText.textContent = 'Tippe hier, um Geheinheiten aus Garmin/Health Connect zu erlauben';
+                    if (actionLabel) actionLabel.textContent = 'Erlauben';
+                    actionBtn.onclick = async () => {
+                        actionBtn.disabled = true;
+                        if (actionLabel) actionLabel.textContent = 'Warte...';
+                        const granted = await this.requestPermissions();
+                        actionBtn.disabled = false;
+                        if (granted) {
+                            this.doSync(true);
+                        } else {
+                            this.updateUI();
+                        }
+                    };
+                    return;
+                }
+
+                // Berechtigt & Bereit
+                statusPill.textContent = 'Auto-Sync Aktiv';
+                statusPill.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-400/30';
+
+                const lastSync = localStorage.getItem('bene_last_hc_sync');
+                if (lastSync) {
+                    const d = new Date(lastSync);
+                    const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    statusText.textContent = `Letzter Sync: ${timeStr} • Nur Aktivität "Gehen"`;
+                } else {
+                    statusText.textContent = 'Bereit • Synchronisiert Garmin-Geheinheiten';
+                }
+
+                if (actionLabel) actionLabel.textContent = 'Sync';
+                actionBtn.onclick = () => this.doSync(false);
+            },
+            doSync: async function (isInitial = false) {
+                const actionBtn = document.getElementById('btn-hc-action');
+                const actionLabel = document.getElementById('hc-action-label');
+                const actionIcon = document.getElementById('hc-action-icon');
+
+                if (actionIcon) actionIcon.classList.add('animate-spin');
+                if (actionLabel) actionLabel.textContent = 'Lädt...';
+                if (actionBtn) actionBtn.disabled = true;
+
+                try {
+                    const res = await this.syncWalkingSessions({ days: 14 });
+                    localStorage.setItem('bene_last_hc_sync', new Date().toISOString());
+
+                    if (actionLabel) actionLabel.textContent = '✓ Fertig';
+                    setTimeout(() => {
+                        this.updateUI();
+                    }, 1200);
+
+                    if (!isInitial && res.updatedCount > 0) {
+                        alert(`✓ Garmin Sync erfolgreich!\n\n${res.totalSessions} Geheinheit(en) gefunden und ${res.updatedCount} Tag(e) in BeneWalker aktualisiert.`);
+                    } else if (!isInitial && res.totalSessions === 0) {
+                        alert(`Garmin Sync:\n\nKeine neuen Geheinheiten in Health Connect für die letzten 14 Tage gefunden.`);
+                    }
+                } catch (e) {
+                    console.error('Health Connect sync error:', e);
+                    if (!isInitial) {
+                        alert(`Hinweis zum Garmin Sync:\n${e.message || e}`);
+                    }
+                    this.updateUI();
+                } finally {
+                    if (actionIcon) actionIcon.classList.remove('animate-spin');
+                    if (actionBtn) actionBtn.disabled = false;
+                }
+            }
+        };
+
+        window.HealthConnectSync = HealthConnectSync;
+        window.handleHealthConnectAction = function () {
+            HealthConnectSync.updateUI();
+        };
+
+        // Auto-Sync beim Starten der App
+        setTimeout(() => {
+            HealthConnectSync.updateUI();
+            if (HealthConnectSync.isNative()) {
+                HealthConnectSync.doSync(true);
+            }
+        }, 400);
 
         if ('serviceWorker' in navigator && location.protocol !== 'blob:') {
             window.addEventListener('load', () => {
