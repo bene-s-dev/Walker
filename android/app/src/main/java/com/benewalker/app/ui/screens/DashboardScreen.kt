@@ -1,8 +1,10 @@
 package com.benewalker.app.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +31,8 @@ import androidx.compose.ui.unit.sp
 import com.benewalker.app.data.WalkRecord
 import com.benewalker.app.ui.WalkUiState
 import com.benewalker.app.ui.WalkViewModel
+import com.benewalker.app.ui.theme.TrendGreenDark
+import com.benewalker.app.ui.theme.TrendGreenLight
 
 @Composable
 fun DashboardScreen(
@@ -59,7 +63,7 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
     ) {
-        // 1. Die 4 Stat-Karten oben (stärker abgehoben mit M3 Elevation)
+        // 1. Die 4 Stat-Karten oben (stark abgehoben mit M3 Elevation & Borders)
         item {
             StatCardsGrid(
                 state = uiState,
@@ -67,7 +71,7 @@ fun DashboardScreen(
             )
         }
 
-        // 2. HAUPTDIAGRAMM mit geglätteter Trendlinie und intelligenter Datumsbeschriftung
+        // 2. HAUPTDIAGRAMM mit hochsichtbarer leuchtender Trendlinie
         item {
             DashboardChartSection(
                 records = displayedChartRecords,
@@ -93,15 +97,17 @@ fun DashboardChartSection(
     selectedRecord: WalkRecord?,
     onBarClick: (WalkRecord?) -> Unit
 ) {
+    val isDark = isSystemInDarkTheme()
     val primaryColor = MaterialTheme.colorScheme.primary
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
-    val trendColor = MaterialTheme.colorScheme.secondary
+    val trendColor = if (isDark) TrendGreenDark else TrendGreenLight
 
-    ElevatedCard(
+    Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
@@ -157,7 +163,8 @@ fun DashboardChartSection(
                                 .weight(1f)
                                 .clickable { onRangeChange(key) },
                             shape = RoundedCornerShape(12.dp),
-                            color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            color = if (isSelected) primaryColor else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+                            border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)) else null
                         ) {
                             Box(
                                 contentAlignment = Alignment.Center,
@@ -175,7 +182,7 @@ fun DashboardChartSection(
                 }
             }
 
-            // Legend
+            // Legend mit hochsichtbarem Trend-Indikator
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -186,12 +193,12 @@ fun DashboardChartSection(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(
                         modifier = Modifier
-                            .width(16.dp)
-                            .height(3.dp)
+                            .width(18.dp)
+                            .height(4.dp)
                             .clip(RoundedCornerShape(2.dp))
                             .background(trendColor)
                     )
-                    Text("Trend (geglättet)", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Trend", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = trendColor)
                 }
             }
 
@@ -199,7 +206,8 @@ fun DashboardChartSection(
             if (selectedRecord != null) {
                 Surface(
                     shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -227,7 +235,7 @@ fun DashboardChartSection(
                 }
             }
 
-            // Canvas Chart with Smooth Trend Line and Date Labels
+            // Canvas Chart with Ultra-Visible Trend Line and Date Labels
             if (records.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -265,7 +273,7 @@ fun DashboardInteractiveBarChart(
     modifier: Modifier = Modifier
 ) {
     val maxSec = (records.maxOfOrNull { it.totalSeconds } ?: 1).coerceAtLeast(60).toFloat()
-    val labelTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+    val labelTextColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     // Calculate smart label interval so dates don't overlap
     val totalBars = records.size
@@ -276,14 +284,33 @@ fun DashboardInteractiveBarChart(
         else -> 7
     }
 
-    // Compute moving average for smoothed trend curve
+    // Starke Glättung (Gaussian Double-Pass) zur zuverlässigen Herausrechnung von Ausreißern und Ruhetagen
     val smoothedValues = remember(records) {
-        val window = 3
-        records.indices.map { i ->
-            val start = (i - window / 2).coerceAtLeast(0)
-            val end = (i + window / 2).coerceAtMost(records.size - 1)
-            val slice = records.subList(start, end + 1)
-            slice.map { it.totalSeconds }.average().toFloat()
+        if (records.isEmpty()) return@remember emptyList()
+        val raw = records.map { it.totalSeconds.toFloat() }
+        val n = raw.size
+
+        // Pass 1: Symmetrischer Gaussian-Filter (Window = 5, Gewichte [1, 3, 6, 3, 1])
+        val weights = floatArrayOf(1f, 3f, 6f, 3f, 1f)
+        val halfWin = weights.size / 2
+        val pass1 = raw.indices.map { i ->
+            var sum = 0f
+            var weightSum = 0f
+            for (offset in -halfWin..halfWin) {
+                val idx = (i + offset).coerceIn(0, n - 1)
+                val w = weights[offset + halfWin]
+                sum += raw[idx] * w
+                weightSum += w
+            }
+            sum / weightSum
+        }
+
+        // Pass 2: Harmonischer Ausgleich für fließenden Trend-Verlauf
+        pass1.indices.map { i ->
+            val prev = pass1.getOrElse(i - 1) { pass1[i] }
+            val curr = pass1[i]
+            val next = pass1.getOrElse(i + 1) { pass1[i] }
+            0.25f * prev + 0.5f * curr + 0.25f * next
         }
     }
 
@@ -313,15 +340,15 @@ fun DashboardInteractiveBarChart(
             // Smoothed Y point
             val smoothVal = smoothedValues.getOrElse(index) { record.totalSeconds.toFloat() }
             val smoothY = chartBottom - (smoothVal / maxSec) * chartBottom
-            points.add(Offset(centerX, smoothY.coerceIn(4.dp.toPx(), chartBottom)))
+            points.add(Offset(centerX, smoothY.coerceIn(8.dp.toPx(), chartBottom)))
 
             // Background highlight if selected
             if (isSelected) {
                 drawRoundRect(
-                    color = primaryColor.copy(alpha = 0.15f),
-                    topLeft = Offset(x - 2.dp.toPx(), 0f),
-                    size = Size(barWidth + 4.dp.toPx(), chartBottom),
-                    cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+                    color = primaryColor.copy(alpha = 0.2f),
+                    topLeft = Offset(x - 3.dp.toPx(), 0f),
+                    size = Size(barWidth + 6.dp.toPx(), chartBottom),
+                    cornerRadius = CornerRadius(10.dp.toPx(), 10.dp.toPx())
                 )
             }
 
@@ -359,7 +386,7 @@ fun DashboardInteractiveBarChart(
                             (labelTextColor.green * 255).toInt(),
                             (labelTextColor.blue * 255).toInt()
                         )
-                        textSize = 9.sp.toPx()
+                        textSize = 9.5.sp.toPx()
                         textAlign = android.graphics.Paint.Align.CENTER
                         isAntiAlias = true
                     }
@@ -368,7 +395,7 @@ fun DashboardInteractiveBarChart(
             }
         }
 
-        // 2. Draw Smoothed Trend Curve (Bezier Path)
+        // 2. Draw Highly Visible Smoothed Trend Curve (Bezier Path)
         if (points.size >= 2) {
             val path = Path().apply {
                 moveTo(points.first().x, points.first().y)
@@ -380,18 +407,26 @@ fun DashboardInteractiveBarChart(
                 }
             }
 
+            // Trend Path Stroke (3.5dp)
             drawPath(
                 path = path,
                 color = trendColor,
                 style = Stroke(
-                    width = 3.dp.toPx(),
+                    width = 3.5.dp.toPx(),
                     cap = StrokeCap.Round,
                     join = StrokeJoin.Round
                 )
             )
 
-            // Draw small indicator dots on points
+            // Distinct Glowing Dots on data points
             points.forEach { pt ->
+                // Outer circle / halo
+                drawCircle(
+                    color = Color.Black.copy(alpha = 0.5f),
+                    radius = 5.dp.toPx(),
+                    center = pt
+                )
+                // Inner bright green dot
                 drawCircle(
                     color = trendColor,
                     radius = 3.5.dp.toPx(),

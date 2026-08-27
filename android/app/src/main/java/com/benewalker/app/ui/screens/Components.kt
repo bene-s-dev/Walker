@@ -1,8 +1,10 @@
 package com.benewalker.app.ui.screens
 
 import android.app.DatePickerDialog
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,9 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.benewalker.app.data.WalkRecord
@@ -48,7 +52,13 @@ fun LegendItem(color: Color, label: String) {
                 .clip(RoundedCornerShape(3.dp))
                 .background(color)
         )
-        Text(text = label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
     }
 }
 
@@ -57,10 +67,10 @@ fun StatCardsGrid(
     state: WalkUiState,
     onAnalyticsClick: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Heute vs. Vortag
             MetricCard(
@@ -86,7 +96,7 @@ fun StatCardsGrid(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // 30-Tage Schnitt
             MetricCard(
@@ -117,17 +127,18 @@ fun MetricCard(
     title: String,
     value: String,
     subtitle: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     isPositive: Boolean? = null,
     onClick: () -> Unit
 ) {
-    ElevatedCard(
+    Card(
         modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp, pressedElevation = 6.dp),
-        colors = CardDefaults.elevatedCardColors(
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp, pressedElevation = 5.dp),
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        )
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
@@ -139,13 +150,14 @@ fun MetricCard(
                     text = title,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
                 )
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
                 )
             }
             Spacer(modifier = Modifier.height(6.dp))
@@ -153,13 +165,15 @@ fun MetricCard(
                 text = value,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = if (isPositive == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                color = if (isPositive == true) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.outline,
+                maxLines = 1
             )
         }
     }
@@ -172,102 +186,93 @@ fun WalkEntryFormCard(
 ) {
     val context = LocalContext.current
 
-    ElevatedCard(
+    Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header: Datumsauswahl
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Gehzeit erfassen",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Manuelle Eingabe für den gewählten Tag",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+            // Header: Titel und Schnellwahl
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Gehzeit erfassen",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    FilledTonalButton(
-                        onClick = {
-                            val today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                            viewModel.setFormDate(today)
-                        },
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text("Heute", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            val yesterday = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                            viewModel.setFormDate(yesterday)
-                        },
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text("Gestern", fontSize = 12.sp)
-                    }
-                }
-            }
-
-            // Datumswähler Feld
-            OutlinedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        val parts = state.formDate.split("-")
-                        val y = parts.getOrNull(0)?.toIntOrNull() ?: LocalDate.now().year
-                        val m = (parts.getOrNull(1)?.toIntOrNull() ?: LocalDate.now().monthValue) - 1
-                        val d = parts.getOrNull(2)?.toIntOrNull() ?: LocalDate.now().dayOfMonth
-
-                        DatePickerDialog(context, { _, year, month, dayOfMonth ->
-                            val selected = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
-                            viewModel.setFormDate(selected)
-                        }, y, m, d).show()
-                    },
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // Datumswähler Feld mit integrierten Heute / Gestern Buttons
+                OutlinedCard(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.outlinedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+                    ),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                        Column {
-                            Text("Datum", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
-                            Text(state.formDate, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    val parts = state.formDate.split("-")
+                                    val y = parts.getOrNull(0)?.toIntOrNull() ?: LocalDate.now().year
+                                    val m = (parts.getOrNull(1)?.toIntOrNull() ?: LocalDate.now().monthValue) - 1
+                                    val d = parts.getOrNull(2)?.toIntOrNull() ?: LocalDate.now().dayOfMonth
+
+                                    DatePickerDialog(context, { _, year, month, dayOfMonth ->
+                                        val selected = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
+                                        viewModel.setFormDate(selected)
+                                    }, y, m, d).show()
+                                }
+                        ) {
+                            Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Column {
+                                Text("Datum", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                                Text(state.formDate, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        // Quick Buttons (Heute / Gestern) mit fester Mindestbreite
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            val todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                            val yesterdayStr = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+
+                            FilterChip(
+                                selected = state.formDate == todayStr,
+                                onClick = { viewModel.setFormDate(todayStr) },
+                                label = { Text("Heute", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) },
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            FilterChip(
+                                selected = state.formDate == yesterdayStr,
+                                onClick = { viewModel.setFormDate(yesterdayStr) },
+                                label = { Text("Gestern", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) },
+                                shape = RoundedCornerShape(10.dp)
+                            )
                         }
                     }
-                    Icon(Icons.Filled.EditCalendar, contentDescription = "Datum ändern", tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(20.dp))
                 }
             }
 
-            // 1. Gehen Block (Primary Color)
+            // 1. Gehen Block (Primary)
             AndroidM3SessionInput(
-                title = "1. Gehen (Vormittag / Erste Einheit)",
+                title = "1. Gehen",
+                subtitle = "Vormittag / 1. Einheit",
                 icon = Icons.Outlined.WbSunny,
                 themeColor = MaterialTheme.colorScheme.primary,
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
                 min = state.morningMin,
                 sec = state.morningSec,
                 onMinChange = { viewModel.updateFormFields(morningMin = it) },
@@ -276,12 +281,12 @@ fun WalkEntryFormCard(
                 onClear = { viewModel.clearFormField("morning") }
             )
 
-            // 2. Gehen Block (Tertiary Color)
+            // 2. Gehen Block (Tertiary)
             AndroidM3SessionInput(
-                title = "2. Gehen (Nachmittag / Zweite Einheit)",
+                title = "2. Gehen",
+                subtitle = "Nachmittag / 2. Einheit",
                 icon = Icons.Outlined.NightsStay,
                 themeColor = MaterialTheme.colorScheme.tertiary,
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.25f),
                 min = state.eveningMin,
                 sec = state.eveningSec,
                 onMinChange = { viewModel.updateFormFields(eveningMin = it) },
@@ -290,7 +295,7 @@ fun WalkEntryFormCard(
                 onClear = { viewModel.clearFormField("evening") }
             )
 
-            // Speichern Action
+            // Speichern Action Button
             Button(
                 onClick = { viewModel.saveForm() },
                 modifier = Modifier
@@ -318,9 +323,9 @@ fun WalkEntryFormCard(
 @Composable
 fun AndroidM3SessionInput(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    subtitle: String,
+    icon: ImageVector,
     themeColor: Color,
-    containerColor: Color,
     min: String,
     sec: String,
     onMinChange: (String) -> Unit,
@@ -333,40 +338,47 @@ fun AndroidM3SessionInput(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        color = containerColor,
-        border = androidx.compose.foundation.BorderStroke(1.dp, themeColor.copy(alpha = 0.3f))
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        border = BorderStroke(1.dp, themeColor.copy(alpha = 0.35f))
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Header mit Titel und Gesamtdauer-Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(18.dp))
-                    Text(text = title, fontWeight = FontWeight.Bold, color = themeColor, fontSize = 13.sp)
+                    Icon(imageVector = icon, contentDescription = null, tint = themeColor, modifier = Modifier.size(20.dp))
+                    Column {
+                        Text(text = title, fontWeight = FontWeight.Bold, color = themeColor, fontSize = 14.sp, maxLines = 1)
+                        Text(text = subtitle, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline, maxLines = 1)
+                    }
                 }
+
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = themeColor.copy(alpha = 0.15f)
+                    color = themeColor.copy(alpha = 0.18f),
+                    border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f))
                 ) {
                     Text(
                         text = formatSecToMinSec(totalSec),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = themeColor
+                        color = themeColor,
+                        maxLines = 1
                     )
                 }
             }
 
-            // Standard Outlined TextFields
+            // Standard Outlined TextFields (Minuten & Sekunden)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = min,
                     onValueChange = onMinChange,
                     modifier = Modifier.weight(1f),
-                    label = { Text("Minuten") },
+                    label = { Text("Minuten", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     placeholder = { Text("0") },
                     leadingIcon = { Icon(Icons.Outlined.Timer, contentDescription = null, modifier = Modifier.size(18.dp)) },
                     suffix = { Text("min", fontSize = 12.sp) },
@@ -375,14 +387,16 @@ fun AndroidM3SessionInput(
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = themeColor,
-                        focusedLabelColor = themeColor
+                        focusedLabelColor = themeColor,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
                 OutlinedTextField(
                     value = sec,
                     onValueChange = onSecChange,
                     modifier = Modifier.weight(1f),
-                    label = { Text("Sekunden") },
+                    label = { Text("Sekunden", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     placeholder = { Text("0") },
                     leadingIcon = { Icon(Icons.Outlined.AccessTime, contentDescription = null, modifier = Modifier.size(18.dp)) },
                     suffix = { Text("sek", fontSize = 12.sp) },
@@ -391,40 +405,54 @@ fun AndroidM3SessionInput(
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = themeColor,
-                        focusedLabelColor = themeColor
+                        focusedLabelColor = themeColor,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface
                     )
                 )
             }
 
-            // Material 3 Quick Add Chips
+            // Material 3 Quick Add Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 listOf(15 to "+15s", 30 to "+30s", 45 to "+45s", 60 to "+1m").forEach { (s, label) ->
-                    SuggestionChip(
-                        onClick = { onAddSeconds(s) },
-                        label = { Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold) },
-                        modifier = Modifier.weight(1f),
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onAddSeconds(s) },
                         shape = RoundedCornerShape(10.dp),
-                        colors = SuggestionChipDefaults.suggestionChipColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            labelColor = themeColor
-                        ),
-                        border = SuggestionChipDefaults.suggestionChipBorder(
-                            enabled = true,
-                            borderColor = themeColor.copy(alpha = 0.3f)
-                        )
-                    )
+                        color = MaterialTheme.colorScheme.surface,
+                        border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f))
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColor,
+                                maxLines = 1
+                            )
+                        }
+                    }
                 }
 
-                FilledTonalIconButton(
-                    onClick = onClear,
-                    modifier = Modifier.size(36.dp),
-                    shape = RoundedCornerShape(10.dp)
+                Surface(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clickable { onClear() },
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
-                    Icon(Icons.Filled.Clear, contentDescription = "Leeren", modifier = Modifier.size(16.dp))
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Filled.Close, contentDescription = "Leeren", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.outline)
+                    }
                 }
             }
         }
@@ -437,11 +465,12 @@ fun HistoryItemCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    ElevatedCard(
+    Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
     ) {
         Row(
             modifier = Modifier
