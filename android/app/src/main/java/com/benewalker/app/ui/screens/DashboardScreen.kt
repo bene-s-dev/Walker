@@ -263,7 +263,7 @@ fun DashboardInteractiveBarChart(
     onBarClick: (WalkRecord?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val maxRawSec = (records.maxOfOrNull { it.totalSeconds } ?: 1).coerceAtLeast(60)
+    val maxRawSec = (records.maxOfOrNull { maxOf(it.morningSeconds, it.eveningSeconds) } ?: 1).coerceAtLeast(60)
     // Round maxSec up to clean minute steps for the Y-axis (e.g. 10m, 15m, 20m, 30m)
     val maxMinutes = ((maxRawSec + 59) / 60)
     val stepMinutes = when {
@@ -342,7 +342,9 @@ fun DashboardInteractiveBarChart(
         val chartBottom = size.height - 22.dp.toPx() // Bottom space for date labels
         val chartWidth = width - leftPadding
         val barSpacing = chartWidth / (totalBars * 1.4f + 0.4f)
-        val barWidth = barSpacing * 0.85f
+        val daySlotWidth = barSpacing * 0.85f
+        val gap = (daySlotWidth * 0.12f).coerceIn(1.5.dp.toPx(), 3.dp.toPx())
+        val unitBarWidth = ((daySlotWidth - gap) / 2f).coerceAtLeast(1.dp.toPx())
 
         // 1. Draw Y-Axis Minute Grid Lines & Labels
         val numGridSteps = yMaxMinutes / stepMinutes
@@ -379,7 +381,9 @@ fun DashboardInteractiveBarChart(
         // 2. Draw Bars & Date Labels
         records.forEachIndexed { index, record ->
             val x = leftPadding + (index * 1.4f + 0.4f) * barSpacing
-            val centerX = x + barWidth / 2
+            val centerX = x + daySlotWidth / 2
+            val morningX = x
+            val eveningX = x + unitBarWidth + gap
 
             val morningRatio = record.morningSeconds / maxSec
             val eveningRatio = record.eveningSeconds / maxSec
@@ -393,28 +397,28 @@ fun DashboardInteractiveBarChart(
                 drawRoundRect(
                     color = primaryColor.copy(alpha = 0.25f),
                     topLeft = Offset(x - 3.dp.toPx(), 0f),
-                    size = Size(barWidth + 6.dp.toPx(), chartBottom),
-                    cornerRadius = CornerRadius(10.dp.toPx(), 10.dp.toPx())
+                    size = Size(daySlotWidth + 6.dp.toPx(), chartBottom),
+                    cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
                 )
             }
 
-            // Morning Bar (Bottom - Primary)
+            // Morning Bar (Left - Primary)
             if (morningHeight > 0) {
                 drawRoundRect(
                     color = primaryColor,
-                    topLeft = Offset(x, chartBottom - morningHeight),
-                    size = Size(barWidth, morningHeight),
-                    cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
+                    topLeft = Offset(morningX, chartBottom - morningHeight),
+                    size = Size(unitBarWidth, morningHeight),
+                    cornerRadius = CornerRadius(3.5.dp.toPx(), 3.5.dp.toPx())
                 )
             }
 
-            // Evening Bar (Stacked on top - Tertiary)
+            // Evening Bar (Right - Tertiary)
             if (eveningHeight > 0) {
                 drawRoundRect(
                     color = tertiaryColor,
-                    topLeft = Offset(x, chartBottom - morningHeight - eveningHeight),
-                    size = Size(barWidth, eveningHeight),
-                    cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
+                    topLeft = Offset(eveningX, chartBottom - eveningHeight),
+                    size = Size(unitBarWidth, eveningHeight),
+                    cornerRadius = CornerRadius(3.5.dp.toPx(), 3.5.dp.toPx())
                 )
             }
 

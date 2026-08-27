@@ -107,7 +107,7 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
         val labelColor = Color.parseColor("#A2B2AC")
 
         val totalBars = records.size
-        val maxRawSec = (records.maxOfOrNull { it.totalSeconds } ?: 1).coerceAtLeast(60)
+        val maxRawSec = (records.maxOfOrNull { maxOf(it.morningSeconds, it.eveningSeconds) } ?: 1).coerceAtLeast(60)
         val maxMinutes = ((maxRawSec + 59) / 60)
         val stepMinutes = when {
             maxMinutes <= 15 -> 5
@@ -122,7 +122,9 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
         val chartBottom = height - 40f
         val chartWidth = width - leftPadding - 15f
         val barSpacing = chartWidth / (totalBars * 1.35f + 0.35f)
-        val barWidth = barSpacing * 0.85f
+        val daySlotWidth = barSpacing * 0.85f
+        val gap = (daySlotWidth * 0.12f).coerceIn(1.5f, 4f)
+        val unitBarWidth = ((daySlotWidth - gap) / 2f).coerceAtLeast(1.5f)
 
         val labelInterval = when {
             totalBars <= 7 -> 1
@@ -185,7 +187,9 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
 
         records.forEachIndexed { index, record ->
             val x = leftPadding + (index * 1.35f + 0.35f) * barSpacing
-            val centerX = x + barWidth / 2f
+            val centerX = x + daySlotWidth / 2f
+            val morningX = x
+            val eveningX = x + unitBarWidth + gap
 
             val morningRatio = record.morningSeconds / maxSec
             val eveningRatio = record.eveningSeconds / maxSec
@@ -193,18 +197,16 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
             val morningHeight = morningRatio * chartBottom
             val eveningHeight = eveningRatio * chartBottom
 
-            // 1. Morning Bar (Primary)
+            // 1. Morning Bar (Left - Primary)
             if (morningHeight > 0) {
-                val rect = RectF(x, chartBottom - morningHeight, x + barWidth, chartBottom)
-                canvas.drawRoundRect(rect, 8f, 8f, primaryPaint)
+                val rect = RectF(morningX, chartBottom - morningHeight, morningX + unitBarWidth, chartBottom)
+                canvas.drawRoundRect(rect, 4f, 4f, primaryPaint)
             }
 
-            // 2. Evening Bar (Tertiary - stacked)
+            // 2. Evening Bar (Right - Tertiary)
             if (eveningHeight > 0) {
-                val top = chartBottom - morningHeight - eveningHeight
-                val bottom = chartBottom - morningHeight
-                val rect = RectF(x, top, x + barWidth, bottom)
-                canvas.drawRoundRect(rect, 8f, 8f, tertiaryPaint)
+                val rect = RectF(eveningX, chartBottom - eveningHeight, eveningX + unitBarWidth, chartBottom)
+                canvas.drawRoundRect(rect, 4f, 4f, tertiaryPaint)
             }
 
             // 3. Date label on X-axis (Smart non-overlapping)
