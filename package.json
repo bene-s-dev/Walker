@@ -3,10 +3,19 @@
   "version": "1.0.0",
   "description": "BeneWalker - Gehzeit Tracker & Visualisierer",
   "scripts": {
+    "build": "node scripts/build.js",
     "dev": "npx -y serve . -l 3000",
-    "start": "npx -y serve . -l 3000"
+    "start": "npx -y serve . -l 3000",
+    "cap:sync": "npm run build && npx cap sync",
+    "build:apk": "npm run cap:sync && cd android && ./gradlew assembleDebug"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/health-fitness": "^1.0.1"
+  }
 }

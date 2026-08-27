@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "EXERCISE": "Read",
+    "STEPS": "Read",
+    "DISTANCE": "Read"
+  },
+  "privacyPolicyUrl": "https://benewalker.app/privacy"
+}
