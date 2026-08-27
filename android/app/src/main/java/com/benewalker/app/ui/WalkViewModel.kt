@@ -358,6 +358,11 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun startStopwatch() {
         _uiState.update { it.copy(stopwatchRunning = true) }
+        if (_uiState.value.stopwatchSoundEnabled) {
+            try {
+                toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 250)
+            } catch (_: Exception) {}
+        }
         stopwatchJob?.cancel()
         stopwatchJob = viewModelScope.launch {
             while (_uiState.value.stopwatchRunning) {

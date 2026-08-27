@@ -453,16 +453,16 @@ fun AndroidM3SessionInput(
 @Composable
 fun GarminBadge() {
     Surface(
-        shape = RoundedCornerShape(5.dp),
+        shape = RoundedCornerShape(4.dp),
         color = Color(0xFF007CC3).copy(alpha = 0.15f)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             // Garmin Delta Triangle
-            Canvas(modifier = Modifier.size(7.dp)) {
+            Canvas(modifier = Modifier.size(6.5.dp)) {
                 val path = androidx.compose.ui.graphics.Path().apply {
                     moveTo(size.width / 2f, 0f)
                     lineTo(size.width, size.height)
@@ -473,7 +473,7 @@ fun GarminBadge() {
             }
             Text(
                 text = "Garmin",
-                fontSize = 10.sp,
+                fontSize = 9.5.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF007CC3),
                 maxLines = 1

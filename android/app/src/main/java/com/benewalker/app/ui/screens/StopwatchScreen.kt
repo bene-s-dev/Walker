@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.*
@@ -44,21 +46,22 @@ fun StopwatchScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Top: Target Selector & Sound Toggle
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        // Top: Target Selector & Speaker Toggle (Lautsprechersymbol)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Card(
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
                 Row(
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier.padding(6.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     FilterChip(
@@ -95,27 +98,25 @@ fun StopwatchScreen(
                 }
             }
 
-            // Sound Toggle Chip (30s Piep & Minuten-Sprachansage)
-            FilterChip(
-                selected = uiState.stopwatchSoundEnabled,
-                onClick = { viewModel.setStopwatchSoundEnabled(!uiState.stopwatchSoundEnabled) },
-                label = {
-                    Text(
-                        text = if (uiState.stopwatchSoundEnabled) "Audio an (30s Piep & Min. Ansage)" else "Audio stumm",
-                        fontSize = 12.sp,
-                        fontWeight = if (uiState.stopwatchSoundEnabled) FontWeight.SemiBold else FontWeight.Normal
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = if (uiState.stopwatchSoundEnabled) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = if (uiState.stopwatchSoundEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                    )
-                },
-                shape = RoundedCornerShape(10.dp)
-            )
+            // Lautsprecher Icon-Button (Aktiv vs. Durchgestrichen)
+            FilledTonalIconToggleButton(
+                checked = uiState.stopwatchSoundEnabled,
+                onCheckedChange = { viewModel.setStopwatchSoundEnabled(it) },
+                shape = CircleShape,
+                modifier = Modifier.size(44.dp),
+                colors = IconButtonDefaults.filledTonalIconToggleButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    checkedContentColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.outline
+                )
+            ) {
+                Icon(
+                    imageVector = if (uiState.stopwatchSoundEnabled) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                    contentDescription = if (uiState.stopwatchSoundEnabled) "Ton an" else "Stummgeschaltet",
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
 
         // Center: Animated Circular Display
