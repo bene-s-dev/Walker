@@ -178,6 +178,10 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 totalRecordedDays = records.size
             )
         }
+
+        try {
+            com.benewalker.app.widget.BeneWalkerChartWidget.updateAllWidgets(getApplication())
+        } catch (_: Exception) {}
     }
 
     fun checkHealthConnectStatus() {
