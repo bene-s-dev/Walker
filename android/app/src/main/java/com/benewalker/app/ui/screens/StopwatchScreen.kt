@@ -44,63 +44,89 @@ fun StopwatchScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Top: Target Selector
-        ElevatedCard(
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-            colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+        // Top: Target Selector & Sound Toggle
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.padding(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
-                FilterChip(
-                    selected = uiState.stopwatchTarget == "morning",
-                    onClick = { viewModel.setStopwatchTarget("morning") },
-                    label = { Text("1. Gehen", fontWeight = FontWeight.Bold) },
-                    leadingIcon = {
-                        if (uiState.stopwatchTarget == "morning") {
-                            Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                        }
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                Row(
+                    modifier = Modifier.padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = uiState.stopwatchTarget == "morning",
+                        onClick = { viewModel.setStopwatchTarget("morning") },
+                        label = { Text("1. Gehen", fontWeight = FontWeight.Bold) },
+                        leadingIcon = {
+                            if (uiState.stopwatchTarget == "morning") {
+                                Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     )
-                )
 
-                FilterChip(
-                    selected = uiState.stopwatchTarget == "evening",
-                    onClick = { viewModel.setStopwatchTarget("evening") },
-                    label = { Text("2. Gehen", fontWeight = FontWeight.Bold) },
-                    leadingIcon = {
-                        if (uiState.stopwatchTarget == "evening") {
-                            Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                        }
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    FilterChip(
+                        selected = uiState.stopwatchTarget == "evening",
+                        onClick = { viewModel.setStopwatchTarget("evening") },
+                        label = { Text("2. Gehen", fontWeight = FontWeight.Bold) },
+                        leadingIcon = {
+                            if (uiState.stopwatchTarget == "evening") {
+                                Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
                     )
-                )
+                }
             }
+
+            // Sound Toggle Chip (30s Piep & Minuten-Sprachansage)
+            FilterChip(
+                selected = uiState.stopwatchSoundEnabled,
+                onClick = { viewModel.setStopwatchSoundEnabled(!uiState.stopwatchSoundEnabled) },
+                label = {
+                    Text(
+                        text = if (uiState.stopwatchSoundEnabled) "Audio an (30s Piep & Min. Ansage)" else "Audio stumm",
+                        fontSize = 12.sp,
+                        fontWeight = if (uiState.stopwatchSoundEnabled) FontWeight.SemiBold else FontWeight.Normal
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = if (uiState.stopwatchSoundEnabled) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = if (uiState.stopwatchSoundEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                    )
+                },
+                shape = RoundedCornerShape(10.dp)
+            )
         }
 
         // Center: Animated Circular Display
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.size(280.dp)
+            modifier = Modifier.size(270.dp)
         ) {
             // Pulsing background ring
             Box(
                 modifier = Modifier
-                    .size(260.dp)
+                    .size(250.dp)
                     .scale(pulseScale)
                     .clip(CircleShape)
                     .background(
@@ -111,14 +137,10 @@ fun StopwatchScreen(
 
             // Inner main circle
             Surface(
-                modifier = Modifier.size(220.dp),
+                modifier = Modifier.size(210.dp),
                 shape = CircleShape,
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 6.dp,
-                border = androidx.compose.foundation.BorderStroke(
-                    3.dp,
-                    if (uiState.stopwatchRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-                )
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                shadowElevation = 4.dp
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -127,7 +149,7 @@ fun StopwatchScreen(
                 ) {
                     Text(
                         text = formattedTime,
-                        fontSize = 48.sp,
+                        fontSize = 46.sp,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurface,
                         letterSpacing = 1.sp

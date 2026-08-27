@@ -17,6 +17,11 @@ import kotlinx.serialization.json.Json
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.speech.tts.TextToSpeech
+import java.util.Locale
+
 enum class HcStatus {
     IDLE,
     SYNCING,
@@ -53,6 +58,7 @@ data class WalkUiState(
     val stopwatchRunning: Boolean = false,
     val stopwatchElapsedSec: Int = 0,
     val stopwatchTarget: String = "morning", // "morning" or "evening"
+    val stopwatchSoundEnabled: Boolean = true,
 
     // Theme & Appearance
     val themeMode: String = "system", // "system", "light", "dark"
@@ -65,10 +71,15 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     private val walkDao = database.walkDao()
     val healthConnectManager = HealthConnectManager(application, walkDao)
 
+    private var toneGenerator: ToneGenerator? = null
+    private var textToSpeech: TextToSpeech? = null
+    private var isTtsReady = false
+
     private val _uiState = MutableStateFlow(
         WalkUiState(
             themeMode = prefs.getString("theme_mode", "system") ?: "system",
-            useDynamicColor = prefs.getBoolean("use_dynamic_color", true)
+            useDynamicColor = prefs.getBoolean("use_dynamic_color", true),
+            stopwatchSoundEnabled = prefs.getBoolean("stopwatch_sound_enabled", true)
         )
     )
     val uiState: StateFlow<WalkUiState> = _uiState.asStateFlow()
@@ -76,6 +87,20 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     private var stopwatchJob: Job? = null
 
     init {
+        // Init Audio / TTS
+        try {
+            toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 85)
+        } catch (_: Exception) {}
+
+        try {
+            textToSpeech = TextToSpeech(application) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    textToSpeech?.language = Locale.GERMAN
+                    isTtsReady = true
+                }
+            }
+        } catch (_: Exception) {}
+
         // Collect DB updates
         viewModelScope.launch {
             walkDao.getAllRecordsFlow().collect { list ->
@@ -285,6 +310,21 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateRecordDirectly(date: String, morningSec: Int, eveningSec: Int) {
+        viewModelScope.launch {
+            val totalSeconds = morningSec + eveningSec
+            val record = WalkRecord(
+                date = date,
+                morningSeconds = morningSec,
+                eveningSeconds = eveningSec,
+                totalSeconds = totalSeconds,
+                updatedAt = System.currentTimeMillis(),
+                source = "manual"
+            )
+            walkDao.insertOrUpdate(record)
+        }
+    }
+
     fun deleteRecord(date: String) {
         viewModelScope.launch {
             walkDao.deleteByDate(date)
@@ -309,13 +349,40 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun setStopwatchSoundEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean("stopwatch_sound_enabled", enabled).apply()
+        _uiState.update { it.copy(stopwatchSoundEnabled = enabled) }
+    }
+
     private fun startStopwatch() {
         _uiState.update { it.copy(stopwatchRunning = true) }
         stopwatchJob?.cancel()
         stopwatchJob = viewModelScope.launch {
             while (_uiState.value.stopwatchRunning) {
                 delay(1000)
-                _uiState.update { it.copy(stopwatchElapsedSec = it.stopwatchElapsedSec + 1) }
+                val nextSec = _uiState.value.stopwatchElapsedSec + 1
+                _uiState.update { it.copy(stopwatchElapsedSec = nextSec) }
+
+                if (_uiState.value.stopwatchSoundEnabled) {
+                    // 30 Sekunden Piep
+                    if (nextSec % 60 == 30) {
+                        try {
+                            toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+                        } catch (_: Exception) {}
+                    }
+                    // Volle Minuten Sprachansage
+                    else if (nextSec > 0 && nextSec % 60 == 0) {
+                        val mins = nextSec / 60
+                        val text = if (mins == 1) "Eine Minute" else "$mins Minuten"
+                        try {
+                            if (isTtsReady) {
+                                textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "min_$mins")
+                            } else {
+                                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 350)
+                            }
+                        } catch (_: Exception) {}
+                    }
+                }
             }
         }
     }
@@ -332,6 +399,17 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setStopwatchTarget(target: String) {
         _uiState.update { it.copy(stopwatchTarget = target) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        try {
+            toneGenerator?.release()
+            toneGenerator = null
+            textToSpeech?.stop()
+            textToSpeech?.shutdown()
+            textToSpeech = null
+        } catch (_: Exception) {}
     }
 
     fun saveStopwatchToToday() {

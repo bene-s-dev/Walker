@@ -51,9 +51,9 @@ sealed interface Screen {
     }
 }
 
+// 3 Tabs in Bottom Navigation Bar (Settings is in TopAppBar menu)
 val bottomNavScreens = listOf(
     Screen.Dashboard,
     Screen.Stopwatch,
-    Screen.Data,
-    Screen.Settings
+    Screen.Data
 )

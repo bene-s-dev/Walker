@@ -1,11 +1,11 @@
 package com.benewalker.app.ui.screens
 
-import android.app.DatePickerDialog
 import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -15,17 +15,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.benewalker.app.data.WalkRecord
 import com.benewalker.app.ui.WalkUiState
 import com.benewalker.app.ui.WalkViewModel
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun DataScreen(
@@ -33,15 +32,29 @@ fun DataScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var recordToDelete by remember { mutableStateOf<String?>(null) }
+    var recordToEdit by remember { mutableStateOf<WalkRecord?>(null) }
+
+    val listState = rememberLazyListState()
+    val haptic = LocalHapticFeedback.current
+
+    // Leichtes haptisches Feedback beim Scrollen
+    var lastScrolledIndex by remember { mutableIntStateOf(0) }
+    LaunchedEffect(listState.firstVisibleItemIndex) {
+        if (listState.firstVisibleItemIndex != lastScrolledIndex && listState.isScrollInProgress) {
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            lastScrolledIndex = listState.firstVisibleItemIndex
+        }
+    }
 
     LazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp)
+        contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)
     ) {
-        // 1. Eintrags-Formular (Neu gestaltetes Android M3 Layout)
+        // 1. Eintrags-Formular (Neues Material 3 Design)
         item {
             WalkEntryFormCard(
                 state = uiState,
@@ -74,7 +87,7 @@ fun DataScreen(
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
                 ) {
                     Text(
                         text = "${uiState.records.size} Einträge",
@@ -92,7 +105,7 @@ fun DataScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                     shape = RoundedCornerShape(20.dp)
                 ) {
                     Box(
@@ -114,11 +127,24 @@ fun DataScreen(
             items(uiState.records, key = { it.date }) { record ->
                 HistoryItemCard(
                     record = record,
-                    onEdit = { viewModel.setFormDate(record.date) },
+                    onEdit = { recordToEdit = record },
                     onDelete = { recordToDelete = record.date }
                 )
             }
         }
+    }
+
+    // Direktes Bearbeiten-Dialog (EditRecordDialog)
+    if (recordToEdit != null) {
+        val record = recordToEdit!!
+        EditRecordDialog(
+            record = record,
+            onDismiss = { recordToEdit = null },
+            onSave = { morningSec, eveningSec ->
+                viewModel.updateRecordDirectly(record.date, morningSec, eveningSec)
+                recordToEdit = null
+            }
+        )
     }
 
     // Delete Confirmation Dialog
@@ -146,4 +172,95 @@ fun DataScreen(
             }
         )
     }
+}
+
+@Composable
+fun EditRecordDialog(
+    record: WalkRecord,
+    onDismiss: () -> Unit,
+    onSave: (morningSec: Int, eveningSec: Int) -> Unit
+) {
+    var morningMin by remember { mutableStateOf(if (record.morningSeconds > 0) (record.morningSeconds / 60).toString() else "") }
+    var morningSec by remember { mutableStateOf(if (record.morningSeconds > 0) (record.morningSeconds % 60).toString() else "") }
+    var eveningMin by remember { mutableStateOf(if (record.eveningSeconds > 0) (record.eveningSeconds / 60).toString() else "") }
+    var eveningSec by remember { mutableStateOf(if (record.eveningSeconds > 0) (record.eveningSeconds % 60).toString() else "") }
+
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text("Eintrag bearbeiten", fontWeight = FontWeight.Bold)
+                Text(record.date, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // 1. Gehen Input
+                AndroidM3SessionInput(
+                    title = "1. Gehen",
+                    subtitle = "Vormittag",
+                    icon = Icons.Outlined.WbSunny,
+                    themeColor = primaryColor,
+                    min = morningMin,
+                    sec = morningSec,
+                    onMinChange = { morningMin = it },
+                    onSecChange = { morningSec = it },
+                    onAddSeconds = { s ->
+                        val curr = (morningMin.toIntOrNull() ?: 0) * 60 + (morningSec.toIntOrNull() ?: 0)
+                        val next = (curr + s).coerceAtLeast(0)
+                        morningMin = (next / 60).toString()
+                        morningSec = (next % 60).toString()
+                    },
+                    onClear = {
+                        morningMin = ""
+                        morningSec = ""
+                    }
+                )
+
+                // 2. Gehen Input
+                AndroidM3SessionInput(
+                    title = "2. Gehen",
+                    subtitle = "Nachmittag",
+                    icon = Icons.Outlined.NightsStay,
+                    themeColor = tertiaryColor,
+                    min = eveningMin,
+                    sec = eveningSec,
+                    onMinChange = { eveningMin = it },
+                    onSecChange = { eveningSec = it },
+                    onAddSeconds = { s ->
+                        val curr = (eveningMin.toIntOrNull() ?: 0) * 60 + (eveningSec.toIntOrNull() ?: 0)
+                        val next = (curr + s).coerceAtLeast(0)
+                        eveningMin = (next / 60).toString()
+                        eveningSec = (next % 60).toString()
+                    },
+                    onClear = {
+                        eveningMin = ""
+                        eveningSec = ""
+                    }
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val m = (morningMin.toIntOrNull() ?: 0) * 60 + (morningSec.toIntOrNull() ?: 0)
+                    val e = (eveningMin.toIntOrNull() ?: 0) * 60 + (eveningSec.toIntOrNull() ?: 0)
+                    onSave(m, e)
+                }
+            ) {
+                Text("Speichern")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Abbrechen")
+            }
+        }
+    )
 }

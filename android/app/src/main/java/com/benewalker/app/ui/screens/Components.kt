@@ -1,10 +1,8 @@
 package com.benewalker.app.ui.screens
 
 import android.app.DatePickerDialog
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -67,10 +65,10 @@ fun StatCardsGrid(
     state: WalkUiState,
     onAnalyticsClick: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // Heute vs. Vortag
             MetricCard(
@@ -96,7 +94,7 @@ fun StatCardsGrid(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             // 30-Tage Schnitt
             MetricCard(
@@ -136,9 +134,8 @@ fun MetricCard(
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp, pressedElevation = 5.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Row(
@@ -190,14 +187,13 @@ fun WalkEntryFormCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header: Titel und Schnellwahl
+            // Header: Titel und Datumsauswahl
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
                     text = "Gehzeit erfassen",
@@ -205,13 +201,10 @@ fun WalkEntryFormCard(
                     fontWeight = FontWeight.Bold
                 )
 
-                // Datumswähler Feld mit integrierten Heute / Gestern Buttons
-                OutlinedCard(
+                // Datumswähler Feld
+                Surface(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.outlinedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-                    ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -245,7 +238,7 @@ fun WalkEntryFormCard(
                             }
                         }
 
-                        // Quick Buttons (Heute / Gestern) mit fester Mindestbreite
+                        // Quick Buttons (Heute / Gestern)
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             val todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                             val yesterdayStr = LocalDate.now().minusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
@@ -338,8 +331,7 @@ fun AndroidM3SessionInput(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        border = BorderStroke(1.dp, themeColor.copy(alpha = 0.35f))
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // Header mit Titel und Gesamtdauer-Badge
@@ -358,8 +350,7 @@ fun AndroidM3SessionInput(
 
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = themeColor.copy(alpha = 0.18f),
-                    border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f))
+                    color = themeColor.copy(alpha = 0.18f)
                 ) {
                     Text(
                         text = formatSecToMinSec(totalSec),
@@ -388,8 +379,8 @@ fun AndroidM3SessionInput(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = themeColor,
                         focusedLabelColor = themeColor,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        focusedContainerColor = MaterialTheme.colorScheme.surface
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
                     )
                 )
                 OutlinedTextField(
@@ -406,8 +397,8 @@ fun AndroidM3SessionInput(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = themeColor,
                         focusedLabelColor = themeColor,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        focusedContainerColor = MaterialTheme.colorScheme.surface
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
                     )
                 )
             }
@@ -424,8 +415,7 @@ fun AndroidM3SessionInput(
                             .weight(1f)
                             .clickable { onAddSeconds(s) },
                         shape = RoundedCornerShape(10.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        border = BorderStroke(1.dp, themeColor.copy(alpha = 0.3f))
+                        color = MaterialTheme.colorScheme.surfaceContainerLowest
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
@@ -447,8 +437,7 @@ fun AndroidM3SessionInput(
                         .size(36.dp)
                         .clickable { onClear() },
                     shape = RoundedCornerShape(10.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                    color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(Icons.Filled.Close, contentDescription = "Leeren", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.outline)
@@ -469,8 +458,7 @@ fun HistoryItemCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Row(
             modifier = Modifier
@@ -479,7 +467,7 @@ fun HistoryItemCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left: Date & Split times (takes remaining width)
+            // Left: Date & Split times
             Column(
                 modifier = Modifier.weight(1f).padding(end = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -532,7 +520,7 @@ fun HistoryItemCard(
                 }
             }
 
-            // Right: Total time & Action Buttons (fixed width, always aligned and fully visible)
+            // Right: Total time & Action Buttons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
