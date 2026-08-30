@@ -22,6 +22,10 @@ import android.media.ToneGenerator
 import android.speech.tts.TextToSpeech
 import java.util.Locale
 
+import com.benewalker.app.service.LocationTracker
+import com.benewalker.app.service.GpsPoint
+import com.benewalker.app.service.KilometerSplit
+
 enum class HcStatus {
     IDLE,
     SYNCING,
@@ -57,13 +61,26 @@ data class WalkUiState(
     val eveningSec: String = "",
     val formSuccessFeedback: Boolean = false,
 
-    // Stopwatch
+    // Stopwatch & Training
     val stopwatchRunning: Boolean = false,
     val stopwatchElapsedSec: Int = 0,
     val stopwatchTarget: String = "morning", // "morning" or "evening"
     val stopwatchSoundEnabled: Boolean = true,
     val stopwatchVoiceIntervalMin: Int = 1, // 1 or 5
     val stopwatchBeep30s: Boolean = true,
+
+    // GPS & Route Tracking
+    val gpsDistanceMeters: Double = 0.0,
+    val gpsCurrentSpeedKmh: Double = 0.0,
+    val gpsAvgSpeedKmh: Double = 0.0,
+    val gpsCurrentPaceMinPerKm: Double = 0.0,
+    val gpsAvgPaceMinPerKm: Double = 0.0,
+    val gpsRoutePoints: List<GpsPoint> = emptyList(),
+    val gpsCurrentLat: Double? = null,
+    val gpsCurrentLon: Double? = null,
+    val gpsAccuracy: Float = 0f,
+    val kilometerSplits: List<KilometerSplit> = emptyList(),
+    val hasLocationPermission: Boolean = true,
 
     // Theme & Appearance
     val themeMode: String = "system", // "system", "light", "dark"
@@ -75,6 +92,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     private val database = WalkDatabase.getInstance(application)
     private val walkDao = database.walkDao()
     val healthConnectManager = HealthConnectManager(application, walkDao)
+    val locationTracker = LocationTracker(application)
 
     private var toneGenerator: ToneGenerator? = null
     private var textToSpeech: TextToSpeech? = null
@@ -108,6 +126,37 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
             }
         } catch (_: Exception) {}
 
+        // Collect GPS Location updates
+        viewModelScope.launch {
+            locationTracker.trackingState.collect { trackState ->
+                val prevSplits = _uiState.value.kilometerSplits
+                if (trackState.splits.size > prevSplits.size && _uiState.value.stopwatchSoundEnabled) {
+                    val latestSplit = trackState.splits.last()
+                    val text = "Kilometer ${latestSplit.kmNumber} in ${latestSplit.paceString} Minuten"
+                    try {
+                        if (isTtsReady) {
+                            textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "km_${latestSplit.kmNumber}")
+                        }
+                    } catch (_: Exception) {}
+                }
+
+                _uiState.update {
+                    it.copy(
+                        gpsDistanceMeters = trackState.totalDistanceMeters,
+                        gpsCurrentSpeedKmh = trackState.currentSpeedKmh,
+                        gpsAvgSpeedKmh = trackState.avgSpeedKmh,
+                        gpsCurrentPaceMinPerKm = trackState.currentPaceMinPerKm,
+                        gpsAvgPaceMinPerKm = trackState.avgPaceMinPerKm,
+                        gpsRoutePoints = trackState.routePoints,
+                        gpsCurrentLat = trackState.currentLatitude,
+                        gpsCurrentLon = trackState.currentLongitude,
+                        gpsAccuracy = trackState.accuracy,
+                        kilometerSplits = trackState.splits
+                    )
+                }
+            }
+        }
+
         // Collect DB updates
         viewModelScope.launch {
             walkDao.getAllRecordsFlow().collect { list ->
@@ -115,12 +164,12 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        // Init Health Connect status & trigger auto-sync
+        // Init Health Connect status & trigger auto-sync (last 90 days)
         checkHealthConnectStatus()
         viewModelScope.launch {
             delay(500)
             if (healthConnectManager.isAvailable() && healthConnectManager.hasPermissions()) {
-                syncWithHealthConnect(days = 14)
+                syncWithHealthConnect(days = 90)
             }
         }
     }
@@ -164,6 +213,13 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         val maxSingle = records.flatMap { listOf(it.morningSeconds, it.eveningSeconds) }.maxOrNull() ?: 0
         val todayMax = listOfNotNull(todayRec?.morningSeconds, todayRec?.eveningSeconds).maxOrNull() ?: 0
 
+        // Auto select 2. Gehen (evening) if 1. Gehen (morning) is already recorded today and stopwatch not currently running
+        val autoTarget = if ((todayRec?.morningSeconds ?: 0) > 0 && !_uiState.value.stopwatchRunning && _uiState.value.stopwatchTarget == "morning") {
+            "evening"
+        } else {
+            _uiState.value.stopwatchTarget
+        }
+
         _uiState.update { current ->
             current.copy(
                 records = records,
@@ -175,7 +231,8 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 diff30DaysSec = diff30,
                 allTimeSingleRecordSec = maxSingle,
                 todayMaxSingleSec = todayMax,
-                totalRecordedDays = records.size
+                totalRecordedDays = records.size,
+                stopwatchTarget = autoTarget
             )
         }
 
@@ -317,13 +374,18 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         if (totalSeconds == 0) return
 
         viewModelScope.launch {
+            val existing = walkDao.getRecordByDate(state.formDate)
             val record = WalkRecord(
                 date = state.formDate,
                 morningSeconds = morningSeconds,
                 eveningSeconds = eveningSeconds,
                 totalSeconds = totalSeconds,
                 updatedAt = System.currentTimeMillis(),
-                source = "manual"
+                source = existing?.source ?: "manual",
+                morningDistanceMeters = existing?.morningDistanceMeters ?: 0.0,
+                eveningDistanceMeters = existing?.eveningDistanceMeters ?: 0.0,
+                morningRouteJson = existing?.morningRouteJson,
+                eveningRouteJson = existing?.eveningRouteJson
             )
             walkDao.insertOrUpdate(record)
 
@@ -335,6 +397,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateRecordDirectly(date: String, morningSec: Int, eveningSec: Int) {
         viewModelScope.launch {
+            val existing = walkDao.getRecordByDate(date)
             val totalSeconds = morningSec + eveningSec
             val record = WalkRecord(
                 date = date,
@@ -342,7 +405,11 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 eveningSeconds = eveningSec,
                 totalSeconds = totalSeconds,
                 updatedAt = System.currentTimeMillis(),
-                source = "manual"
+                source = existing?.source ?: "manual",
+                morningDistanceMeters = existing?.morningDistanceMeters ?: 0.0,
+                eveningDistanceMeters = existing?.eveningDistanceMeters ?: 0.0,
+                morningRouteJson = existing?.morningRouteJson,
+                eveningRouteJson = existing?.eveningRouteJson
             )
             walkDao.insertOrUpdate(record)
         }
@@ -387,10 +454,25 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(stopwatchBeep30s = enabled) }
     }
 
+    fun setLocationPermissionGranted(granted: Boolean) {
+        _uiState.update { it.copy(hasLocationPermission = granted) }
+        if (granted) {
+            locationTracker.startListening()
+            if (_uiState.value.stopwatchRunning) {
+                locationTracker.startTracking()
+            }
+        }
+    }
+
     private fun startStopwatch() {
         _uiState.update { it.copy(stopwatchRunning = true) }
         val currentSec = _uiState.value.stopwatchElapsedSec
         val target = _uiState.value.stopwatchTarget
+
+        // Start GPS tracking
+        if (_uiState.value.hasLocationPermission) {
+            locationTracker.startTracking()
+        }
 
         try {
             com.benewalker.app.service.StopwatchService.start(getApplication(), currentSec, target)
@@ -407,6 +489,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 delay(1000)
                 val nextSec = _uiState.value.stopwatchElapsedSec + 1
                 _uiState.update { it.copy(stopwatchElapsedSec = nextSec) }
+                locationTracker.updateElapsedSeconds(nextSec)
 
                 if (_uiState.value.stopwatchSoundEnabled) {
                     // 30 Sekunden Signal (deutlich hörbarer Doppel-Piepton)
@@ -437,6 +520,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun pauseStopwatch() {
         _uiState.update { it.copy(stopwatchRunning = false) }
+        locationTracker.pauseTracking()
         stopwatchJob?.cancel()
         try {
             com.benewalker.app.service.StopwatchService.pause(
@@ -449,6 +533,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetStopwatch() {
         pauseStopwatch()
+        locationTracker.reset()
         _uiState.update { it.copy(stopwatchElapsedSec = 0) }
         try {
             com.benewalker.app.service.StopwatchService.stop(getApplication())
@@ -471,6 +556,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     override fun onCleared() {
         super.onCleared()
         try {
+            locationTracker.pauseTracking()
             com.benewalker.app.service.StopwatchService.stop(getApplication())
             toneGenerator?.release()
             toneGenerator = null
@@ -480,17 +566,24 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         } catch (_: Exception) {}
     }
 
-    fun saveStopwatchToToday() {
+    fun saveStopwatchToToday(targetChoice: String? = null) {
         val elapsed = _uiState.value.stopwatchElapsedSec
         if (elapsed <= 0) return
 
-        val target = _uiState.value.stopwatchTarget
+        val target = targetChoice ?: _uiState.value.stopwatchTarget
         val todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        val currentPoints = _uiState.value.gpsRoutePoints
+        val currentDist = _uiState.value.gpsDistanceMeters
+        val routeJsonString = if (currentPoints.isNotEmpty()) jsonConfig.encodeToString(currentPoints) else null
 
         viewModelScope.launch {
             val existing = walkDao.getRecordByDate(todayStr)
             val morningSec = if (target == "morning") elapsed else (existing?.morningSeconds ?: 0)
             val eveningSec = if (target == "evening") elapsed else (existing?.eveningSeconds ?: 0)
+            val morningDist = if (target == "morning") (if (currentDist > 0) currentDist else (existing?.morningDistanceMeters ?: 0.0)) else (existing?.morningDistanceMeters ?: 0.0)
+            val eveningDist = if (target == "evening") (if (currentDist > 0) currentDist else (existing?.eveningDistanceMeters ?: 0.0)) else (existing?.eveningDistanceMeters ?: 0.0)
+            val morningRoute = if (target == "morning") (routeJsonString ?: existing?.morningRouteJson) else existing?.morningRouteJson
+            val eveningRoute = if (target == "evening") (routeJsonString ?: existing?.eveningRouteJson) else existing?.eveningRouteJson
 
             val record = WalkRecord(
                 date = todayStr,
@@ -498,10 +591,19 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 eveningSeconds = eveningSec,
                 totalSeconds = morningSec + eveningSec,
                 updatedAt = System.currentTimeMillis(),
-                source = "stopwatch"
+                source = "stopwatch",
+                morningDistanceMeters = morningDist,
+                eveningDistanceMeters = eveningDist,
+                morningRouteJson = morningRoute,
+                eveningRouteJson = eveningRoute
             )
             walkDao.insertOrUpdate(record)
             resetStopwatch()
+
+            // If 1. Gehen was saved, automatically set target to 2. Gehen for the next session
+            if (target == "morning") {
+                setStopwatchTarget("evening")
+            }
         }
     }
 

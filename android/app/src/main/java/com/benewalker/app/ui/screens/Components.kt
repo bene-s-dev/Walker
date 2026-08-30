@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,10 +26,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.benewalker.app.data.WalkRecord
+import com.benewalker.app.service.GpsPoint
 import com.benewalker.app.ui.WalkUiState
 import com.benewalker.app.ui.WalkViewModel
+import kotlinx.serialization.json.Json
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
+private val routeJsonParser = Json { ignoreUnknownKeys = true; isLenient = true }
+
+fun parseGpsRoute(routeJson: String?): List<GpsPoint> {
+    if (routeJson.isNullOrBlank()) return emptyList()
+    return try {
+        routeJsonParser.decodeFromString<List<GpsPoint>>(routeJson)
+    } catch (_: Exception) {
+        emptyList()
+    }
+}
 
 fun formatSecToMinSec(totalSec: Int): String {
     val m = totalSec / 60
@@ -541,23 +554,26 @@ fun HistoryItemCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val morningPoints = remember(record.morningRouteJson) { parseGpsRoute(record.morningRouteJson) }
+    val eveningPoints = remember(record.eveningRouteJson) { parseGpsRoute(record.eveningRouteJson) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // Left: Date, Garmin badge & Split times
-            Column(
-                modifier = Modifier.weight(1f).padding(end = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+            // Top Header: Date, Garmin badge, Total time & Edit/Delete
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -574,101 +590,266 @@ fun HistoryItemCard(
                 }
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    if (record.morningSeconds > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-                        ) {
-                            Text(
-                                text = "1.: ${formatSecToMinSec(record.morningSeconds)}",
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-                    if (record.eveningSeconds > 0) {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.6f)
-                        ) {
-                            Text(
-                                text = "2.: ${formatSecToMinSec(record.eveningSeconds)}",
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-                    if (record.morningSeconds == 0 && record.eveningSeconds == 0) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
                         Text(
-                            text = "Keine Einheiten",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.outline
+                            text = formatSecDetailed(record.totalSeconds),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+
+                    // Edit Button
+                    FilledTonalIconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(32.dp),
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Edit,
+                            contentDescription = "Bearbeiten",
+                            modifier = Modifier.size(15.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Delete Button
+                    FilledTonalIconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(32.dp),
+                        shape = CircleShape,
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Löschen",
+                            modifier = Modifier.size(15.dp),
+                            tint = MaterialTheme.colorScheme.error
                         )
                     }
                 }
             }
 
-            // Right: Total time & Action Buttons
+            // Training Session 1: 1. Gehen (Vormittag)
+            if (record.morningSeconds > 0) {
+                TrainingSessionCard(
+                    title = "1. Gehen (Vormittag)",
+                    icon = Icons.Outlined.WbSunny,
+                    chipColor = MaterialTheme.colorScheme.primaryContainer,
+                    chipTextColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    durationSec = record.morningSeconds,
+                    distanceMeters = record.morningDistanceMeters,
+                    routePoints = morningPoints
+                )
+            }
+
+            // Training Session 2: 2. Gehen (Nachmittag)
+            if (record.eveningSeconds > 0) {
+                TrainingSessionCard(
+                    title = "2. Gehen (Nachmittag)",
+                    icon = Icons.Outlined.NightsStay,
+                    chipColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    chipTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    durationSec = record.eveningSeconds,
+                    distanceMeters = record.eveningDistanceMeters,
+                    routePoints = eveningPoints
+                )
+            }
+
+            if (record.morningSeconds == 0 && record.eveningSeconds == 0) {
+                Text(
+                    text = "Keine Einheiten an diesem Tag",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TrainingSessionCard(
+    title: String,
+    icon: ImageVector,
+    chipColor: Color,
+    chipTextColor: Color,
+    durationSec: Int,
+    distanceMeters: Double,
+    routePoints: List<GpsPoint>
+) {
+    val distanceKm = distanceMeters / 1000.0
+    val avgSpeedKmh = if (durationSec > 0 && distanceMeters > 0) (distanceKm / (durationSec / 3600.0)) else 0.0
+    val avgPaceMinPerKm = if (distanceKm > 0.05 && durationSec > 0) (durationSec / 60.0) / distanceKm else 0.0
+    val paceMin = avgPaceMinPerKm.toInt()
+    val paceSec = ((avgPaceMinPerKm - paceMin) * 60).toInt().coerceIn(0, 59)
+    val paceFormatted = if (avgPaceMinPerKm in 2.0..30.0) String.format(java.util.Locale.GERMAN, "%02d:%02d /km", paceMin, paceSec) else null
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Title & Chips
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    modifier = Modifier.padding(end = 4.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = chipTextColor)
+                    Text(title, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = chipColor
                 ) {
                     Text(
-                        text = formatSecDetailed(record.totalSeconds),
-                        style = MaterialTheme.typography.titleMedium,
+                        text = formatSecToMinSec(durationSec),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        fontSize = 11.5.sp,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "Gesamt",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
-
-                // Edit Button (Fixed 36dp)
-                FilledTonalIconButton(
-                    onClick = onEdit,
-                    modifier = Modifier.size(36.dp),
-                    shape = CircleShape
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Edit,
-                        contentDescription = "Bearbeiten",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Delete Button (Fixed 36dp)
-                FilledTonalIconButton(
-                    onClick = onDelete,
-                    modifier = Modifier.size(36.dp),
-                    shape = CircleShape,
-                    colors = IconButtonDefaults.filledTonalIconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Delete,
-                        contentDescription = "Löschen",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.error
+                        color = chipTextColor
                     )
                 }
             }
+
+            // Metrics row (Distance, Pace, Speed)
+            if (distanceKm > 0.01) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Distance
+                    SessionSmallMetric(
+                        modifier = Modifier.weight(1f),
+                        label = "Distanz",
+                        value = String.format(java.util.Locale.GERMAN, "%.2f km", distanceKm)
+                    )
+
+                    // Pace
+                    if (paceFormatted != null) {
+                        SessionSmallMetric(
+                            modifier = Modifier.weight(1f),
+                            label = "Ø Pace",
+                            value = paceFormatted
+                        )
+                    }
+
+                    // Speed
+                    SessionSmallMetric(
+                        modifier = Modifier.weight(1f),
+                        label = "Ø Tempo",
+                        value = String.format(java.util.Locale.GERMAN, "%.1f km/h", avgSpeedKmh)
+                    )
+                }
+            }
+
+            // Speed-Colored OpenStreetMap Route Snippet or Grey Placeholder Map
+            if (routePoints.size >= 2) {
+                OsmRouteSnippetMap(
+                    routePoints = routePoints,
+                    height = 150.dp,
+                    allowFullscreen = true
+                )
+            } else {
+                GreyPlaceholderMap(height = 110.dp)
+            }
+        }
+    }
+}
+
+@Composable
+fun GreyPlaceholderMap(
+    modifier: Modifier = Modifier,
+    height: androidx.compose.ui.unit.Dp = 110.dp
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val step = 28.dp.toPx()
+            val lineColor = Color.Gray.copy(alpha = 0.15f)
+            var x = 0f
+            while (x < size.width) {
+                drawLine(lineColor, start = androidx.compose.ui.geometry.Offset(x, 0f), end = androidx.compose.ui.geometry.Offset(x, size.height), strokeWidth = 1.dp.toPx())
+                x += step
+            }
+            var y = 0f
+            while (y < size.height) {
+                drawLine(lineColor, start = androidx.compose.ui.geometry.Offset(0f, y), end = androidx.compose.ui.geometry.Offset(size.width, y), strokeWidth = 1.dp.toPx())
+                y += step
+            }
+        }
+
+        Surface(
+            shape = RoundedCornerShape(8.dp),
+            color = MaterialTheme.colorScheme.surface.copy(alpha = 0.90f),
+            shadowElevation = 2.dp
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.LocationOff,
+                    contentDescription = null,
+                    modifier = Modifier.size(15.dp),
+                    tint = MaterialTheme.colorScheme.outline
+                )
+                Text(
+                    text = "Keine GPS-Strecke aufgezeichnet",
+                    fontSize = 11.5.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SessionSmallMetric(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLowest
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(label, fontSize = 9.5.sp, color = MaterialTheme.colorScheme.outline, fontWeight = FontWeight.Medium)
+            Text(value, fontSize = 11.5.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         }
     }
 }

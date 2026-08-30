@@ -13,5 +13,9 @@ data class WalkRecord(
     val eveningSeconds: Int = 0, // 2. Gehen
     val totalSeconds: Int = morningSeconds + eveningSeconds,
     val updatedAt: Long = System.currentTimeMillis(),
-    val source: String = "manual" // "manual", "garmin_health_connect", "stopwatch"
+    val source: String = "manual", // "manual", "garmin_health_connect", "stopwatch"
+    val morningDistanceMeters: Double = 0.0,
+    val eveningDistanceMeters: Double = 0.0,
+    val morningRouteJson: String? = null,
+    val eveningRouteJson: String? = null
 )

@@ -29,7 +29,7 @@ sealed interface Screen {
     @Serializable
     data object Stopwatch : Screen {
         override val index = 1
-        override val title = "Stoppuhr"
+        override val title = "Training"
         override val selectedIcon = Icons.Filled.Timer
         override val unselectedIcon = Icons.Outlined.Timer
     }

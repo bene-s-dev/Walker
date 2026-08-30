@@ -4,8 +4,27 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [WalkRecord::class], version = 1, exportSchema = false)
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        try {
+            db.execSQL("ALTER TABLE walk_records ADD COLUMN morningDistanceMeters REAL NOT NULL DEFAULT 0.0")
+        } catch (_: Exception) {}
+        try {
+            db.execSQL("ALTER TABLE walk_records ADD COLUMN eveningDistanceMeters REAL NOT NULL DEFAULT 0.0")
+        } catch (_: Exception) {}
+        try {
+            db.execSQL("ALTER TABLE walk_records ADD COLUMN morningRouteJson TEXT")
+        } catch (_: Exception) {}
+        try {
+            db.execSQL("ALTER TABLE walk_records ADD COLUMN eveningRouteJson TEXT")
+        } catch (_: Exception) {}
+    }
+}
+
+@Database(entities = [WalkRecord::class], version = 2, exportSchema = false)
 abstract class WalkDatabase : RoomDatabase() {
     abstract fun walkDao(): WalkDao
 
@@ -19,7 +38,10 @@ abstract class WalkDatabase : RoomDatabase() {
                     context.applicationContext,
                     WalkDatabase::class.java,
                     "benewalker.db"
-                ).build()
+                )
+                .addMigrations(MIGRATION_1_2)
+                .fallbackToDestructiveMigration()
+                .build()
                 INSTANCE = instance
                 instance
             }

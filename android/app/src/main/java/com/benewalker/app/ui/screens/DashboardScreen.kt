@@ -392,13 +392,21 @@ fun DashboardInteractiveBarChart(
             val eveningHeight = eveningRatio * chartBottom
             val isSelected = selectedRecord?.date == record.date
 
-            // Selection Background Highlight
+            // Selection Thin Vertical Scrub Line & Indicator
             if (isSelected) {
-                drawRoundRect(
-                    color = primaryColor.copy(alpha = 0.25f),
-                    topLeft = Offset(x - 3.dp.toPx(), 0f),
-                    size = Size(daySlotWidth + 6.dp.toPx(), chartBottom),
-                    cornerRadius = CornerRadius(8.dp.toPx(), 8.dp.toPx())
+                // Subtle thin vertical line through center
+                drawLine(
+                    color = primaryColor,
+                    start = Offset(centerX, 0f),
+                    end = Offset(centerX, chartBottom),
+                    strokeWidth = 2.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f))
+                )
+                // Top indicator dot
+                drawCircle(
+                    color = primaryColor,
+                    radius = 3.5.dp.toPx(),
+                    center = Offset(centerX, 4.dp.toPx())
                 )
             }
 
