@@ -19,6 +19,7 @@ import java.time.format.DateTimeFormatter
 
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.os.SystemClock
 import android.speech.tts.TextToSpeech
 import java.util.Locale
 
@@ -110,6 +111,10 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     val uiState: StateFlow<WalkUiState> = _uiState.asStateFlow()
 
     private var stopwatchJob: Job? = null
+    private var stopwatchStartTimestamp: Long = 0L
+    private var stopwatchBaseElapsedSec: Int = 0
+    private var lastBeepSecond: Int = -1
+    private var lastSpokenMinute: Int = -1
 
     init {
         // Init Audio / TTS (Volume 100 for clear audible feedback)
@@ -469,6 +474,11 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         val currentSec = _uiState.value.stopwatchElapsedSec
         val target = _uiState.value.stopwatchTarget
 
+        stopwatchStartTimestamp = SystemClock.elapsedRealtime()
+        stopwatchBaseElapsedSec = currentSec
+        lastBeepSecond = -1
+        lastSpokenMinute = -1
+
         // Start GPS tracking
         if (_uiState.value.hasLocationPermission) {
             locationTracker.startTracking()
@@ -486,31 +496,37 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         stopwatchJob?.cancel()
         stopwatchJob = viewModelScope.launch {
             while (_uiState.value.stopwatchRunning) {
-                delay(1000)
-                val nextSec = _uiState.value.stopwatchElapsedSec + 1
-                _uiState.update { it.copy(stopwatchElapsedSec = nextSec) }
-                locationTracker.updateElapsedSeconds(nextSec)
+                delay(500)
+                val elapsedSinceStart = ((SystemClock.elapsedRealtime() - stopwatchStartTimestamp) / 1000).toInt()
+                val nextSec = stopwatchBaseElapsedSec + elapsedSinceStart
 
-                if (_uiState.value.stopwatchSoundEnabled) {
-                    // 30 Sekunden Signal (deutlich hörbarer Doppel-Piepton)
-                    if (_uiState.value.stopwatchBeep30s && nextSec % 60 == 30) {
-                        try {
-                            toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 320)
-                        } catch (_: Exception) {}
-                    }
-                    // Sprachansage (Jede Minute oder alle 5 Minuten)
-                    else if (nextSec > 0 && nextSec % 60 == 0) {
-                        val mins = nextSec / 60
-                        val interval = _uiState.value.stopwatchVoiceIntervalMin
-                        if (mins % interval == 0) {
-                            val text = if (mins == 1) "Eine Minute" else "$mins Minuten"
+                if (nextSec != _uiState.value.stopwatchElapsedSec) {
+                    _uiState.update { it.copy(stopwatchElapsedSec = nextSec) }
+                    locationTracker.updateElapsedSeconds(nextSec)
+
+                    if (_uiState.value.stopwatchSoundEnabled) {
+                        // 30 Sekunden Signal (deutlich hörbarer Doppel-Piepton)
+                        if (_uiState.value.stopwatchBeep30s && nextSec % 60 == 30 && nextSec != lastBeepSecond) {
+                            lastBeepSecond = nextSec
                             try {
-                                if (isTtsReady) {
-                                    textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "min_$mins")
-                                } else {
-                                    toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
-                                }
+                                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 320)
                             } catch (_: Exception) {}
+                        }
+                        // Sprachansage (Jede Minute oder alle 5 Minuten)
+                        else if (nextSec > 0 && nextSec % 60 == 0) {
+                            val mins = nextSec / 60
+                            val interval = _uiState.value.stopwatchVoiceIntervalMin
+                            if (mins % interval == 0 && mins != lastSpokenMinute) {
+                                lastSpokenMinute = mins
+                                val text = if (mins == 1) "Eine Minute" else "$mins Minuten"
+                                try {
+                                    if (isTtsReady) {
+                                        textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "min_$mins")
+                                    } else {
+                                        toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
+                                    }
+                                } catch (_: Exception) {}
+                            }
                         }
                     }
                 }
@@ -519,7 +535,14 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun pauseStopwatch() {
-        _uiState.update { it.copy(stopwatchRunning = false) }
+        if (_uiState.value.stopwatchRunning) {
+            val elapsedSinceStart = ((SystemClock.elapsedRealtime() - stopwatchStartTimestamp) / 1000).toInt()
+            val finalSec = stopwatchBaseElapsedSec + elapsedSinceStart
+            _uiState.update { it.copy(stopwatchRunning = false, stopwatchElapsedSec = finalSec) }
+            locationTracker.updateElapsedSeconds(finalSec)
+        } else {
+            _uiState.update { it.copy(stopwatchRunning = false) }
+        }
         locationTracker.pauseTracking()
         stopwatchJob?.cancel()
         try {
@@ -535,6 +558,9 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         pauseStopwatch()
         locationTracker.reset()
         _uiState.update { it.copy(stopwatchElapsedSec = 0) }
+        stopwatchBaseElapsedSec = 0
+        lastBeepSecond = -1
+        lastSpokenMinute = -1
         try {
             com.benewalker.app.service.StopwatchService.stop(getApplication())
         } catch (_: Exception) {}

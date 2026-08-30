@@ -10,11 +10,14 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.benewalker.app.MainActivity
 import com.benewalker.app.R
 
 class StopwatchService : Service() {
+
+    private var wakeLock: PowerManager.WakeLock? = null
 
     companion object {
         const val CHANNEL_ID = "benewalker_stopwatch_live_channel"
@@ -68,34 +71,71 @@ class StopwatchService : Service() {
         createNotificationChannel()
     }
 
+    private fun acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+                wakeLock = powerManager.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK,
+                    "BeneWalker::StopwatchWakeLock"
+                ).apply {
+                    setReferenceCounted(false)
+                }
+            }
+            if (wakeLock?.isHeld == false) {
+                // Max timeout 6 hours to prevent accidental battery drain if forgotten
+                wakeLock?.acquire(6 * 60 * 60 * 1000L)
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release()
+            }
+        } catch (_: Exception) {}
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
+                acquireWakeLock()
                 val elapsedSec = intent.getIntExtra(EXTRA_ELAPSED_SECONDS, 0)
                 val target = intent.getStringExtra(EXTRA_TARGET) ?: "morning"
                 val notification = buildLiveNotification(elapsedSec, target, isRunning = true)
                 try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
+                        val serviceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH or ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                        startForeground(NOTIFICATION_ID, notification, serviceType)
                     } else {
                         startForeground(NOTIFICATION_ID, notification)
                     }
                 } catch (_: Exception) {
-                    startForeground(NOTIFICATION_ID, notification)
+                    try {
+                        startForeground(NOTIFICATION_ID, notification)
+                    } catch (_: Exception) {}
                 }
             }
             ACTION_PAUSE -> {
+                releaseWakeLock()
                 val elapsedSec = intent.getIntExtra(EXTRA_ELAPSED_SECONDS, 0)
                 val target = intent.getStringExtra(EXTRA_TARGET) ?: "morning"
                 val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
                 manager.notify(NOTIFICATION_ID, buildLiveNotification(elapsedSec, target, isRunning = false))
             }
             ACTION_STOP -> {
+                releaseWakeLock()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
         }
         return START_NOT_STICKY
+    }
+
+    override fun onDestroy() {
+        releaseWakeLock()
+        super.onDestroy()
     }
 
     private fun buildLiveNotification(elapsedSeconds: Int, target: String, isRunning: Boolean): Notification {
