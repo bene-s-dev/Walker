@@ -7,11 +7,13 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import android.os.Looper
+import android.os.SystemClock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
+import java.util.Locale
 
 @Serializable
 data class GpsPoint(
@@ -53,17 +55,19 @@ class LocationTracker private constructor(private val context: Context) : Locati
     val trackingState: StateFlow<TrainingTrackingState> = _trackingState.asStateFlow()
 
     private var isListening = false
-    private var lastTrackedLocation: Location? = null
-    private var lastSmoothedLat: Double? = null
-    private var lastSmoothedLon: Double? = null
-    private var lastTrackedTimestamp: Long = 0L
+    private var lastRecordedLat: Double? = null
+    private var lastRecordedLon: Double? = null
+    private var lastLocationTimestampRealtime: Long = 0L
     private var lastSplitElapsedSec: Int = 0
     private var currentElapsedSeconds: Int = 0
 
+    // Callback when a new kilometer split is reached (for TTS in Foreground Service)
+    var onSplitReached: ((KilometerSplit) -> Unit)? = null
+
     companion object {
-        private const val MAX_ACCURACY_METERS = 32.0f
-        private const val MAX_HUMAN_SPEED_KMH = 28.0 // 7.7 m/s max for walking/sprinting
-        private const val STATIONARY_DRIFT_THRESHOLD_METERS = 2.5
+        private const val MAX_ACCEPTABLE_ACCURACY_METERS = 28.0f
+        private const val MAX_PLAUSIBLE_SPEED_KMH = 35.0 // ~9.7 m/s max for human foot tracking
+        private const val JITTER_ACCURACY_RATIO = 0.25 // stationary jitter threshold
 
         @Volatile
         private var INSTANCE: LocationTracker? = null
@@ -77,10 +81,11 @@ class LocationTracker private constructor(private val context: Context) : Locati
 
     fun updateElapsedSeconds(elapsedSec: Int) {
         currentElapsedSeconds = elapsedSec
-        if (_trackingState.value.isTracking && _trackingState.value.totalDistanceMeters > 0) {
-            val distKm = _trackingState.value.totalDistanceMeters / 1000.0
+        val currentDist = _trackingState.value.totalDistanceMeters
+        if (currentDist > 0) {
+            val distKm = currentDist / 1000.0
             val avgSpeed = if (elapsedSec > 0) (distKm / (elapsedSec / 3600.0)) else 0.0
-            val avgPace = if (distKm > 0.05) (elapsedSec / 60.0) / distKm else 0.0
+            val avgPace = if (distKm > 0.02 && elapsedSec > 0) (elapsedSec / 60.0) / distKm else 0.0
             _trackingState.update {
                 it.copy(
                     avgSpeedKmh = avgSpeed,
@@ -95,14 +100,13 @@ class LocationTracker private constructor(private val context: Context) : Locati
         if (isListening) return
         isListening = true
 
-        // 1. Check all providers for immediate last known location
+        // 1. Initial best last known location
+        var bestLocation: Location? = null
         val providers = listOf(
             LocationManager.GPS_PROVIDER,
             LocationManager.NETWORK_PROVIDER,
             LocationManager.PASSIVE_PROVIDER
         )
-
-        var bestLocation: Location? = null
         for (provider in providers) {
             try {
                 if (locationManager.isProviderEnabled(provider)) {
@@ -128,28 +132,34 @@ class LocationTracker private constructor(private val context: Context) : Locati
             }
         }
 
-        // 2. Request live updates from both GPS and Network
-        for (provider in listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)) {
-            try {
-                if (locationManager.isProviderEnabled(provider)) {
-                    locationManager.requestLocationUpdates(
-                        provider,
-                        1000L,
-                        0.5f,
-                        this,
-                        Looper.getMainLooper()
-                    )
-                }
-            } catch (_: Exception) {}
-        }
+        // 2. Request updates: Prioritize GPS_PROVIDER for precise tracking
+        try {
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                locationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER,
+                    1000L,
+                    0f,
+                    this,
+                    Looper.getMainLooper()
+                )
+            } else if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                // Fallback only if GPS hardware is disabled
+                locationManager.requestLocationUpdates(
+                    LocationManager.NETWORK_PROVIDER,
+                    1000L,
+                    0f,
+                    this,
+                    Looper.getMainLooper()
+                )
+            }
+        } catch (_: Exception) {}
     }
 
     fun startTracking() {
         startListening()
-        lastTrackedLocation = null
-        lastSmoothedLat = null
-        lastSmoothedLon = null
-        lastTrackedTimestamp = 0L
+        lastRecordedLat = null
+        lastRecordedLon = null
+        lastLocationTimestampRealtime = 0L
         _trackingState.update { it.copy(isTracking = true) }
     }
 
@@ -165,10 +175,9 @@ class LocationTracker private constructor(private val context: Context) : Locati
     }
 
     fun reset() {
-        lastTrackedLocation = null
-        lastSmoothedLat = null
-        lastSmoothedLon = null
-        lastTrackedTimestamp = 0L
+        lastRecordedLat = null
+        lastRecordedLon = null
+        lastLocationTimestampRealtime = 0L
         lastSplitElapsedSec = 0
         currentElapsedSeconds = 0
         val currentLat = _trackingState.value.currentLatitude
@@ -188,16 +197,27 @@ class LocationTracker private constructor(private val context: Context) : Locati
     }
 
     override fun onLocationChanged(location: Location) {
-        // 1. Filter inaccurate or invalid location fixes
+        // 1. Basic sanity filter
         if (location.latitude == 0.0 && location.longitude == 0.0) return
-        if (location.hasAccuracy() && location.accuracy > MAX_ACCURACY_METERS) {
+        if (location.hasAccuracy() && location.accuracy > MAX_ACCEPTABLE_ACCURACY_METERS) {
+            // Still update accuracy state for UI indication, but skip trajectory calculation
+            _trackingState.update {
+                it.copy(
+                    isGpsActive = true,
+                    currentLatitude = location.latitude,
+                    currentLongitude = location.longitude,
+                    currentAltitude = location.altitude,
+                    accuracy = location.accuracy
+                )
+            }
             return
         }
 
+        val nowRealtime = SystemClock.elapsedRealtime()
         val isTracking = _trackingState.value.isTracking
-        var newDistance = _trackingState.value.totalDistanceMeters
-        var updatedPoints = _trackingState.value.routePoints
-        val currentSplits = _trackingState.value.splits.toMutableList()
+        var totalDist = _trackingState.value.totalDistanceMeters
+        var points = _trackingState.value.routePoints
+        val splits = _trackingState.value.splits.toMutableList()
 
         var calculatedSpeedKmh = if (location.hasSpeed() && location.speed > 0f) {
             location.speed * 3.6 // m/s -> km/h
@@ -205,122 +225,106 @@ class LocationTracker private constructor(private val context: Context) : Locati
             0.0
         }
 
-        // 2. Trajectory smoothing & Road/Path estimation
-        var finalLat = location.latitude
-        var finalLon = location.longitude
+        var smoothedLat = location.latitude
+        var smoothedLon = location.longitude
 
         if (isTracking) {
-            val prevLat = lastSmoothedLat
-            val prevLon = lastSmoothedLon
-            val prevLoc = lastTrackedLocation
+            val prevLat = lastRecordedLat
+            val prevLon = lastRecordedLon
+            val prevTime = lastLocationTimestampRealtime
 
-            if (prevLat != null && prevLon != null && prevLoc != null) {
-                val timeDeltaSec = (location.time - lastTrackedTimestamp) / 1000.0
-                val rawDistanceToPrev = FloatArray(1)
-                Location.distanceBetween(prevLat, prevLon, location.latitude, location.longitude, rawDistanceToPrev)
-                val distMeters = rawDistanceToPrev[0].toDouble()
+            if (prevLat != null && prevLon != null && prevTime > 0) {
+                val timeDeltaSec = (nowRealtime - prevTime) / 1000.0
+                val results = FloatArray(1)
+                Location.distanceBetween(prevLat, prevLon, location.latitude, location.longitude, results)
+                val distMeters = results[0].toDouble()
 
-                // Check speed plausibility (reject multipath glitches / teleports)
-                val pointSpeedKmh = if (timeDeltaSec > 0.3) (distMeters / timeDeltaSec) * 3.6 else 0.0
-                if (pointSpeedKmh > MAX_HUMAN_SPEED_KMH && distMeters > 30.0) {
-                    // Outlier / Glitch -> Skip this faulty reading
+                // Check speed plausibility (reject multi-path teleports)
+                val impliedSpeedKmh = if (timeDeltaSec > 0.2) (distMeters / timeDeltaSec) * 3.6 else 0.0
+                if (impliedSpeedKmh > MAX_PLAUSIBLE_SPEED_KMH && distMeters > 30.0) {
+                    // Glitch point -> ignore
                     return
                 }
 
-                // Stationary filter: If distance is minimal and user is standing/slow, prevent ghost drift
-                if (distMeters < STATIONARY_DRIFT_THRESHOLD_METERS && (calculatedSpeedKmh < 1.8 || pointSpeedKmh < 1.8)) {
-                    calculatedSpeedKmh = 0.0
-                    // Update current location indicator without accumulating false distance
-                    _trackingState.update {
-                        it.copy(
-                            isGpsActive = true,
-                            currentLatitude = location.latitude,
-                            currentLongitude = location.longitude,
-                            currentAltitude = location.altitude,
-                            accuracy = location.accuracy,
-                            currentSpeedKmh = 0.0
-                        )
-                    }
-                    return
-                }
+                // Stationary jitter filter:
+                // If user is stationary, small GPS oscillations around 0.5-1.5m shouldn't falsely inflate distance
+                val accuracy = if (location.hasAccuracy()) location.accuracy else 10f
+                val isStationaryJitter = distMeters < 0.6 && calculatedSpeedKmh < 0.5 && impliedSpeedKmh < 0.8
 
-                // Dynamic Accuracy-Weighted Smoothing (Kalman-style low-pass along paths)
-                // Higher accuracy & speed -> higher responsiveness (alpha 0.85); Lower accuracy -> heavier smoothing (alpha 0.45)
-                val accuracyFactor = (1.0 - (location.accuracy.coerceIn(3f, 30f) / 45.0)).coerceIn(0.45, 0.88)
-                finalLat = prevLat + accuracyFactor * (location.latitude - prevLat)
-                finalLon = prevLon + accuracyFactor * (location.longitude - prevLon)
+                if (!isStationaryJitter) {
+                    // Smooth point slightly based on accuracy
+                    val alpha = (1.0 - (accuracy.coerceIn(2f, 25f) / 50.0)).coerceIn(0.65, 0.95)
+                    smoothedLat = prevLat + alpha * (location.latitude - prevLat)
+                    smoothedLon = prevLon + alpha * (location.longitude - prevLon)
 
-                // Calculate actual distance between smoothed points along the road/path
-                val smoothedDist = FloatArray(1)
-                Location.distanceBetween(prevLat, prevLon, finalLat, finalLon, smoothedDist)
-                val stepDistance = smoothedDist[0].toDouble()
+                    val smoothResults = FloatArray(1)
+                    Location.distanceBetween(prevLat, prevLon, smoothedLat, smoothedLon, smoothResults)
+                    val stepDistance = smoothResults[0].toDouble()
 
-                if (stepDistance > 0.5) {
-                    newDistance += stepDistance
+                    totalDist += stepDistance
 
                     if (calculatedSpeedKmh == 0.0 && timeDeltaSec > 0.5) {
                         calculatedSpeedKmh = (stepDistance / timeDeltaSec) * 3.6
                     }
+                } else {
+                    calculatedSpeedKmh = 0.0
                 }
             }
 
-            lastSmoothedLat = finalLat
-            lastSmoothedLon = finalLon
-            lastTrackedLocation = location
-            lastTrackedTimestamp = location.time
+            lastRecordedLat = smoothedLat
+            lastRecordedLon = smoothedLon
+            lastLocationTimestampRealtime = nowRealtime
 
             val point = GpsPoint(
-                latitude = finalLat,
-                longitude = finalLon,
+                latitude = smoothedLat,
+                longitude = smoothedLon,
                 altitude = location.altitude,
-                timestamp = location.time
+                timestamp = System.currentTimeMillis()
             )
-            updatedPoints = updatedPoints + point
+            points = points + point
 
             // Check kilometer splits
-            val currentCompletedKms = (newDistance / 1000.0).toInt()
-            if (currentCompletedKms > currentSplits.size && currentCompletedKms >= 1) {
+            val completedKms = (totalDist / 1000.0).toInt()
+            if (completedKms > splits.size && completedKms >= 1) {
                 val splitSec = currentElapsedSeconds - lastSplitElapsedSec
                 lastSplitElapsedSec = currentElapsedSeconds
 
                 val splitMin = splitSec / 60
                 val splitSecRemainder = splitSec % 60
-                val splitPaceStr = String.format("%02d:%02d", splitMin, splitSecRemainder)
+                val splitPaceStr = String.format(Locale.GERMAN, "%02d:%02d", splitMin, splitSecRemainder)
 
-                currentSplits.add(
-                    KilometerSplit(
-                        kmNumber = currentCompletedKms,
-                        splitSeconds = splitSec,
-                        totalElapsedSeconds = currentElapsedSeconds,
-                        paceString = splitPaceStr
-                    )
+                val newSplit = KilometerSplit(
+                    kmNumber = completedKms,
+                    splitSeconds = splitSec,
+                    totalElapsedSeconds = currentElapsedSeconds,
+                    paceString = splitPaceStr
                 )
+                splits.add(newSplit)
+                try {
+                    onSplitReached?.invoke(newSplit)
+                } catch (_: Exception) {}
             }
-        } else {
-            // Not recording, just previewing location
-            finalLat = location.latitude
-            finalLon = location.longitude
         }
 
-        val distKm = newDistance / 1000.0
+        val distKm = totalDist / 1000.0
         val avgSpeed = if (currentElapsedSeconds > 0) (distKm / (currentElapsedSeconds / 3600.0)) else 0.0
-        val avgPace = if (distKm > 0.05 && currentElapsedSeconds > 0) (currentElapsedSeconds / 60.0) / distKm else 0.0
-        val currentPace = if (calculatedSpeedKmh > 0.5) (60.0 / calculatedSpeedKmh) else 0.0
+        val avgPace = if (distKm > 0.02 && currentElapsedSeconds > 0) (currentElapsedSeconds / 60.0) / distKm else 0.0
+        val currentPace = if (calculatedSpeedKmh > 0.3) (60.0 / calculatedSpeedKmh) else 0.0
 
         _trackingState.update {
             it.copy(
                 isGpsActive = true,
-                currentLatitude = finalLat,
-                currentLongitude = finalLon,
+                currentLatitude = smoothedLat,
+                currentLongitude = smoothedLon,
                 currentAltitude = location.altitude,
                 accuracy = location.accuracy,
-                totalDistanceMeters = newDistance,
+                totalDistanceMeters = totalDist,
                 currentSpeedKmh = calculatedSpeedKmh,
                 avgSpeedKmh = avgSpeed,
                 currentPaceMinPerKm = currentPace,
                 avgPaceMinPerKm = avgPace,
-                routePoints = updatedPoints,
-                splits = currentSplits
+                routePoints = points,
+                splits = splits
             )
         }
     }

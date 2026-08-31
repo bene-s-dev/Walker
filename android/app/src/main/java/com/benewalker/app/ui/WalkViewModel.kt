@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.benewalker.app.data.WalkDatabase
 import com.benewalker.app.data.WalkRecord
 import com.benewalker.app.health.HealthConnectManager
+import com.benewalker.app.service.GpsPoint
+import com.benewalker.app.service.KilometerSplit
+import com.benewalker.app.service.LocationTracker
+import com.benewalker.app.service.StopwatchManager
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -16,16 +19,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-
-import android.media.AudioManager
-import android.media.ToneGenerator
-import android.os.SystemClock
-import android.speech.tts.TextToSpeech
 import java.util.Locale
-
-import com.benewalker.app.service.LocationTracker
-import com.benewalker.app.service.GpsPoint
-import com.benewalker.app.service.KilometerSplit
 
 enum class HcStatus {
     IDLE,
@@ -64,7 +58,7 @@ data class WalkUiState(
     val eveningDistanceKm: String = "",
     val formSuccessFeedback: Boolean = false,
 
-    // Stopwatch & Training
+    // Stopwatch & Training (Synced from StopwatchManager)
     val stopwatchRunning: Boolean = false,
     val stopwatchElapsedSec: Int = 0,
     val stopwatchTarget: String = "morning", // "morning" or "evening"
@@ -72,7 +66,7 @@ data class WalkUiState(
     val stopwatchVoiceIntervalMin: Int = 1, // 1 or 5
     val stopwatchBeep30s: Boolean = true,
 
-    // GPS & Route Tracking
+    // GPS & Route Tracking (Synced from LocationTracker)
     val gpsDistanceMeters: Double = 0.0,
     val gpsCurrentSpeedKmh: Double = 0.0,
     val gpsAvgSpeedKmh: Double = 0.0,
@@ -96,57 +90,58 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     private val walkDao = database.walkDao()
     val healthConnectManager = HealthConnectManager(application, walkDao)
     val locationTracker = LocationTracker.getInstance(application)
-
-    private var toneGenerator: ToneGenerator? = null
-    private var textToSpeech: TextToSpeech? = null
-    private var isTtsReady = false
+    val stopwatchManager = StopwatchManager.getInstance(application)
 
     private val _uiState = MutableStateFlow(
         WalkUiState(
             themeMode = prefs.getString("theme_mode", "system") ?: "system",
             useDynamicColor = prefs.getBoolean("use_dynamic_color", true),
-            stopwatchSoundEnabled = prefs.getBoolean("stopwatch_sound_enabled", true),
-            stopwatchVoiceIntervalMin = prefs.getInt("stopwatch_voice_interval_min", 1),
-            stopwatchBeep30s = prefs.getBoolean("stopwatch_beep_30s", true)
+            stopwatchSoundEnabled = stopwatchManager.soundEnabled.value,
+            stopwatchVoiceIntervalMin = stopwatchManager.voiceIntervalMin.value,
+            stopwatchBeep30s = stopwatchManager.beep30s.value,
+            stopwatchTarget = stopwatchManager.target.value,
+            stopwatchRunning = stopwatchManager.isRunning.value,
+            stopwatchElapsedSec = stopwatchManager.elapsedSeconds.value
         )
     )
     val uiState: StateFlow<WalkUiState> = _uiState.asStateFlow()
 
-    private var stopwatchJob: Job? = null
-    private var stopwatchStartTimestamp: Long = 0L
-    private var stopwatchBaseElapsedSec: Int = 0
-    private var lastBeepSecond: Int = -1
-    private var lastSpokenMinute: Int = -1
-
     init {
-        // Init Audio / TTS (Volume 100 for clear audible feedback)
-        try {
-            toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
-        } catch (_: Exception) {}
-
-        try {
-            textToSpeech = TextToSpeech(application) { status ->
-                if (status == TextToSpeech.SUCCESS) {
-                    textToSpeech?.language = Locale.GERMAN
-                    isTtsReady = true
-                }
+        // 1. Sync StopwatchManager state into UI state
+        viewModelScope.launch {
+            stopwatchManager.isRunning.collect { running ->
+                _uiState.update { it.copy(stopwatchRunning = running) }
             }
-        } catch (_: Exception) {}
+        }
+        viewModelScope.launch {
+            stopwatchManager.elapsedSeconds.collect { sec ->
+                _uiState.update { it.copy(stopwatchElapsedSec = sec) }
+            }
+        }
+        viewModelScope.launch {
+            stopwatchManager.target.collect { target ->
+                _uiState.update { it.copy(stopwatchTarget = target) }
+            }
+        }
+        viewModelScope.launch {
+            stopwatchManager.soundEnabled.collect { enabled ->
+                _uiState.update { it.copy(stopwatchSoundEnabled = enabled) }
+            }
+        }
+        viewModelScope.launch {
+            stopwatchManager.beep30s.collect { beep ->
+                _uiState.update { it.copy(stopwatchBeep30s = beep) }
+            }
+        }
+        viewModelScope.launch {
+            stopwatchManager.voiceIntervalMin.collect { interval ->
+                _uiState.update { it.copy(stopwatchVoiceIntervalMin = interval) }
+            }
+        }
 
-        // Collect GPS Location updates
+        // 2. Collect GPS Location updates from LocationTracker
         viewModelScope.launch {
             locationTracker.trackingState.collect { trackState ->
-                val prevSplits = _uiState.value.kilometerSplits
-                if (trackState.splits.size > prevSplits.size && _uiState.value.stopwatchSoundEnabled) {
-                    val latestSplit = trackState.splits.last()
-                    val text = "Kilometer ${latestSplit.kmNumber} in ${latestSplit.paceString} Minuten"
-                    try {
-                        if (isTtsReady) {
-                            textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "km_${latestSplit.kmNumber}")
-                        }
-                    } catch (_: Exception) {}
-                }
-
                 _uiState.update {
                     it.copy(
                         gpsDistanceMeters = trackState.totalDistanceMeters,
@@ -164,14 +159,14 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        // Collect DB updates
+        // 3. Collect DB updates
         viewModelScope.launch {
             walkDao.getAllRecordsFlow().collect { list ->
                 updateMetrics(list)
             }
         }
 
-        // Init Health Connect status & trigger auto-sync (last 90 days)
+        // 4. Init Health Connect status & trigger auto-sync (last 90 days)
         checkHealthConnectStatus()
         viewModelScope.launch {
             delay(500)
@@ -221,10 +216,8 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         val todayMax = listOfNotNull(todayRec?.morningSeconds, todayRec?.eveningSeconds).maxOrNull() ?: 0
 
         // Auto select 2. Gehen (evening) if 1. Gehen (morning) is already recorded today and stopwatch not currently running
-        val autoTarget = if ((todayRec?.morningSeconds ?: 0) > 0 && !_uiState.value.stopwatchRunning && _uiState.value.stopwatchTarget == "morning") {
-            "evening"
-        } else {
-            _uiState.value.stopwatchTarget
+        if ((todayRec?.morningSeconds ?: 0) > 0 && !stopwatchManager.isRunning.value && stopwatchManager.target.value == "morning") {
+            stopwatchManager.setTarget("evening")
         }
 
         _uiState.update { current ->
@@ -238,8 +231,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 diff30DaysSec = diff30,
                 allTimeSingleRecordSec = maxSingle,
                 todayMaxSingleSec = todayMax,
-                totalRecordedDays = records.size,
-                stopwatchTarget = autoTarget
+                totalRecordedDays = records.size
             )
         }
 
@@ -306,11 +298,11 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.update {
                     it.copy(
                         formDate = record.date,
-                        morningMin = if (record.morningSeconds > 0) (record.morningSeconds / 60).toString() else "",
-                        morningSec = if (record.morningSeconds > 0) (record.morningSeconds % 60).toString() else "",
+                        morningMin = mMin,
+                        morningSec = mSec,
                         morningDistanceKm = mDist,
-                        eveningMin = if (record.eveningSeconds > 0) (record.eveningSeconds / 60).toString() else "",
-                        eveningSec = if (record.eveningSeconds > 0) (record.eveningSeconds % 60).toString() else "",
+                        eveningMin = eMin,
+                        eveningSec = eSec,
                         eveningDistanceKm = eDist
                     )
                 }
@@ -462,7 +454,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
 
     // Stopwatch Controls
     fun toggleStopwatch() {
-        if (_uiState.value.stopwatchRunning) {
+        if (stopwatchManager.isRunning.value) {
             pauseStopwatch()
         } else {
             startStopwatch()
@@ -470,152 +462,48 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setStopwatchSoundEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean("stopwatch_sound_enabled", enabled).apply()
-        _uiState.update { it.copy(stopwatchSoundEnabled = enabled) }
-        try {
-            com.benewalker.app.service.StopwatchService.updateConfig(
-                getApplication(),
-                enabled,
-                _uiState.value.stopwatchBeep30s,
-                _uiState.value.stopwatchVoiceIntervalMin
-            )
-        } catch (_: Exception) {}
+        stopwatchManager.setSoundEnabled(enabled)
     }
 
     fun setStopwatchVoiceInterval(intervalMin: Int) {
-        prefs.edit().putInt("stopwatch_voice_interval_min", intervalMin).apply()
-        _uiState.update { it.copy(stopwatchVoiceIntervalMin = intervalMin) }
-        try {
-            com.benewalker.app.service.StopwatchService.updateConfig(
-                getApplication(),
-                _uiState.value.stopwatchSoundEnabled,
-                _uiState.value.stopwatchBeep30s,
-                intervalMin
-            )
-        } catch (_: Exception) {}
+        stopwatchManager.setVoiceIntervalMin(intervalMin)
     }
 
     fun setStopwatchBeep30s(enabled: Boolean) {
-        prefs.edit().putBoolean("stopwatch_beep_30s", enabled).apply()
-        _uiState.update { it.copy(stopwatchBeep30s = enabled) }
-        try {
-            com.benewalker.app.service.StopwatchService.updateConfig(
-                getApplication(),
-                _uiState.value.stopwatchSoundEnabled,
-                enabled,
-                _uiState.value.stopwatchVoiceIntervalMin
-            )
-        } catch (_: Exception) {}
+        stopwatchManager.setBeep30s(enabled)
     }
 
     fun setLocationPermissionGranted(granted: Boolean) {
         _uiState.update { it.copy(hasLocationPermission = granted) }
         if (granted) {
             locationTracker.startListening()
-            if (_uiState.value.stopwatchRunning) {
+            if (stopwatchManager.isRunning.value) {
                 locationTracker.startTracking()
             }
         }
     }
 
-    private fun startStopwatch() {
-        _uiState.update { it.copy(stopwatchRunning = true) }
-        val currentSec = _uiState.value.stopwatchElapsedSec
-        val target = _uiState.value.stopwatchTarget
-
-        stopwatchStartTimestamp = SystemClock.elapsedRealtime()
-        stopwatchBaseElapsedSec = currentSec
-
-        // Start Foreground Service with Location Tracking, WakeLock & Audio engine
-        try {
-            com.benewalker.app.service.StopwatchService.start(
-                getApplication(),
-                currentSec,
-                target,
-                _uiState.value.stopwatchSoundEnabled,
-                _uiState.value.stopwatchBeep30s,
-                _uiState.value.stopwatchVoiceIntervalMin
-            )
-        } catch (_: Exception) {}
-
-        stopwatchJob?.cancel()
-        stopwatchJob = viewModelScope.launch {
-            while (_uiState.value.stopwatchRunning) {
-                delay(500)
-                val elapsedSinceStart = ((SystemClock.elapsedRealtime() - stopwatchStartTimestamp) / 1000).toInt()
-                val nextSec = stopwatchBaseElapsedSec + elapsedSinceStart
-
-                if (nextSec != _uiState.value.stopwatchElapsedSec) {
-                    _uiState.update { it.copy(stopwatchElapsedSec = nextSec) }
-                    locationTracker.updateElapsedSeconds(nextSec)
-                }
-            }
-        }
+    fun startStopwatch() {
+        stopwatchManager.start()
     }
 
-    private fun pauseStopwatch() {
-        if (_uiState.value.stopwatchRunning) {
-            val elapsedSinceStart = ((SystemClock.elapsedRealtime() - stopwatchStartTimestamp) / 1000).toInt()
-            val finalSec = stopwatchBaseElapsedSec + elapsedSinceStart
-            _uiState.update { it.copy(stopwatchRunning = false, stopwatchElapsedSec = finalSec) }
-            locationTracker.updateElapsedSeconds(finalSec)
-        } else {
-            _uiState.update { it.copy(stopwatchRunning = false) }
-        }
-        locationTracker.pauseTracking()
-        stopwatchJob?.cancel()
-        try {
-            com.benewalker.app.service.StopwatchService.pause(
-                getApplication(),
-                _uiState.value.stopwatchElapsedSec,
-                _uiState.value.stopwatchTarget
-            )
-        } catch (_: Exception) {}
+    fun pauseStopwatch() {
+        stopwatchManager.pause()
     }
 
     fun resetStopwatch() {
-        pauseStopwatch()
-        locationTracker.reset()
-        _uiState.update { it.copy(stopwatchElapsedSec = 0) }
-        stopwatchBaseElapsedSec = 0
-        lastBeepSecond = -1
-        lastSpokenMinute = -1
-        try {
-            com.benewalker.app.service.StopwatchService.stop(getApplication())
-        } catch (_: Exception) {}
+        stopwatchManager.reset()
     }
 
     fun setStopwatchTarget(target: String) {
-        _uiState.update { it.copy(stopwatchTarget = target) }
-        if (_uiState.value.stopwatchRunning) {
-            try {
-                com.benewalker.app.service.StopwatchService.start(
-                    getApplication(),
-                    _uiState.value.stopwatchElapsedSec,
-                    target
-                )
-            } catch (_: Exception) {}
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        try {
-            locationTracker.pauseTracking()
-            com.benewalker.app.service.StopwatchService.stop(getApplication())
-            toneGenerator?.release()
-            toneGenerator = null
-            textToSpeech?.stop()
-            textToSpeech?.shutdown()
-            textToSpeech = null
-        } catch (_: Exception) {}
+        stopwatchManager.setTarget(target)
     }
 
     fun saveStopwatchToToday(targetChoice: String? = null) {
-        val elapsed = _uiState.value.stopwatchElapsedSec
+        val elapsed = stopwatchManager.getExactCurrentElapsedSeconds()
         if (elapsed <= 0) return
 
-        val target = targetChoice ?: _uiState.value.stopwatchTarget
+        val target = targetChoice ?: stopwatchManager.target.value
         val todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
         val currentPoints = _uiState.value.gpsRoutePoints
         val currentDist = _uiState.value.gpsDistanceMeters

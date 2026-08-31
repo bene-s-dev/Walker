@@ -13,7 +13,6 @@ import android.media.ToneGenerator
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import android.os.SystemClock
 import android.speech.tts.TextToSpeech
 import androidx.core.app.NotificationCompat
 import com.benewalker.app.MainActivity
@@ -119,6 +118,14 @@ class StopwatchService : Service() {
         super.onCreate()
         createNotificationChannel()
         initAudio()
+
+        // Attach split TTS callback to LocationTracker
+        LocationTracker.getInstance(applicationContext).onSplitReached = { split ->
+            if (soundEnabled) {
+                val text = "Kilometer ${split.kmNumber} in ${split.paceString} Minuten"
+                speakText(text)
+            }
+        }
     }
 
     private fun initAudio() {
@@ -176,14 +183,14 @@ class StopwatchService : Service() {
                 // 1. Start continuous foreground GPS tracking engine
                 LocationTracker.getInstance(applicationContext).startTracking()
 
-                // 2. Play start sound
+                // 2. Play start confirmation tone
                 if (soundEnabled) {
                     try {
                         toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 250)
                     } catch (_: Exception) {}
                 }
 
-                // 3. Start Foreground Notification
+                // 3. Start Foreground Notification with Chronometer
                 val notification = buildLiveNotification(elapsedSec, target, isRunning = true)
                 try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -198,8 +205,8 @@ class StopwatchService : Service() {
                     } catch (_: Exception) {}
                 }
 
-                // 4. Start background timer & TTS loop
-                startServiceTimer(elapsedSec)
+                // 4. Start background timer & TTS loop synced with StopwatchManager
+                startServiceTimer()
             }
             ACTION_UPDATE_CONFIG -> {
                 soundEnabled = intent.getBooleanExtra(EXTRA_SOUND_ENABLED, soundEnabled)
@@ -226,20 +233,18 @@ class StopwatchService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun startServiceTimer(initialElapsedSec: Int) {
+    private fun startServiceTimer() {
         timerJob?.cancel()
-        val startRealtime = SystemClock.elapsedRealtime()
+        val manager = StopwatchManager.getInstance(applicationContext)
 
         timerJob = serviceScope.launch {
             while (isActive) {
                 delay(500)
-                val elapsedSinceStart = ((SystemClock.elapsedRealtime() - startRealtime) / 1000).toInt()
-                val currentSec = initialElapsedSec + elapsedSinceStart
-
-                LocationTracker.getInstance(applicationContext).updateElapsedSeconds(currentSec)
+                val currentSec = manager.getExactCurrentElapsedSeconds()
+                manager.tick(currentSec)
 
                 if (soundEnabled) {
-                    // 30 Sekunden Signal (Doppel-Piepton)
+                    // 30 Seconds Beep
                     if (beep30s && currentSec % 60 == 30 && currentSec != lastBeepSecond) {
                         lastBeepSecond = currentSec
                         try {
@@ -247,7 +252,7 @@ class StopwatchService : Service() {
                         } catch (_: Exception) {}
                     }
 
-                    // Minuten Sprachansage (zuverlässig nach Minutenüberschreitung)
+                    // Minute Voice Interval Announcement
                     val currentMin = currentSec / 60
                     if (currentMin > lastSpokenMinute && currentMin > 0) {
                         if (currentMin % voiceIntervalMin == 0) {
@@ -276,6 +281,7 @@ class StopwatchService : Service() {
     override fun onDestroy() {
         timerJob?.cancel()
         serviceScope.cancel()
+        LocationTracker.getInstance(applicationContext).onSplitReached = null
         LocationTracker.getInstance(applicationContext).pauseTracking()
         releaseWakeLock()
         try {
