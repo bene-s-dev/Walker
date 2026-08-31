@@ -45,7 +45,7 @@ data class TrainingTrackingState(
     val splits: List<KilometerSplit> = emptyList()
 )
 
-class LocationTracker(private val context: Context) : LocationListener {
+class LocationTracker private constructor(private val context: Context) : LocationListener {
 
     private val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
@@ -64,6 +64,15 @@ class LocationTracker(private val context: Context) : LocationListener {
         private const val MAX_ACCURACY_METERS = 32.0f
         private const val MAX_HUMAN_SPEED_KMH = 28.0 // 7.7 m/s max for walking/sprinting
         private const val STATIONARY_DRIFT_THRESHOLD_METERS = 2.5
+
+        @Volatile
+        private var INSTANCE: LocationTracker? = null
+
+        fun getInstance(context: Context): LocationTracker {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: LocationTracker(context.applicationContext).also { INSTANCE = it }
+            }
+        }
     }
 
     fun updateElapsedSeconds(elapsedSec: Int) {

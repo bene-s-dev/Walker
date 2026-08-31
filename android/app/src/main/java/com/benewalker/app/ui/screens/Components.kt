@@ -348,8 +348,10 @@ fun WalkEntryFormCard(
                 themeColor = MaterialTheme.colorScheme.primary,
                 min = state.morningMin,
                 sec = state.morningSec,
+                km = state.morningDistanceKm,
                 onMinChange = { viewModel.updateFormFields(morningMin = it) },
                 onSecChange = { viewModel.updateFormFields(morningSec = it) },
+                onKmChange = { viewModel.updateFormFields(morningDistanceKm = it) },
                 onAddSeconds = { viewModel.addQuickSeconds("morning", it) },
                 onClear = { viewModel.clearFormField("morning") }
             )
@@ -362,8 +364,10 @@ fun WalkEntryFormCard(
                 themeColor = MaterialTheme.colorScheme.tertiary,
                 min = state.eveningMin,
                 sec = state.eveningSec,
+                km = state.eveningDistanceKm,
                 onMinChange = { viewModel.updateFormFields(eveningMin = it) },
                 onSecChange = { viewModel.updateFormFields(eveningSec = it) },
+                onKmChange = { viewModel.updateFormFields(eveningDistanceKm = it) },
                 onAddSeconds = { viewModel.addQuickSeconds("evening", it) },
                 onClear = { viewModel.clearFormField("evening") }
             )
@@ -386,7 +390,7 @@ fun WalkEntryFormCard(
                 } else {
                     Icon(Icons.Filled.Save, contentDescription = null, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Gehzeit speichern", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text("Gehzeit & Strecke speichern", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -401,12 +405,15 @@ fun AndroidM3SessionInput(
     themeColor: Color,
     min: String,
     sec: String,
+    km: String = "",
     onMinChange: (String) -> Unit,
     onSecChange: (String) -> Unit,
+    onKmChange: ((String) -> Unit)? = null,
     onAddSeconds: (Int) -> Unit,
     onClear: () -> Unit
 ) {
     val totalSec = (min.toIntOrNull() ?: 0) * 60 + (sec.toIntOrNull() ?: 0)
+    val distanceKmVal = km.replace(',', '.').toDoubleOrNull() ?: 0.0
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -428,31 +435,49 @@ fun AndroidM3SessionInput(
                     }
                 }
 
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = themeColor.copy(alpha = 0.18f)
-                ) {
-                    Text(
-                        text = formatSecToMinSec(totalSec),
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = themeColor,
-                        maxLines = 1
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (distanceKmVal > 0.0) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = themeColor.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = String.format(java.util.Locale.GERMAN, "%.2f km", distanceKmVal),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                fontSize = 11.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = themeColor,
+                                maxLines = 1
+                            )
+                        }
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = themeColor.copy(alpha = 0.18f)
+                    ) {
+                        Text(
+                            text = formatSecToMinSec(totalSec),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = themeColor,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
 
-            // Standard Outlined TextFields (Minuten & Sekunden)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Standard Outlined TextFields (Minuten & Sekunden & Distanz)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = min,
                     onValueChange = onMinChange,
                     modifier = Modifier.weight(1f),
                     label = { Text("Minuten", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     placeholder = { Text("0") },
-                    leadingIcon = { Icon(Icons.Outlined.Timer, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                    suffix = { Text("min", fontSize = 12.sp) },
+                    leadingIcon = { Icon(Icons.Outlined.Timer, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                    suffix = { Text("min", fontSize = 11.sp) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
@@ -469,8 +494,8 @@ fun AndroidM3SessionInput(
                     modifier = Modifier.weight(1f),
                     label = { Text("Sekunden", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     placeholder = { Text("0") },
-                    leadingIcon = { Icon(Icons.Outlined.AccessTime, contentDescription = null, modifier = Modifier.size(18.dp)) },
-                    suffix = { Text("sek", fontSize = 12.sp) },
+                    leadingIcon = { Icon(Icons.Outlined.AccessTime, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                    suffix = { Text("sek", fontSize = 11.sp) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
@@ -481,6 +506,26 @@ fun AndroidM3SessionInput(
                         focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
                     )
                 )
+                if (onKmChange != null) {
+                    OutlinedTextField(
+                        value = km,
+                        onValueChange = onKmChange,
+                        modifier = Modifier.weight(1.1f),
+                        label = { Text("Distanz", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        placeholder = { Text("0.0") },
+                        leadingIcon = { Icon(Icons.Outlined.Straighten, contentDescription = null, modifier = Modifier.size(16.dp)) },
+                        suffix = { Text("km", fontSize = 11.sp) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = themeColor,
+                            focusedLabelColor = themeColor,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                        )
+                    )
+                }
             }
 
             // Material 3 Quick Add Buttons
@@ -593,6 +638,20 @@ fun HistoryItemCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
+                    val totalDistanceMeters = record.morningDistanceMeters + record.eveningDistanceMeters
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Text(
+                            text = String.format(java.util.Locale.GERMAN, "%.2f km", totalDistanceMeters / 1000.0),
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+
                     Surface(
                         shape = RoundedCornerShape(8.dp),
                         color = MaterialTheme.colorScheme.primaryContainer
@@ -734,34 +793,30 @@ private fun TrainingSessionCard(
             }
 
             // Metrics row (Distance, Pace, Speed)
-            if (distanceKm > 0.01) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    // Distance
-                    SessionSmallMetric(
-                        modifier = Modifier.weight(1f),
-                        label = "Distanz",
-                        value = String.format(java.util.Locale.GERMAN, "%.2f km", distanceKm)
-                    )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                // Distance
+                SessionSmallMetric(
+                    modifier = Modifier.weight(1f),
+                    label = "Distanz",
+                    value = String.format(java.util.Locale.GERMAN, "%.2f km", distanceKm)
+                )
 
-                    // Pace
-                    if (paceFormatted != null) {
-                        SessionSmallMetric(
-                            modifier = Modifier.weight(1f),
-                            label = "Ø Pace",
-                            value = paceFormatted
-                        )
-                    }
+                // Pace
+                SessionSmallMetric(
+                    modifier = Modifier.weight(1f),
+                    label = "Ø Pace",
+                    value = paceFormatted ?: "--:-- /km"
+                )
 
-                    // Speed
-                    SessionSmallMetric(
-                        modifier = Modifier.weight(1f),
-                        label = "Ø Tempo",
-                        value = String.format(java.util.Locale.GERMAN, "%.1f km/h", avgSpeedKmh)
-                    )
-                }
+                // Speed
+                SessionSmallMetric(
+                    modifier = Modifier.weight(1f),
+                    label = "Ø Tempo",
+                    value = String.format(java.util.Locale.GERMAN, "%.1f km/h", avgSpeedKmh)
+                )
             }
 
             // Speed-Colored OpenStreetMap Route Snippet or Grey Placeholder Map

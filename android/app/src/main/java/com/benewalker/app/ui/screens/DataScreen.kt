@@ -127,8 +127,8 @@ fun DataScreen(
         EditRecordDialog(
             record = record,
             onDismiss = { recordToEdit = null },
-            onSave = { morningSec, eveningSec ->
-                viewModel.updateRecordDirectly(record.date, morningSec, eveningSec)
+            onSave = { morningSec, eveningSec, morningDistMeters, eveningDistMeters ->
+                viewModel.updateRecordDirectly(record.date, morningSec, eveningSec, morningDistMeters, eveningDistMeters)
                 recordToEdit = null
             }
         )
@@ -165,12 +165,14 @@ fun DataScreen(
 fun EditRecordDialog(
     record: WalkRecord,
     onDismiss: () -> Unit,
-    onSave: (morningSec: Int, eveningSec: Int) -> Unit
+    onSave: (morningSec: Int, eveningSec: Int, morningDistMeters: Double, eveningDistMeters: Double) -> Unit
 ) {
     var morningMin by remember { mutableStateOf(if (record.morningSeconds > 0) (record.morningSeconds / 60).toString() else "") }
     var morningSec by remember { mutableStateOf(if (record.morningSeconds > 0) (record.morningSeconds % 60).toString() else "") }
+    var morningKm by remember { mutableStateOf(if (record.morningDistanceMeters > 0) String.format(java.util.Locale.GERMAN, "%.2f", record.morningDistanceMeters / 1000.0) else "") }
     var eveningMin by remember { mutableStateOf(if (record.eveningSeconds > 0) (record.eveningSeconds / 60).toString() else "") }
     var eveningSec by remember { mutableStateOf(if (record.eveningSeconds > 0) (record.eveningSeconds % 60).toString() else "") }
+    var eveningKm by remember { mutableStateOf(if (record.eveningDistanceMeters > 0) String.format(java.util.Locale.GERMAN, "%.2f", record.eveningDistanceMeters / 1000.0) else "") }
 
     val primaryColor = MaterialTheme.colorScheme.primary
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
@@ -196,8 +198,10 @@ fun EditRecordDialog(
                     themeColor = primaryColor,
                     min = morningMin,
                     sec = morningSec,
+                    km = morningKm,
                     onMinChange = { morningMin = it },
                     onSecChange = { morningSec = it },
+                    onKmChange = { morningKm = it },
                     onAddSeconds = { s ->
                         val curr = (morningMin.toIntOrNull() ?: 0) * 60 + (morningSec.toIntOrNull() ?: 0)
                         val next = (curr + s).coerceAtLeast(0)
@@ -207,6 +211,7 @@ fun EditRecordDialog(
                     onClear = {
                         morningMin = ""
                         morningSec = ""
+                        morningKm = ""
                     }
                 )
 
@@ -218,8 +223,10 @@ fun EditRecordDialog(
                     themeColor = tertiaryColor,
                     min = eveningMin,
                     sec = eveningSec,
+                    km = eveningKm,
                     onMinChange = { eveningMin = it },
                     onSecChange = { eveningSec = it },
+                    onKmChange = { eveningKm = it },
                     onAddSeconds = { s ->
                         val curr = (eveningMin.toIntOrNull() ?: 0) * 60 + (eveningSec.toIntOrNull() ?: 0)
                         val next = (curr + s).coerceAtLeast(0)
@@ -229,6 +236,7 @@ fun EditRecordDialog(
                     onClear = {
                         eveningMin = ""
                         eveningSec = ""
+                        eveningKm = ""
                     }
                 )
             }
@@ -236,9 +244,13 @@ fun EditRecordDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val m = (morningMin.toIntOrNull() ?: 0) * 60 + (morningSec.toIntOrNull() ?: 0)
-                    val e = (eveningMin.toIntOrNull() ?: 0) * 60 + (eveningSec.toIntOrNull() ?: 0)
-                    onSave(m, e)
+                    val mSec = (morningMin.toIntOrNull() ?: 0) * 60 + (morningSec.toIntOrNull() ?: 0)
+                    val eSec = (eveningMin.toIntOrNull() ?: 0) * 60 + (eveningSec.toIntOrNull() ?: 0)
+                    val mKm = morningKm.replace(',', '.').toDoubleOrNull() ?: 0.0
+                    val eKm = eveningKm.replace(',', '.').toDoubleOrNull() ?: 0.0
+                    val mDistMeters = if (mKm > 0.0) mKm * 1000.0 else (if (mSec > 0) record.morningDistanceMeters else 0.0)
+                    val eDistMeters = if (eKm > 0.0) eKm * 1000.0 else (if (eSec > 0) record.eveningDistanceMeters else 0.0)
+                    onSave(mSec, eSec, mDistMeters, eDistMeters)
                 }
             ) {
                 Text("Speichern")

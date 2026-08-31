@@ -58,8 +58,10 @@ data class WalkUiState(
     val formDate: String = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")),
     val morningMin: String = "",
     val morningSec: String = "",
+    val morningDistanceKm: String = "",
     val eveningMin: String = "",
     val eveningSec: String = "",
+    val eveningDistanceKm: String = "",
     val formSuccessFeedback: Boolean = false,
 
     // Stopwatch & Training
@@ -93,7 +95,7 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     private val database = WalkDatabase.getInstance(application)
     private val walkDao = database.walkDao()
     val healthConnectManager = HealthConnectManager(application, walkDao)
-    val locationTracker = LocationTracker(application)
+    val locationTracker = LocationTracker.getInstance(application)
 
     private var toneGenerator: ToneGenerator? = null
     private var textToSpeech: TextToSpeech? = null
@@ -299,13 +301,17 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 val mSec = if (record.morningSeconds > 0) (record.morningSeconds % 60).toString() else ""
                 val eMin = if (record.eveningSeconds > 0) (record.eveningSeconds / 60).toString() else ""
                 val eSec = if (record.eveningSeconds > 0) (record.eveningSeconds % 60).toString() else ""
+                val mDist = if (record.morningDistanceMeters > 0) String.format(Locale.GERMAN, "%.2f", record.morningDistanceMeters / 1000.0) else ""
+                val eDist = if (record.eveningDistanceMeters > 0) String.format(Locale.GERMAN, "%.2f", record.eveningDistanceMeters / 1000.0) else ""
                 _uiState.update {
                     it.copy(
-                        formDate = date,
-                        morningMin = mMin,
-                        morningSec = mSec,
-                        eveningMin = eMin,
-                        eveningSec = eSec
+                        formDate = record.date,
+                        morningMin = if (record.morningSeconds > 0) (record.morningSeconds / 60).toString() else "",
+                        morningSec = if (record.morningSeconds > 0) (record.morningSeconds % 60).toString() else "",
+                        morningDistanceKm = mDist,
+                        eveningMin = if (record.eveningSeconds > 0) (record.eveningSeconds / 60).toString() else "",
+                        eveningSec = if (record.eveningSeconds > 0) (record.eveningSeconds % 60).toString() else "",
+                        eveningDistanceKm = eDist
                     )
                 }
             } else {
@@ -314,8 +320,10 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                         formDate = date,
                         morningMin = "",
                         morningSec = "",
+                        morningDistanceKm = "",
                         eveningMin = "",
-                        eveningSec = ""
+                        eveningSec = "",
+                        eveningDistanceKm = ""
                     )
                 }
             }
@@ -325,15 +333,19 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     fun updateFormFields(
         morningMin: String? = null,
         morningSec: String? = null,
+        morningDistanceKm: String? = null,
         eveningMin: String? = null,
-        eveningSec: String? = null
+        eveningSec: String? = null,
+        eveningDistanceKm: String? = null
     ) {
         _uiState.update { current ->
             current.copy(
                 morningMin = morningMin ?: current.morningMin,
                 morningSec = morningSec ?: current.morningSec,
+                morningDistanceKm = morningDistanceKm ?: current.morningDistanceKm,
                 eveningMin = eveningMin ?: current.eveningMin,
-                eveningSec = eveningSec ?: current.eveningSec
+                eveningSec = eveningSec ?: current.eveningSec,
+                eveningDistanceKm = eveningDistanceKm ?: current.eveningDistanceKm
             )
         }
     }
@@ -360,8 +372,8 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearFormField(target: String) {
         _uiState.update {
-            if (target == "morning") it.copy(morningMin = "", morningSec = "")
-            else it.copy(eveningMin = "", eveningSec = "")
+            if (target == "morning") it.copy(morningMin = "", morningSec = "", morningDistanceKm = "")
+            else it.copy(eveningMin = "", eveningSec = "", eveningDistanceKm = "")
         }
     }
 
@@ -371,15 +383,20 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         val mSec = state.morningSec.toIntOrNull() ?: 0
         val eMin = state.eveningMin.toIntOrNull() ?: 0
         val eSec = state.eveningSec.toIntOrNull() ?: 0
+        val mDistKm = state.morningDistanceKm.replace(',', '.').toDoubleOrNull() ?: 0.0
+        val eDistKm = state.eveningDistanceKm.replace(',', '.').toDoubleOrNull() ?: 0.0
 
         val morningSeconds = mMin * 60 + mSec
         val eveningSeconds = eMin * 60 + eSec
         val totalSeconds = morningSeconds + eveningSeconds
 
-        if (totalSeconds == 0) return
+        if (totalSeconds == 0 && mDistKm == 0.0 && eDistKm == 0.0) return
 
         viewModelScope.launch {
             val existing = walkDao.getRecordByDate(state.formDate)
+            val morningDistMeters = if (mDistKm > 0.0) mDistKm * 1000.0 else (existing?.morningDistanceMeters ?: 0.0)
+            val eveningDistMeters = if (eDistKm > 0.0) eDistKm * 1000.0 else (existing?.eveningDistanceMeters ?: 0.0)
+
             val record = WalkRecord(
                 date = state.formDate,
                 morningSeconds = morningSeconds,
@@ -387,8 +404,8 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 totalSeconds = totalSeconds,
                 updatedAt = System.currentTimeMillis(),
                 source = existing?.source ?: "manual",
-                morningDistanceMeters = existing?.morningDistanceMeters ?: 0.0,
-                eveningDistanceMeters = existing?.eveningDistanceMeters ?: 0.0,
+                morningDistanceMeters = morningDistMeters,
+                eveningDistanceMeters = eveningDistMeters,
                 morningRouteJson = existing?.morningRouteJson,
                 eveningRouteJson = existing?.eveningRouteJson
             )
@@ -400,10 +417,18 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateRecordDirectly(date: String, morningSec: Int, eveningSec: Int) {
+    fun updateRecordDirectly(
+        date: String,
+        morningSec: Int,
+        eveningSec: Int,
+        morningDistMeters: Double? = null,
+        eveningDistMeters: Double? = null
+    ) {
         viewModelScope.launch {
             val existing = walkDao.getRecordByDate(date)
             val totalSeconds = morningSec + eveningSec
+            val mDist = morningDistMeters ?: (existing?.morningDistanceMeters ?: 0.0)
+            val eDist = eveningDistMeters ?: (existing?.eveningDistanceMeters ?: 0.0)
             val record = WalkRecord(
                 date = date,
                 morningSeconds = morningSec,
@@ -411,8 +436,8 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 totalSeconds = totalSeconds,
                 updatedAt = System.currentTimeMillis(),
                 source = existing?.source ?: "manual",
-                morningDistanceMeters = existing?.morningDistanceMeters ?: 0.0,
-                eveningDistanceMeters = existing?.eveningDistanceMeters ?: 0.0,
+                morningDistanceMeters = mDist,
+                eveningDistanceMeters = eDist,
                 morningRouteJson = existing?.morningRouteJson,
                 eveningRouteJson = existing?.eveningRouteJson
             )
@@ -447,16 +472,40 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
     fun setStopwatchSoundEnabled(enabled: Boolean) {
         prefs.edit().putBoolean("stopwatch_sound_enabled", enabled).apply()
         _uiState.update { it.copy(stopwatchSoundEnabled = enabled) }
+        try {
+            com.benewalker.app.service.StopwatchService.updateConfig(
+                getApplication(),
+                enabled,
+                _uiState.value.stopwatchBeep30s,
+                _uiState.value.stopwatchVoiceIntervalMin
+            )
+        } catch (_: Exception) {}
     }
 
     fun setStopwatchVoiceInterval(intervalMin: Int) {
         prefs.edit().putInt("stopwatch_voice_interval_min", intervalMin).apply()
         _uiState.update { it.copy(stopwatchVoiceIntervalMin = intervalMin) }
+        try {
+            com.benewalker.app.service.StopwatchService.updateConfig(
+                getApplication(),
+                _uiState.value.stopwatchSoundEnabled,
+                _uiState.value.stopwatchBeep30s,
+                intervalMin
+            )
+        } catch (_: Exception) {}
     }
 
     fun setStopwatchBeep30s(enabled: Boolean) {
         prefs.edit().putBoolean("stopwatch_beep_30s", enabled).apply()
         _uiState.update { it.copy(stopwatchBeep30s = enabled) }
+        try {
+            com.benewalker.app.service.StopwatchService.updateConfig(
+                getApplication(),
+                _uiState.value.stopwatchSoundEnabled,
+                enabled,
+                _uiState.value.stopwatchVoiceIntervalMin
+            )
+        } catch (_: Exception) {}
     }
 
     fun setLocationPermissionGranted(granted: Boolean) {
@@ -476,23 +525,19 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
 
         stopwatchStartTimestamp = SystemClock.elapsedRealtime()
         stopwatchBaseElapsedSec = currentSec
-        lastBeepSecond = -1
-        lastSpokenMinute = -1
 
-        // Start GPS tracking
-        if (_uiState.value.hasLocationPermission) {
-            locationTracker.startTracking()
-        }
-
+        // Start Foreground Service with Location Tracking, WakeLock & Audio engine
         try {
-            com.benewalker.app.service.StopwatchService.start(getApplication(), currentSec, target)
+            com.benewalker.app.service.StopwatchService.start(
+                getApplication(),
+                currentSec,
+                target,
+                _uiState.value.stopwatchSoundEnabled,
+                _uiState.value.stopwatchBeep30s,
+                _uiState.value.stopwatchVoiceIntervalMin
+            )
         } catch (_: Exception) {}
 
-        if (_uiState.value.stopwatchSoundEnabled) {
-            try {
-                toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 250)
-            } catch (_: Exception) {}
-        }
         stopwatchJob?.cancel()
         stopwatchJob = viewModelScope.launch {
             while (_uiState.value.stopwatchRunning) {
@@ -503,32 +548,6 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
                 if (nextSec != _uiState.value.stopwatchElapsedSec) {
                     _uiState.update { it.copy(stopwatchElapsedSec = nextSec) }
                     locationTracker.updateElapsedSeconds(nextSec)
-
-                    if (_uiState.value.stopwatchSoundEnabled) {
-                        // 30 Sekunden Signal (deutlich hörbarer Doppel-Piepton)
-                        if (_uiState.value.stopwatchBeep30s && nextSec % 60 == 30 && nextSec != lastBeepSecond) {
-                            lastBeepSecond = nextSec
-                            try {
-                                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 320)
-                            } catch (_: Exception) {}
-                        }
-                        // Sprachansage (Jede Minute oder alle 5 Minuten)
-                        else if (nextSec > 0 && nextSec % 60 == 0) {
-                            val mins = nextSec / 60
-                            val interval = _uiState.value.stopwatchVoiceIntervalMin
-                            if (mins % interval == 0 && mins != lastSpokenMinute) {
-                                lastSpokenMinute = mins
-                                val text = if (mins == 1) "Eine Minute" else "$mins Minuten"
-                                try {
-                                    if (isTtsReady) {
-                                        textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "min_$mins")
-                                    } else {
-                                        toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
-                                    }
-                                } catch (_: Exception) {}
-                            }
-                        }
-                    }
                 }
             }
         }

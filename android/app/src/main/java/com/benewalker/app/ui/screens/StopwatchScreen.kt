@@ -452,6 +452,12 @@ fun StopwatchScreen(
         val morningSec = todayRecord?.morningSeconds ?: 0
         val eveningSec = todayRecord?.eveningSeconds ?: 0
 
+        var selectedTarget by remember {
+            mutableStateOf(
+                if (uiState.stopwatchTarget == "evening" || (morningSec > 0 && eveningSec == 0)) "evening" else "morning"
+            )
+        }
+
         AlertDialog(
             onDismissRequest = { showSaveConfirmDialog = false },
             title = {
@@ -464,72 +470,102 @@ fun StopwatchScreen(
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Dieses Training ($formattedTime${if (distanceKm > 0.01) ", $formattedDistance" else ""}) als Einheit speichern:",
+                        text = "Dieses Training ($formattedTime${if (distanceKm > 0.01) ", $formattedDistance" else ""}) speichern als:",
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    // Option 1: 1. Gehen (Nur anbieten wenn 1. Gehen noch frei ist, oder beide bereits belegt sind)
-                    if (morningSec == 0 || eveningSec > 0) {
-                        Surface(
-                            onClick = {
-                                viewModel.saveStopwatchToToday(targetChoice = "morning")
-                                showSaveConfirmDialog = false
-                            },
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column {
-                                    Text("Als 1. Gehen speichern", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                                    if (morningSec > 0) {
-                                        Text("Bereits: ${morningSec / 60}m ${morningSec % 60}s (wird überschrieben)", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.outline)
-                                    } else {
-                                        Text("Noch frei für heute", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.primary)
-                                    }
-                                }
-                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                            }
-                        }
-                    }
-
-                    // Option 2: 2. Gehen
+                    // Option 1: 1. Gehen (Vormittag)
                     Surface(
-                        onClick = {
-                            viewModel.saveStopwatchToToday(targetChoice = "evening")
-                            showSaveConfirmDialog = false
-                        },
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f),
+                        onClick = { selectedTarget = "morning" },
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (selectedTarget == "morning")
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (selectedTarget == "morning")
+                            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+                        else
+                            null,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column {
-                                Text("Als 2. Gehen speichern", fontWeight = FontWeight.Bold, fontSize = 13.5.sp, color = MaterialTheme.colorScheme.onTertiaryContainer)
-                                if (eveningSec > 0) {
-                                    Text("Bereits: ${eveningSec / 60}m ${eveningSec % 60}s (wird überschrieben)", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.outline)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Icon(Icons.Outlined.WbSunny, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                                    Text("1. Gehen (Vormittag)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                if (morningSec > 0) {
+                                    Text("Bereits: ${morningSec / 60}m ${morningSec % 60}s (wird überschrieben)", fontSize = 11.sp, color = MaterialTheme.colorScheme.outline)
                                 } else {
-                                    Text(if (morningSec > 0) "1. Gehen abgeschlossen • Jetzt 2. Gehen sichern" else "Noch frei für heute", fontSize = 10.5.sp, color = MaterialTheme.colorScheme.tertiary)
+                                    Text("Noch frei für heute", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                                 }
                             }
-                            Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(20.dp))
+                            RadioButton(
+                                selected = selectedTarget == "morning",
+                                onClick = { selectedTarget = "morning" }
+                            )
+                        }
+                    }
+
+                    // Option 2: 2. Gehen (Nachmittag)
+                    Surface(
+                        onClick = { selectedTarget = "evening" },
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (selectedTarget == "evening")
+                            MaterialTheme.colorScheme.tertiaryContainer
+                        else
+                            MaterialTheme.colorScheme.surfaceContainerHigh,
+                        border = if (selectedTarget == "evening")
+                            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.tertiary)
+                        else
+                            null,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Icon(Icons.Outlined.NightsStay, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.tertiary)
+                                    Text("2. Gehen (Nachmittag)", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                if (eveningSec > 0) {
+                                    Text("Bereits: ${eveningSec / 60}m ${eveningSec % 60}s (wird überschrieben)", fontSize = 11.sp, color = MaterialTheme.colorScheme.outline)
+                                } else {
+                                    Text("Noch frei für heute", fontSize = 11.sp, color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Medium)
+                                }
+                            }
+                            RadioButton(
+                                selected = selectedTarget == "evening",
+                                onClick = { selectedTarget = "evening" }
+                            )
                         }
                     }
                 }
             },
-            confirmButton = {},
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.saveStopwatchToToday(targetChoice = selectedTarget)
+                        showSaveConfirmDialog = false
+                    },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Speichern")
+                }
+            },
             dismissButton = {
                 TextButton(onClick = { showSaveConfirmDialog = false }) {
                     Text("Abbrechen")

@@ -8,16 +8,34 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.SystemClock
+import android.speech.tts.TextToSpeech
 import androidx.core.app.NotificationCompat
 import com.benewalker.app.MainActivity
 import com.benewalker.app.R
+import kotlinx.coroutines.*
+import java.util.Locale
 
 class StopwatchService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
+    private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private var timerJob: Job? = null
+
+    private var toneGenerator: ToneGenerator? = null
+    private var textToSpeech: TextToSpeech? = null
+    private var isTtsReady = false
+
+    private var soundEnabled = true
+    private var beep30s = true
+    private var voiceIntervalMin = 1
+    private var lastBeepSecond = -1
+    private var lastSpokenMinute = 0
 
     companion object {
         const val CHANNEL_ID = "benewalker_stopwatch_live_channel"
@@ -26,15 +44,29 @@ class StopwatchService : Service() {
         const val ACTION_START = "com.benewalker.app.ACTION_START"
         const val ACTION_PAUSE = "com.benewalker.app.ACTION_PAUSE"
         const val ACTION_STOP = "com.benewalker.app.ACTION_STOP"
+        const val ACTION_UPDATE_CONFIG = "com.benewalker.app.ACTION_UPDATE_CONFIG"
 
         const val EXTRA_ELAPSED_SECONDS = "extra_elapsed_seconds"
         const val EXTRA_TARGET = "extra_target"
+        const val EXTRA_SOUND_ENABLED = "extra_sound_enabled"
+        const val EXTRA_BEEP_30S = "extra_beep_30s"
+        const val EXTRA_VOICE_INTERVAL_MIN = "extra_voice_interval_min"
 
-        fun start(context: Context, elapsedSeconds: Int, target: String) {
+        fun start(
+            context: Context,
+            elapsedSeconds: Int,
+            target: String,
+            soundEnabled: Boolean = true,
+            beep30s: Boolean = true,
+            voiceIntervalMin: Int = 1
+        ) {
             val intent = Intent(context, StopwatchService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_ELAPSED_SECONDS, elapsedSeconds)
                 putExtra(EXTRA_TARGET, target)
+                putExtra(EXTRA_SOUND_ENABLED, soundEnabled)
+                putExtra(EXTRA_BEEP_30S, beep30s)
+                putExtra(EXTRA_VOICE_INTERVAL_MIN, voiceIntervalMin)
             }
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -42,6 +74,23 @@ class StopwatchService : Service() {
                 } else {
                     context.startService(intent)
                 }
+            } catch (_: Exception) {}
+        }
+
+        fun updateConfig(
+            context: Context,
+            soundEnabled: Boolean,
+            beep30s: Boolean,
+            voiceIntervalMin: Int
+        ) {
+            val intent = Intent(context, StopwatchService::class.java).apply {
+                action = ACTION_UPDATE_CONFIG
+                putExtra(EXTRA_SOUND_ENABLED, soundEnabled)
+                putExtra(EXTRA_BEEP_30S, beep30s)
+                putExtra(EXTRA_VOICE_INTERVAL_MIN, voiceIntervalMin)
+            }
+            try {
+                context.startService(intent)
             } catch (_: Exception) {}
         }
 
@@ -69,6 +118,22 @@ class StopwatchService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        initAudio()
+    }
+
+    private fun initAudio() {
+        try {
+            toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+        } catch (_: Exception) {}
+
+        try {
+            textToSpeech = TextToSpeech(applicationContext) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    textToSpeech?.language = Locale.GERMAN
+                    isTtsReady = true
+                }
+            }
+        } catch (_: Exception) {}
     }
 
     private fun acquireWakeLock() {
@@ -83,8 +148,7 @@ class StopwatchService : Service() {
                 }
             }
             if (wakeLock?.isHeld == false) {
-                // Max timeout 6 hours to prevent accidental battery drain if forgotten
-                wakeLock?.acquire(6 * 60 * 60 * 1000L)
+                wakeLock?.acquire(6 * 60 * 60 * 1000L) // 6h max
             }
         } catch (_: Exception) {}
     }
@@ -103,6 +167,23 @@ class StopwatchService : Service() {
                 acquireWakeLock()
                 val elapsedSec = intent.getIntExtra(EXTRA_ELAPSED_SECONDS, 0)
                 val target = intent.getStringExtra(EXTRA_TARGET) ?: "morning"
+                soundEnabled = intent.getBooleanExtra(EXTRA_SOUND_ENABLED, true)
+                beep30s = intent.getBooleanExtra(EXTRA_BEEP_30S, true)
+                voiceIntervalMin = intent.getIntExtra(EXTRA_VOICE_INTERVAL_MIN, 1)
+                lastBeepSecond = -1
+                lastSpokenMinute = elapsedSec / 60
+
+                // 1. Start continuous foreground GPS tracking engine
+                LocationTracker.getInstance(applicationContext).startTracking()
+
+                // 2. Play start sound
+                if (soundEnabled) {
+                    try {
+                        toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 250)
+                    } catch (_: Exception) {}
+                }
+
+                // 3. Start Foreground Notification
                 val notification = buildLiveNotification(elapsedSec, target, isRunning = true)
                 try {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -116,8 +197,18 @@ class StopwatchService : Service() {
                         startForeground(NOTIFICATION_ID, notification)
                     } catch (_: Exception) {}
                 }
+
+                // 4. Start background timer & TTS loop
+                startServiceTimer(elapsedSec)
+            }
+            ACTION_UPDATE_CONFIG -> {
+                soundEnabled = intent.getBooleanExtra(EXTRA_SOUND_ENABLED, soundEnabled)
+                beep30s = intent.getBooleanExtra(EXTRA_BEEP_30S, beep30s)
+                voiceIntervalMin = intent.getIntExtra(EXTRA_VOICE_INTERVAL_MIN, voiceIntervalMin)
             }
             ACTION_PAUSE -> {
+                timerJob?.cancel()
+                LocationTracker.getInstance(applicationContext).pauseTracking()
                 releaseWakeLock()
                 val elapsedSec = intent.getIntExtra(EXTRA_ELAPSED_SECONDS, 0)
                 val target = intent.getStringExtra(EXTRA_TARGET) ?: "morning"
@@ -125,6 +216,8 @@ class StopwatchService : Service() {
                 manager.notify(NOTIFICATION_ID, buildLiveNotification(elapsedSec, target, isRunning = false))
             }
             ACTION_STOP -> {
+                timerJob?.cancel()
+                LocationTracker.getInstance(applicationContext).pauseTracking()
                 releaseWakeLock()
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
@@ -133,8 +226,65 @@ class StopwatchService : Service() {
         return START_NOT_STICKY
     }
 
+    private fun startServiceTimer(initialElapsedSec: Int) {
+        timerJob?.cancel()
+        val startRealtime = SystemClock.elapsedRealtime()
+
+        timerJob = serviceScope.launch {
+            while (isActive) {
+                delay(500)
+                val elapsedSinceStart = ((SystemClock.elapsedRealtime() - startRealtime) / 1000).toInt()
+                val currentSec = initialElapsedSec + elapsedSinceStart
+
+                LocationTracker.getInstance(applicationContext).updateElapsedSeconds(currentSec)
+
+                if (soundEnabled) {
+                    // 30 Sekunden Signal (Doppel-Piepton)
+                    if (beep30s && currentSec % 60 == 30 && currentSec != lastBeepSecond) {
+                        lastBeepSecond = currentSec
+                        try {
+                            toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 320)
+                        } catch (_: Exception) {}
+                    }
+
+                    // Minuten Sprachansage (zuverlässig nach Minutenüberschreitung)
+                    val currentMin = currentSec / 60
+                    if (currentMin > lastSpokenMinute && currentMin > 0) {
+                        if (currentMin % voiceIntervalMin == 0) {
+                            lastSpokenMinute = currentMin
+                            val text = if (currentMin == 1) "Eine Minute" else "$currentMin Minuten"
+                            speakText(text)
+                        } else {
+                            lastSpokenMinute = currentMin
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun speakText(text: String) {
+        try {
+            if (isTtsReady) {
+                textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "service_min_${System.currentTimeMillis()}")
+            } else {
+                toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
+            }
+        } catch (_: Exception) {}
+    }
+
     override fun onDestroy() {
+        timerJob?.cancel()
+        serviceScope.cancel()
+        LocationTracker.getInstance(applicationContext).pauseTracking()
         releaseWakeLock()
+        try {
+            toneGenerator?.release()
+            toneGenerator = null
+            textToSpeech?.stop()
+            textToSpeech?.shutdown()
+            textToSpeech = null
+        } catch (_: Exception) {}
         super.onDestroy()
     }
 
