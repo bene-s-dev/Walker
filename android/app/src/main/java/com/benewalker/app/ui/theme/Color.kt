@@ -52,6 +52,11 @@ val OnSurfaceVariantDark = Color(0xFFC0CAC7)
 val OutlineDark = Color(0xFF8A9491)
 val OutlineVariantDark = Color(0xFF3B4845)   // Distinct card borders
 
-// High-Visibility Trend Line Colors
+// High-Visibility Trend & Session Colors (High-Contrast 1. Gehen vs 2. Gehen)
 val TrendGreenDark = Color(0xFF00E676)       // Vibrant glowing emerald in dark mode
 val TrendGreenLight = Color(0xFF059669)      // Rich dark emerald in light mode
+
+// 1. Gehen (Vormittag / Frisches Smaragdgrün)
+val ChartMorningColor = Color(0xFF00E676)
+// 2. Gehen (Nachmittag / Leuchtendes Sonnen-Orange)
+val ChartEveningColor = Color(0xFFFF9100)

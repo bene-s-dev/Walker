@@ -101,8 +101,8 @@ class BeneWalkerChartWidget : AppWidgetProvider() {
             return bitmap
         }
 
-        val primaryColor = Color.parseColor("#78D8AF") // Material You Mint
-        val tertiaryColor = Color.parseColor("#84D4DE") // Material You Teal/Cyan
+        val primaryColor = Color.parseColor("#00E676") // 1. Gehen (Strahlendes Frisches Grün)
+        val tertiaryColor = Color.parseColor("#FF9100") // 2. Gehen (Leuchtendes Sonnen-Orange)
         val gridColor = Color.parseColor("#33443F")
         val labelColor = Color.parseColor("#A2B2AC")
 

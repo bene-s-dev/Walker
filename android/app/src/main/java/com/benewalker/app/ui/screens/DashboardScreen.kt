@@ -2,6 +2,7 @@ package com.benewalker.app.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -27,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.benewalker.app.data.WalkRecord
 import com.benewalker.app.ui.WalkViewModel
+import com.benewalker.app.ui.theme.ChartEveningColor
+import com.benewalker.app.ui.theme.ChartMorningColor
 import java.util.Locale
 
 @Composable
@@ -96,7 +100,8 @@ fun DashboardChartSection(
     onBarClick: (WalkRecord?) -> Unit
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
-    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val morningColor = ChartMorningColor // Strahlendes Frisches Grün
+    val eveningColor = ChartEveningColor // Leuchtendes Sonnenuntergangs-Orange
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -222,14 +227,14 @@ fun DashboardChartSection(
                 }
             }
 
-            // Legend: 1. Gehen und 2. Gehen
+            // Legend: 1. Gehen (Grün) und 2. Gehen (Orange)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                LegendItem(color = primaryColor, label = "1. Gehen")
-                LegendItem(color = tertiaryColor, label = "2. Gehen")
+                LegendItem(color = morningColor, label = "1. Gehen (Vormittag)")
+                LegendItem(color = eveningColor, label = "2. Gehen (Nachmittag)")
             }
 
             // Detail-Anzeige bei Tippen auf einen Balken
@@ -268,8 +273,8 @@ fun DashboardChartSection(
                                         Text(
                                             mLabel,
                                             fontSize = 11.5.sp,
-                                            color = primaryColor,
-                                            fontWeight = FontWeight.SemiBold
+                                            color = morningColor,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
                                     if (selectedRecord.eveningSeconds > 0 || selectedRecord.eveningDistanceMeters > 0) {
@@ -281,8 +286,8 @@ fun DashboardChartSection(
                                         Text(
                                             eLabel,
                                             fontSize = 11.5.sp,
-                                            color = tertiaryColor,
-                                            fontWeight = FontWeight.SemiBold
+                                            color = eveningColor,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
                                 }
@@ -298,7 +303,7 @@ fun DashboardChartSection(
                                     text = totalValueStr,
                                     fontWeight = FontWeight.Black,
                                     fontSize = 16.sp,
-                                    color = primaryColor
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
                                     text = if (metricMode == "distance") "Gesamtdistanz" else "Gesamtzeit",
@@ -325,8 +330,8 @@ fun DashboardChartSection(
                 DashboardInteractiveBarChart(
                     records = records,
                     metricMode = metricMode,
-                    primaryColor = primaryColor,
-                    tertiaryColor = tertiaryColor,
+                    morningColor = morningColor,
+                    eveningColor = eveningColor,
                     selectedRecord = selectedRecord,
                     onBarClick = onBarClick,
                     modifier = Modifier
@@ -342,8 +347,8 @@ fun DashboardChartSection(
 fun DashboardInteractiveBarChart(
     records: List<WalkRecord>,
     metricMode: String,
-    primaryColor: Color,
-    tertiaryColor: Color,
+    morningColor: Color,
+    eveningColor: Color,
     selectedRecord: WalkRecord?,
     onBarClick: (WalkRecord?) -> Unit,
     modifier: Modifier = Modifier
@@ -382,6 +387,7 @@ fun DashboardInteractiveBarChart(
 
     val labelTextColor = MaterialTheme.colorScheme.onSurfaceVariant
     val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+    val selectionLineColor = MaterialTheme.colorScheme.primary
     val haptic = LocalHapticFeedback.current
 
     val totalBars = records.size
@@ -505,33 +511,33 @@ fun DashboardInteractiveBarChart(
             // Selection Thin Vertical Scrub Line & Indicator
             if (isSelected) {
                 drawLine(
-                    color = primaryColor,
+                    color = selectionLineColor,
                     start = Offset(centerX, 0f),
                     end = Offset(centerX, chartBottom),
                     strokeWidth = 2.dp.toPx(),
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f))
                 )
                 drawCircle(
-                    color = primaryColor,
+                    color = selectionLineColor,
                     radius = 3.5.dp.toPx(),
                     center = Offset(centerX, 4.dp.toPx())
                 )
             }
 
-            // Morning Bar (Left - Primary)
+            // Morning Bar (Left - 1. Gehen: Grün)
             if (morningHeight > 0) {
                 drawRoundRect(
-                    color = primaryColor,
+                    color = morningColor,
                     topLeft = Offset(morningX, chartBottom - morningHeight),
                     size = Size(unitBarWidth, morningHeight),
                     cornerRadius = CornerRadius(3.5.dp.toPx(), 3.5.dp.toPx())
                 )
             }
 
-            // Evening Bar (Right - Tertiary)
+            // Evening Bar (Right - 2. Gehen: Orange)
             if (eveningHeight > 0) {
                 drawRoundRect(
-                    color = tertiaryColor,
+                    color = eveningColor,
                     topLeft = Offset(eveningX, chartBottom - eveningHeight),
                     size = Size(unitBarWidth, eveningHeight),
                     cornerRadius = CornerRadius(3.5.dp.toPx(), 3.5.dp.toPx())
