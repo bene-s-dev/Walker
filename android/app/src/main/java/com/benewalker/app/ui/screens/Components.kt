@@ -420,8 +420,8 @@ fun AndroidM3SessionInput(
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
-        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            // Header mit Titel und Gesamtdauer-Badge
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Header mit Titel und Dauer-/Distanz-Badges
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -468,7 +468,7 @@ fun AndroidM3SessionInput(
                 }
             }
 
-            // Standard Outlined TextFields (Minuten & Sekunden & Distanz)
+            // Row 1: Zeit-Eingabe (Minuten & Sekunden)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = min,
@@ -506,13 +506,21 @@ fun AndroidM3SessionInput(
                         focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
                     )
                 )
-                if (onKmChange != null) {
+            }
+
+            // Row 2: Distanz-Eingabe & Schnellwahl (falls onKmChange vorhanden)
+            if (onKmChange != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     OutlinedTextField(
                         value = km,
                         onValueChange = onKmChange,
-                        modifier = Modifier.weight(1.1f),
-                        label = { Text("Distanz", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        placeholder = { Text("0.0") },
+                        modifier = Modifier.weight(1.2f),
+                        label = { Text("Distanz / Strecke", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                        placeholder = { Text("0.00") },
                         leadingIcon = { Icon(Icons.Outlined.Straighten, contentDescription = null, modifier = Modifier.size(16.dp)) },
                         suffix = { Text("km", fontSize = 11.sp) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -525,10 +533,43 @@ fun AndroidM3SessionInput(
                             focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
                         )
                     )
+
+                    // Quick km presets (+0.5km, +1.0km, +2.0km)
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        listOf(0.5 to "+0.5k", 1.0 to "+1.0k", 2.0 to "+2.0k").forEach { (addKm, label) ->
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        val currentVal = km.replace(',', '.').toDoubleOrNull() ?: 0.0
+                                        val nextVal = currentVal + addKm
+                                        onKmChange(String.format(java.util.Locale.GERMAN, "%.2f", nextVal))
+                                    },
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerLowest
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(vertical = 12.dp)
+                                ) {
+                                    Text(
+                                        text = label,
+                                        fontSize = 10.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = themeColor,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            // Material 3 Quick Add Buttons
+            // Row 3: Material 3 Quick Add Seconds Buttons & Clear Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),

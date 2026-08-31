@@ -176,6 +176,7 @@ fun EditRecordDialog(
 
     val primaryColor = MaterialTheme.colorScheme.primary
     val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val scrollState = androidx.compose.foundation.rememberScrollState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -187,7 +188,9 @@ fun EditRecordDialog(
         },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .androidx.compose.foundation.verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 // 1. Gehen Input
@@ -248,8 +251,8 @@ fun EditRecordDialog(
                     val eSec = (eveningMin.toIntOrNull() ?: 0) * 60 + (eveningSec.toIntOrNull() ?: 0)
                     val mKm = morningKm.replace(',', '.').toDoubleOrNull() ?: 0.0
                     val eKm = eveningKm.replace(',', '.').toDoubleOrNull() ?: 0.0
-                    val mDistMeters = if (mKm > 0.0) mKm * 1000.0 else (if (mSec > 0) record.morningDistanceMeters else 0.0)
-                    val eDistMeters = if (eKm > 0.0) eKm * 1000.0 else (if (eSec > 0) record.eveningDistanceMeters else 0.0)
+                    val mDistMeters = if (mKm > 0.0) mKm * 1000.0 else 0.0
+                    val eDistMeters = if (eKm > 0.0) eKm * 1000.0 else 0.0
                     onSave(mSec, eSec, mDistMeters, eDistMeters)
                 }
             ) {

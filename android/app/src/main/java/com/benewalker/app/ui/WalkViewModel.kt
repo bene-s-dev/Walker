@@ -385,9 +385,8 @@ class WalkViewModel(application: Application) : AndroidViewModel(application) {
         if (totalSeconds == 0 && mDistKm == 0.0 && eDistKm == 0.0) return
 
         viewModelScope.launch {
-            val existing = walkDao.getRecordByDate(state.formDate)
-            val morningDistMeters = if (mDistKm > 0.0) mDistKm * 1000.0 else (existing?.morningDistanceMeters ?: 0.0)
-            val eveningDistMeters = if (eDistKm > 0.0) eDistKm * 1000.0 else (existing?.eveningDistanceMeters ?: 0.0)
+            val morningDistMeters = if (mDistKm > 0.0) mDistKm * 1000.0 else (if (state.morningDistanceKm.isBlank()) (existing?.morningDistanceMeters ?: 0.0) else 0.0)
+            val eveningDistMeters = if (eDistKm > 0.0) eDistKm * 1000.0 else (if (state.eveningDistanceKm.isBlank()) (existing?.eveningDistanceMeters ?: 0.0) else 0.0)
 
             val record = WalkRecord(
                 date = state.formDate,
