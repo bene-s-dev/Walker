@@ -90,6 +90,13 @@ fun OsmRouteSnippetMap(
             if (sampled.last() != routePoints.last()) {
                 sampled.add(routePoints.last())
             }
+            // Ensure resume points are preserved in sampled so pause gaps are never lost in preview
+            for (p in routePoints) {
+                if (p.isResumePoint && sampled.none { it.timestamp == p.timestamp }) {
+                    val insertIdx = sampled.indexOfFirst { it.timestamp > p.timestamp }
+                    if (insertIdx >= 0) sampled.add(insertIdx, p) else sampled.add(p)
+                }
+            }
             sampled
         }
     }
@@ -158,11 +165,16 @@ fun OsmRouteSnippetMap(
 
             // 2. Draw Glow / Track Underlay
             val fullPath = Path()
-            val firstPt = toOffset(simplifiedPoints[0])
-            fullPath.moveTo(firstPt.x, firstPt.y)
-            for (i in 1 until simplifiedPoints.size) {
+            var hasMoved = false
+            for (i in simplifiedPoints.indices) {
                 val pt = toOffset(simplifiedPoints[i])
-                fullPath.lineTo(pt.x, pt.y)
+                val isGap = simplifiedPoints[i].isResumePoint || (i > 0 && (simplifiedPoints[i].timestamp - simplifiedPoints[i - 1].timestamp) > 25_000L)
+                if (!hasMoved || isGap) {
+                    fullPath.moveTo(pt.x, pt.y)
+                    hasMoved = true
+                } else {
+                    fullPath.lineTo(pt.x, pt.y)
+                }
             }
 
             // Shadow/Glow
@@ -176,6 +188,11 @@ fun OsmRouteSnippetMap(
             for (i in 0 until simplifiedPoints.size - 1) {
                 val p1 = simplifiedPoints[i]
                 val p2 = simplifiedPoints[i + 1]
+                val isGap = p2.isResumePoint || ((p2.timestamp - p1.timestamp) > 25_000L)
+                if (isGap) {
+                    // Do NOT connect pre-pause point with post-pause point!
+                    continue
+                }
                 val o1 = toOffset(p1)
                 val o2 = toOffset(p2)
 
@@ -353,11 +370,17 @@ private fun renderSpeedColoredRoute(mapView: MapView, routePoints: List<GpsPoint
     for (i in 0 until routePoints.size - 1) {
         val p1 = routePoints[i]
         val p2 = routePoints[i + 1]
+        val isGap = p2.isResumePoint || ((p2.timestamp - p1.timestamp) > 25_000L)
 
         minLat = minOf(minLat, p1.latitude, p2.latitude)
         maxLat = maxOf(maxLat, p1.latitude, p2.latitude)
         minLon = minOf(minLon, p1.longitude, p2.longitude)
         maxLon = maxOf(maxLon, p1.longitude, p2.longitude)
+
+        if (isGap) {
+            // Do NOT connect pre-pause point with post-pause point!
+            continue
+        }
 
         val results = FloatArray(1)
         Location.distanceBetween(p1.latitude, p1.longitude, p2.latitude, p2.longitude, results)

@@ -20,8 +20,29 @@ data class GpsPoint(
     val latitude: Double,
     val longitude: Double,
     val altitude: Double = 0.0,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val isResumePoint: Boolean = false
 )
+
+fun splitRouteSegments(points: List<GpsPoint>): List<List<GpsPoint>> {
+    if (points.isEmpty()) return emptyList()
+    val segments = mutableListOf<MutableList<GpsPoint>>()
+    var currentSegment = mutableListOf<GpsPoint>()
+
+    for (i in points.indices) {
+        val p = points[i]
+        val isGap = p.isResumePoint || (i > 0 && (p.timestamp - points[i - 1].timestamp) > 25_000L)
+        if (isGap && currentSegment.isNotEmpty()) {
+            segments.add(currentSegment)
+            currentSegment = mutableListOf()
+        }
+        currentSegment.add(p)
+    }
+    if (currentSegment.isNotEmpty()) {
+        segments.add(currentSegment)
+    }
+    return segments
+}
 
 @Serializable
 data class KilometerSplit(
@@ -55,6 +76,7 @@ class LocationTracker private constructor(private val context: Context) : Locati
     val trackingState: StateFlow<TrainingTrackingState> = _trackingState.asStateFlow()
 
     private var isListening = false
+    private var isResumePending = false
     private var lastRecordedLat: Double? = null
     private var lastRecordedLon: Double? = null
     private var lastLocationTimestampRealtime: Long = 0L
@@ -100,18 +122,19 @@ class LocationTracker private constructor(private val context: Context) : Locati
         if (isListening) return
         isListening = true
 
-        // 1. Initial best last known location
+        // 1. Initial best last known location (only if recent < 30s)
         var bestLocation: Location? = null
         val providers = listOf(
             LocationManager.GPS_PROVIDER,
             LocationManager.NETWORK_PROVIDER,
             LocationManager.PASSIVE_PROVIDER
         )
+        val now = System.currentTimeMillis()
         for (provider in providers) {
             try {
                 if (locationManager.isProviderEnabled(provider)) {
                     val loc = locationManager.getLastKnownLocation(provider)
-                    if (loc != null) {
+                    if (loc != null && (now - loc.time < 30_000L)) {
                         if (bestLocation == null || loc.time > bestLocation.time) {
                             bestLocation = loc
                         }
@@ -156,15 +179,32 @@ class LocationTracker private constructor(private val context: Context) : Locati
     }
 
     fun startTracking() {
-        startListening()
+        if (_trackingState.value.routePoints.isNotEmpty()) {
+            isResumePending = true
+        }
         lastRecordedLat = null
         lastRecordedLon = null
         lastLocationTimestampRealtime = 0L
         _trackingState.update { it.copy(isTracking = true) }
+        startListening()
     }
 
     fun pauseTracking() {
-        _trackingState.update { it.copy(isTracking = false, currentSpeedKmh = 0.0) }
+        stopListening()
+        lastRecordedLat = null
+        lastRecordedLon = null
+        lastLocationTimestampRealtime = 0L
+        if (_trackingState.value.routePoints.isNotEmpty()) {
+            isResumePending = true
+        }
+        _trackingState.update {
+            it.copy(
+                isTracking = false,
+                isGpsActive = false,
+                currentSpeedKmh = 0.0,
+                currentPaceMinPerKm = 0.0
+            )
+        }
     }
 
     fun stopListening() {
@@ -175,6 +215,8 @@ class LocationTracker private constructor(private val context: Context) : Locati
     }
 
     fun reset() {
+        stopListening()
+        isResumePending = false
         lastRecordedLat = null
         lastRecordedLon = null
         lastLocationTimestampRealtime = 0L
@@ -184,11 +226,10 @@ class LocationTracker private constructor(private val context: Context) : Locati
         val currentLon = _trackingState.value.currentLongitude
         val currentAlt = _trackingState.value.currentAltitude
         val accuracy = _trackingState.value.accuracy
-        val isGps = _trackingState.value.isGpsActive
 
         _trackingState.value = TrainingTrackingState(
             isTracking = false,
-            isGpsActive = isGps,
+            isGpsActive = false,
             currentLatitude = currentLat,
             currentLongitude = currentLon,
             currentAltitude = currentAlt,
@@ -229,9 +270,10 @@ class LocationTracker private constructor(private val context: Context) : Locati
         var smoothedLon = location.longitude
 
         if (isTracking) {
-            val prevLat = lastRecordedLat
-            val prevLon = lastRecordedLon
-            val prevTime = lastLocationTimestampRealtime
+            val isResume = isResumePending
+            val prevLat = if (isResume) null else lastRecordedLat
+            val prevLon = if (isResume) null else lastRecordedLon
+            val prevTime = if (isResume) 0L else lastLocationTimestampRealtime
 
             if (prevLat != null && prevLon != null && prevTime > 0) {
                 val timeDeltaSec = (nowRealtime - prevTime) / 1000.0
@@ -269,6 +311,11 @@ class LocationTracker private constructor(private val context: Context) : Locati
                 } else {
                     calculatedSpeedKmh = 0.0
                 }
+            } else {
+                // First point or resume point: do NOT connect or accumulate distance across the pause gap!
+                if (calculatedSpeedKmh == 0.0 && location.hasSpeed() && location.speed > 0f) {
+                    calculatedSpeedKmh = location.speed * 3.6
+                }
             }
 
             lastRecordedLat = smoothedLat
@@ -279,9 +326,13 @@ class LocationTracker private constructor(private val context: Context) : Locati
                 latitude = smoothedLat,
                 longitude = smoothedLon,
                 altitude = location.altitude,
-                timestamp = System.currentTimeMillis()
+                timestamp = System.currentTimeMillis(),
+                isResumePoint = isResume
             )
             points = points + point
+            if (isResume) {
+                isResumePending = false
+            }
 
             // Check kilometer splits
             val completedKms = (totalDist / 1000.0).toInt()

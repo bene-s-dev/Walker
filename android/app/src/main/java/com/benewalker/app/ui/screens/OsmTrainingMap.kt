@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.benewalker.app.service.GpsPoint
+import com.benewalker.app.service.splitRouteSegments
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -76,7 +77,7 @@ fun OsmTrainingMap(
     var followLocation by remember { mutableStateOf(true) }
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var locationOverlayRef by remember { mutableStateOf<MyLocationNewOverlay?>(null) }
-    var polylineRef by remember { mutableStateOf<Polyline?>(null) }
+    val polylineOverlays = remember { mutableListOf<Polyline>() }
     var hasCenteredInitially by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -84,15 +85,36 @@ fun OsmTrainingMap(
         Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", 0))
     }
 
-    // Reactively update Polyline and center on position
+    // Reactively update Polylines per segment and center on position
     LaunchedEffect(routePoints, currentLat, currentLon, followLocation) {
         val mapView = mapViewRef ?: return@LaunchedEffect
 
-        if (polylineRef != null) {
-            val geoPoints = routePoints.map { GeoPoint(it.latitude, it.longitude) }
-            polylineRef?.setPoints(geoPoints)
-            mapView.invalidate()
+        // Clean up previous polylines
+        polylineOverlays.forEach { mapView.overlayManager.remove(it) }
+        polylineOverlays.clear()
+
+        val segments = splitRouteSegments(routePoints)
+        val locIndex = locationOverlayRef?.let { mapView.overlayManager.indexOf(it) } ?: -1
+
+        for (seg in segments) {
+            if (seg.size >= 2) {
+                val poly = Polyline(mapView).apply {
+                    outlinePaint.color = primaryColor
+                    outlinePaint.strokeWidth = 14f
+                    outlinePaint.strokeCap = Paint.Cap.ROUND
+                    outlinePaint.strokeJoin = Paint.Join.ROUND
+                    outlinePaint.isAntiAlias = true
+                    setPoints(seg.map { GeoPoint(it.latitude, it.longitude) })
+                }
+                if (locIndex >= 0) {
+                    mapView.overlayManager.add(locIndex, poly)
+                } else {
+                    mapView.overlayManager.add(poly)
+                }
+                polylineOverlays.add(poly)
+            }
         }
+        mapView.invalidate()
 
         if (currentLat != null && currentLon != null) {
             val currentGeo = GeoPoint(currentLat, currentLon)
@@ -157,17 +179,6 @@ fun OsmTrainingMap(
                         setMultiTouchControls(true)
                         zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
                         controller.setZoom(17.5)
-
-                        // Polyline for track
-                        val polyline = Polyline(this).apply {
-                            outlinePaint.color = primaryColor
-                            outlinePaint.strokeWidth = 14f
-                            outlinePaint.strokeCap = Paint.Cap.ROUND
-                            outlinePaint.strokeJoin = Paint.Join.ROUND
-                            outlinePaint.isAntiAlias = true
-                        }
-                        overlayManager.add(polyline)
-                        polylineRef = polyline
 
                         // User Location Marker Overlay with Blue Dot
                         val provider = GpsMyLocationProvider(ctx)

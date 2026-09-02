@@ -137,6 +137,8 @@ class StopwatchService : Service() {
             textToSpeech = TextToSpeech(applicationContext) { status ->
                 if (status == TextToSpeech.SUCCESS) {
                     textToSpeech?.language = Locale.GERMAN
+                    textToSpeech?.setPitch(0.82f)
+                    textToSpeech?.setSpeechRate(0.95f)
                     isTtsReady = true
                 }
             }
@@ -271,6 +273,8 @@ class StopwatchService : Service() {
     private fun speakText(text: String) {
         try {
             if (isTtsReady) {
+                textToSpeech?.setPitch(0.82f)
+                textToSpeech?.setSpeechRate(0.95f)
                 textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "service_min_${System.currentTimeMillis()}")
             } else {
                 toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP2, 400)
